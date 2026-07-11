@@ -1,0 +1,110 @@
+/* position */
+.relative {
+  position: relative;
+}
+
+/* flex */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flex-justify-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.flex-align-center {
+  display: flex;
+  align-items: center;
+}
+
+.flex-left-center {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.flex-right-center {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.flex-justify-content {
+  display: flex;
+  justify-content: center;
+}
+
+/* 文字单行省略号 */
+.sle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 文字多行省略号 */
+.mle {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* 文字多了自动換行 */
+.break-word {
+  word-break: break-all;
+  word-wrap: break-word;
+}
+
+/* clearfix 清除浮动 用于解决浮动元素造成的布局 */
+.clearfix::after {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  clear: both;
+  content: "";
+}
+
+/* fade-transform */
+.fade-transform-leave-active,
+.fade-transform-enter-active {
+  transition: all 0.2s;
+}
+.fade-transform-enter-from {
+  opacity: 0;
+  transition: all 0.2s;
+  transform: translateX(-30px);
+}
+.fade-transform-leave-to {
+  opacity: 0;
+  transition: all 0.2s;
+  transform: translateX(30px);
+}
+
+/* 外边距、内边距全局样式 */
+@for $i from 0 through 100 {
+  .mt#{$i} {
+    margin-top: #{$i}px !important;
+  }
+  .mr#{$i} {
+    margin-right: #{$i}px !important;
+  }
+  .mb#{$i} {
+    margin-bottom: #{$i}px !important;
+  }
+  .ml#{$i} {
+    margin-left: #{$i}px !important;
+  }
+  .pt#{$i} {
+    padding-top: #{$i}px !important;
+  }
+  .pr#{$i} {
+    padding-right: #{$i}px !important;
+  }
+  .pb#{$i} {
+    padding-bottom: #{$i}px !important;
+  }
+  .pl#{$i} {
+    padding-left: #{$i}px !important;
+  }
+}
