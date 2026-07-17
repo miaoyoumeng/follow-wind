@@ -1,4 +1,4 @@
 <template>
   <div></div>
 </template>
-<script setup lang="ts" name="layoutVertical"></script>
+<script setup lang="ts" name="LayoutVertical"></script>

@@ -1,7 +1,7 @@
 <template>
   <component :is="LayoutComponents[layout]" />
 </template>
-<script setup lang="ts" name="layout">
+<script setup lang="ts" name="Layout">
 import { type Component, computed, ComputedRef } from 'vue';
 import LayoutClassic from '@/layouts/classic/index.vue';
 import LayoutVertical from '@/layouts/vertical/index.vue';

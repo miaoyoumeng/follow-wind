@@ -126,7 +126,7 @@ const getActive = (maxLevel = 3) => {
   return '';
 };
 </script>
-<style scoped>
+<style scoped lang="scss">
 .header-logo-container {
   width: 184px;
   height: 26px;

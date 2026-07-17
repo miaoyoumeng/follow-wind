@@ -38,7 +38,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       },
       proxy: {
         '/api': {
-          target: 'https://m1.apifoxmock.com/m1/4079066-3716874-default',
+          target: 'https://m1.apifoxmock.com/m1/8520177-8294671-default',
           changeOrigin: true,
           rewrite: path => path.replace(/^\/api/, '')
         }

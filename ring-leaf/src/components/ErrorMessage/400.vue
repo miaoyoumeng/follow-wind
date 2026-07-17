@@ -9,11 +9,11 @@
   </div>
 </template>
 
-<style scoped lang="scss">
-@import './index.scss';
-</style>
-
 <script setup lang="ts" name="404">
 import { useRouter } from 'vue-router';
 const router = useRouter();
 </script>
+
+<style scoped lang="scss">
+@import './index.scss';
+</style>

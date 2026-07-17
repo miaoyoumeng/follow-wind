@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/modules/user.ts';
 import router from '@/routers/index';
 import { MAIN_URL, TO_LOGIN_URL } from '@/routers/config.ts';
 import md5 from 'md5';
-import { useAuthStore } from "@/stores/modules/auth.ts";
+import { useAuthStore } from '@/stores/modules/auth.ts';
 // 登录模块
 export namespace Login {
   export interface ReqLoginForm {
@@ -31,7 +31,7 @@ const logoutApi = () => {
  * @name 用户登录
  */
 const loginApi = (params: Login.ReqLoginForm): Promise<ResultData<Login.RespLogin>> => {
-  return http.post('/sso/login', params);
+  return http.post('/sso/security/login', params);
 };
 
 /**

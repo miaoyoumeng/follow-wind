@@ -46,7 +46,7 @@ const changeSearchFocus = (value: boolean) => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .header-menu-search {
   display: flex;
   margin-left: 16px;

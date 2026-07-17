@@ -49,7 +49,7 @@ const title = import.meta.env.VITE_GLOB_APP_TITLE as string;
 
 const router = useRouter();
 
-import { getAppMenus } from '@/api/menu.ts';
+import { getAppMenusApi } from '@/api/menu.ts';
 import { Menu } from '@/api/modules/auth.ts';
 
 const menus = ref<Menu.MenuOptions[]>([]);
@@ -64,7 +64,7 @@ onMounted(() => {
 
 //functions
 const renderMenus = async () => {
-  const { data } = await getAppMenus();
+  const { data } = await getAppMenusApi();
   if (data && data.length > 0) {
     menus.value = data;
   }
@@ -74,7 +74,7 @@ const handleNavTo: MenuProps['onChange'] = (item: MenuValue) => {
   router.push(routePath);
 };
 </script>
-<style scoped>
+<style scoped lang="scss">
 .logo-img {
   height: 32px;
   width: 32px;

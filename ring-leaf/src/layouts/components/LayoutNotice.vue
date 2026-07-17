@@ -73,7 +73,7 @@ const goDetail = () => {
   router.push('/detail/secondary');
 };
 </script>
-<style scoped>
+<style scoped lang="scss">
 .header-msg {
   width: 400px;
   height: 500px;
