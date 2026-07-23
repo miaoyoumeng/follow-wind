@@ -1,6 +1,6 @@
 import { ResultData } from '@/request/modules.ts';
 import { Menu } from '@/api/modules/auth.ts';
-import authMenuList from '@/assets/jsons/left-menus.json';
+import authMenuList from '@/assets/jsons/dynamic-routers.json';
 
 // 获取我的应用列表
 export const getAppMenusApi = (): Promise<ResultData<Menu.MenuOptions[]>> => {

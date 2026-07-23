@@ -6,7 +6,6 @@ import router from '@/routers/index';
 import { useAuthStore } from '@/stores/modules/auth.ts';
 import { logout } from '@/api/login.ts';
 import { LAYOUT_FRAMEWORK, TO_LOGIN_URL } from '@/routers/config.ts';
-// import HomeIndex from '@/views/home/index.vue';
 
 const appId = import.meta.env.VITE_GLOB_APP_ID as number;
 const modules: Record<string, Component> = import.meta.glob('@/views/**/*.vue', { import: 'default', eager: true });
