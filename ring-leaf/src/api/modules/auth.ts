@@ -19,12 +19,3 @@ export declare namespace Menu {
     isKeepAlive: boolean;
   }
 }
-
-/* 路由 */
-export declare namespace Router {
-  interface RouterMeta {
-    id: number;
-    path: string;
-    type: 'button|menu';
-  }
-}

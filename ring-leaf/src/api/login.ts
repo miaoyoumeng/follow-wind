@@ -5,6 +5,7 @@ import router from '@/routers/index';
 import { MAIN_URL, TO_LOGIN_URL } from '@/routers/config.ts';
 import md5 from 'md5';
 import { useAuthStore } from '@/stores/modules/auth.ts';
+
 // 登录模块
 export namespace Login {
   export interface ReqLoginForm {
@@ -27,6 +28,7 @@ export namespace Login {
 const logoutApi = () => {
   return http.get('/sso/logout');
 };
+
 /**
  * @name 用户登录
  */
@@ -40,6 +42,7 @@ const loginApi = (params: Login.ReqLoginForm): Promise<ResultData<Login.RespLogi
 const tokenUserInfoApi = (): Promise<ResultData<Login.RespUserInfo>> => {
   return http.get('/sso/token/user/info');
 };
+
 ////////////////////////////////////api function above ////////////////////////////////////
 
 /**
@@ -52,14 +55,6 @@ export const logout = async () => {
   await userStore.clear();
   await authStore.clear();
   await router.push(TO_LOGIN_URL);
-};
-/**
- * 从storage中用户信息
- */
-export const storeUserInfo = (): Login.RespUserInfo => {
-  const userStore = useUserStore();
-  const userInfo: Login.RespUserInfo = userStore.tokenUserInfo as Login.RespUserInfo;
-  return userInfo;
 };
 
 /* 登录表单提交 */
