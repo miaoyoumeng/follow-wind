@@ -1,0 +1,211 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "total": 89,
+    "list": [
+      {
+        "userId": 100256,
+        "userName": "u_100256",
+        "nickname": "快乐的小鱼",
+        "channel1": "抖音",
+        "channel2": "抖音-神笔马良图片处理专属渠道",
+        "payTime": "2026-07-21 14:35:42"
+      },
+      {
+        "userId": 100254,
+        "userName": "u_100254",
+        "nickname": "星空守望者",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "payTime": "2026-07-21 14:20:33"
+      },
+      {
+        "userId": 100252,
+        "userName": "u_100252",
+        "nickname": "晴天娃娃",
+        "channel1": "快手",
+        "channel2": "快手-直播带量",
+        "payTime": "2026-07-21 13:45:08"
+      },
+      {
+        "userId": 100250,
+        "userName": "u_100250",
+        "nickname": "王大锤",
+        "channel1": "抖音",
+        "channel2": "抖音-信息流投放",
+        "payTime": "2026-07-21 13:00:15"
+      },
+      {
+        "userId": 100180,
+        "userName": "u_100180",
+        "nickname": "购物狂",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "payTime": "2026-07-21 12:10:44"
+      },
+      {
+        "userId": 100155,
+        "userName": "u_100155",
+        "nickname": "月光旅人",
+        "channel1": "抖音",
+        "channel2": "抖音-搜索广告",
+        "payTime": "2026-07-21 11:30:22"
+      },
+      {
+        "userId": 100142,
+        "userName": "u_100142",
+        "nickname": "晨曦微露",
+        "channel1": "抖音",
+        "channel2": "抖音-神笔马良图片处理专属渠道",
+        "payTime": "2026-07-21 11:05:18"
+      },
+      {
+        "userId": 100130,
+        "userName": "u_100130",
+        "nickname": "流云飞鸟",
+        "channel1": "快手",
+        "channel2": "快手-直播带量",
+        "payTime": "2026-07-21 10:40:33"
+      },
+      {
+        "userId": 100118,
+        "userName": "u_100118",
+        "nickname": "雨落无声",
+        "channel1": "抖音",
+        "channel2": "抖音-KOL合作推广计划",
+        "payTime": "2026-07-21 10:15:45"
+      },
+      {
+        "userId": 100105,
+        "userName": "u_100105",
+        "nickname": "花开有声",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "payTime": "2026-07-21 09:50:22"
+      },
+      {
+        "userId": 100092,
+        "userName": "u_100092",
+        "nickname": "风起云涌",
+        "channel1": "抖音",
+        "channel2": "抖音-信息流投放",
+        "payTime": "2026-07-21 09:25:15"
+      },
+      {
+        "userId": 100080,
+        "userName": "u_100080",
+        "nickname": "云淡风轻",
+        "channel1": "快手",
+        "channel2": "快手-直播带量",
+        "payTime": "2026-07-21 09:00:33"
+      },
+      {
+        "userId": 100068,
+        "userName": "u_100068",
+        "nickname": "星河滚烫",
+        "channel1": "抖音",
+        "channel2": "抖音-搜索广告",
+        "payTime": "2026-07-21 08:35:42"
+      },
+      {
+        "userId": 100055,
+        "userName": "u_100055",
+        "nickname": "月色温柔",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "payTime": "2026-07-21 08:10:18"
+      },
+      {
+        "userId": 100042,
+        "userName": "u_100042",
+        "nickname": "清风拂面",
+        "channel1": "抖音",
+        "channel2": "抖音-神笔马良图片处理专属渠道",
+        "payTime": "2026-07-21 07:45:05"
+      },
+      {
+        "userId": 100030,
+        "userName": "u_100030",
+        "nickname": "山水之间",
+        "channel1": "快手",
+        "channel2": "快手-直播带量",
+        "payTime": "2026-07-21 07:20:33"
+      },
+      {
+        "userId": 100015,
+        "userName": "u_100015",
+        "nickname": "云水禅心",
+        "channel1": "抖音",
+        "channel2": "抖音-信息流投放",
+        "payTime": "2026-07-21 06:55:18"
+      },
+      {
+        "userId": 100005,
+        "userName": "u_100005",
+        "nickname": "落叶归根",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "payTime": "2026-07-21 06:30:42"
+      },
+      {
+        "userId": 99995,
+        "userName": "u_99995",
+        "nickname": "岁月留声",
+        "channel1": "抖音",
+        "channel2": "抖音-KOL合作推广计划",
+        "payTime": "2026-07-21 06:05:15"
+      },
+      {
+        "userId": 99982,
+        "userName": "u_99982",
+        "nickname": "天涯咫尺",
+        "channel1": "快手",
+        "channel2": "快手-直播带量",
+        "payTime": "2026-07-21 05:40:28"
+      },
+      {
+        "userId": 99970,
+        "userName": "u_99970",
+        "nickname": "春暖花开",
+        "channel1": "抖音",
+        "channel2": "抖音-搜索广告",
+        "payTime": "2026-07-21 05:15:33"
+      },
+      {
+        "userId": 99958,
+        "userName": "u_99958",
+        "nickname": "风轻云淡",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "payTime": "2026-07-21 04:50:05"
+      },
+      {
+        "userId": 99945,
+        "userName": "u_99945",
+        "nickname": "一叶扁舟",
+        "channel1": "抖音",
+        "channel2": "抖音-信息流投放",
+        "payTime": "2026-07-21 04:25:18"
+      },
+      {
+        "userId": 99932,
+        "userName": "u_99932",
+        "nickname": "素年锦时",
+        "channel1": "快手",
+        "channel2": "快手-直播带量",
+        "payTime": "2026-07-21 04:00:42"
+      },
+      {
+        "userId": 99920,
+        "userName": "u_99920",
+        "nickname": "浮生若梦",
+        "channel1": "抖音",
+        "channel2": "抖音-神笔马良图片处理专属渠道",
+        "payTime": "2026-07-21 03:35:15"
+      }
+    ]
+  }
+}

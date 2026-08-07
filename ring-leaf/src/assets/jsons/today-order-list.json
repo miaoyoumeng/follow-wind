@@ -1,0 +1,138 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "paidSummary": {
+      "orderCount": 128,
+      "totalAmount": 12580.0
+    },
+    "unpaidSummary": {
+      "orderCount": 35,
+      "totalAmount": 3260.0
+    },
+    "refundSummary": {
+      "orderCount": 5,
+      "totalAmount": 486.0
+    },
+    "paidList": [
+      {
+        "id": 1,
+        "orderNo": "ORD001",
+        "userId": "10001",
+        "userName": "张三",
+        "phone": "138****1234",
+        "appName": "神笔马良",
+        "skuName": "月卡会员",
+        "payAmount": 28.0,
+        "payMethod": "微信支付",
+        "orderTime": "2026-07-30 10:00:00"
+      },
+      {
+        "id": 2,
+        "orderNo": "ORD002",
+        "userId": "10002",
+        "userName": "李四",
+        "phone": "139****5678",
+        "appName": "神笔马良",
+        "skuName": "年卡会员",
+        "payAmount": 238.0,
+        "payMethod": "支付宝",
+        "orderTime": "2026-07-30 09:30:00"
+      },
+      {
+        "id": 3,
+        "orderNo": "ORD003",
+        "userId": "10003",
+        "userName": "王五",
+        "phone": "137****9012",
+        "appName": "AppB",
+        "skuName": "季卡会员",
+        "payAmount": 68.0,
+        "payMethod": "微信支付",
+        "orderTime": "2026-07-30 08:15:00"
+      }
+    ],
+    "unpaidList": [
+      {
+        "id": 4,
+        "orderNo": "ORD004",
+        "userId": "10004",
+        "userName": "赵六",
+        "phone": "139****5678",
+        "appName": "神笔马良",
+        "skuName": "月卡会员",
+        "orderAmount": 28.0,
+        "unpaidStatus": "pending",
+        "unpaidStatusName": "待支付",
+        "orderTime": "2026-07-30 10:05:00",
+        "expireTime": "2026-07-30 10:20:00"
+      },
+      {
+        "id": 5,
+        "orderNo": "ORD005",
+        "userId": "10005",
+        "userName": "钱七",
+        "phone": "136****3456",
+        "appName": "神笔马良",
+        "skuName": "年卡会员",
+        "orderAmount": 238.0,
+        "unpaidStatus": "expired",
+        "unpaidStatusName": "支付超时",
+        "orderTime": "2026-07-30 09:00:00",
+        "expireTime": "2026-07-30 09:15:00"
+      },
+      {
+        "id": 6,
+        "orderNo": "ORD006",
+        "userId": "10006",
+        "userName": "孙八",
+        "phone": "135****7890",
+        "appName": "AppB",
+        "skuName": "季卡会员",
+        "orderAmount": 68.0,
+        "unpaidStatus": "cancelled",
+        "unpaidStatusName": "取消支付",
+        "orderTime": "2026-07-30 08:30:00",
+        "expireTime": ""
+      }
+    ],
+    "refundList": [
+      {
+        "id": 7,
+        "orderNo": "ORD007",
+        "userId": "10007",
+        "userName": "周九",
+        "phone": "136****9012",
+        "appName": "神笔马良",
+        "skuName": "月卡会员",
+        "payMethod": "微信支付",
+        "payTime": "2026-07-29 10:00:00",
+        "payAmount": 28.0,
+        "confirmedAmount": 9.3,
+        "refundAmount": 18.7,
+        "refundReason": "不满意",
+        "refundTime": "2026-07-30 14:00:00",
+        "reviewer": "张三"
+      },
+      {
+        "id": 8,
+        "orderNo": "ORD008",
+        "userId": "10008",
+        "userName": "吴十",
+        "phone": "134****2345",
+        "appName": "神笔马良",
+        "skuName": "年卡会员",
+        "payMethod": "支付宝",
+        "payTime": "2026-07-29 11:00:00",
+        "payAmount": 238.0,
+        "confirmedAmount": 50.0,
+        "refundAmount": 188.0,
+        "refundReason": "重复购买",
+        "refundTime": "2026-07-30 11:30:00",
+        "reviewer": "李四"
+      }
+    ]
+  }
+}

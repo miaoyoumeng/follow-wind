@@ -1,0 +1,237 @@
+{
+  "code": "200",
+  "displayMsg": "成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "operateTime": "2026-07-24 10:00:00",
+        "operatorName": "张三",
+        "module": "员工管理",
+        "operateType": "新增",
+        "content": "新增员工：李四",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 2,
+        "operateTime": "2026-07-24 09:30:00",
+        "operatorName": "李四",
+        "module": "商品管理",
+        "operateType": "修改",
+        "content": "修改 SPU：神笔马良",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 3,
+        "operateTime": "2026-07-23 14:30:00",
+        "operatorName": "张三",
+        "module": "登录",
+        "operateType": "登录",
+        "content": "微信扫码登录",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 4,
+        "operateTime": "2026-07-23 11:20:00",
+        "operatorName": "王五",
+        "module": "订单管理",
+        "operateType": "修改",
+        "content": "修改订单备注：订单号 20260723001",
+        "ip": "192.168.1.102"
+      },
+      {
+        "id": 5,
+        "operateTime": "2026-07-23 09:00:00",
+        "operatorName": "张三",
+        "module": "用户管理",
+        "operateType": "停用",
+        "content": "停用用户：user_10086",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 6,
+        "operateTime": "2026-07-22 16:45:00",
+        "operatorName": "李四",
+        "module": "商品管理",
+        "operateType": "删除",
+        "content": "删除 SPU：过期商品A",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 7,
+        "operateTime": "2026-07-22 14:00:00",
+        "operatorName": "张三",
+        "module": "系统设置",
+        "operateType": "修改",
+        "content": "修改字典：订单状态字典新增'部分退款'选项",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 8,
+        "operateTime": "2026-07-22 10:30:00",
+        "operatorName": "李四",
+        "module": "登录",
+        "operateType": "登录",
+        "content": "微信扫码登录",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 9,
+        "operateTime": "2026-07-21 17:00:00",
+        "operatorName": "张三",
+        "module": "财务管理",
+        "operateType": "新增",
+        "content": "新建对账记录：2026-07-20",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 10,
+        "operateTime": "2026-07-21 15:20:00",
+        "operatorName": "王五",
+        "module": "消息管理",
+        "operateType": "启用",
+        "content": "启用消息模板：订单支付成功通知",
+        "ip": "192.168.1.102"
+      },
+      {
+        "id": 11,
+        "operateTime": "2026-07-21 10:00:00",
+        "operatorName": "张三",
+        "module": "员工管理",
+        "operateType": "修改",
+        "content": "修改员工：王五，调整负责App",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 12,
+        "operateTime": "2026-07-20 09:15:00",
+        "operatorName": "李四",
+        "module": "商品管理",
+        "operateType": "新增",
+        "content": "新增 SPU：夏季新品B",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 13,
+        "operateTime": "2026-07-20 08:30:00",
+        "operatorName": "张三",
+        "module": "登录",
+        "operateType": "登录",
+        "content": "微信扫码登录",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 14,
+        "operateTime": "2026-07-19 16:00:00",
+        "operatorName": "王五",
+        "module": "订单管理",
+        "operateType": "删除",
+        "content": "取消订单：订单号 20260719005",
+        "ip": "192.168.1.102"
+      },
+      {
+        "id": 15,
+        "operateTime": "2026-07-19 11:30:00",
+        "operatorName": "张三",
+        "module": "系统设置",
+        "operateType": "新增",
+        "content": "新增员工：王五",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 16,
+        "operateTime": "2026-07-18 14:00:00",
+        "operatorName": "李四",
+        "module": "用户管理",
+        "operateType": "启用",
+        "content": "启用用户：user_10099",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 17,
+        "operateTime": "2026-07-18 10:00:00",
+        "operatorName": "张三",
+        "module": "登录",
+        "operateType": "登录",
+        "content": "微信扫码登录",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 18,
+        "operateTime": "2026-07-17 17:30:00",
+        "operatorName": "王五",
+        "module": "消息管理",
+        "operateType": "修改",
+        "content": "修改消息模板：订单发货通知内容更新",
+        "ip": "192.168.1.102"
+      },
+      {
+        "id": 19,
+        "operateTime": "2026-07-17 14:00:00",
+        "operatorName": "张三",
+        "module": "财务管理",
+        "operateType": "修改",
+        "content": "修改确收策略：虚拟商品即时确收",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 20,
+        "operateTime": "2026-07-17 09:00:00",
+        "operatorName": "李四",
+        "module": "登录",
+        "operateType": "登录",
+        "content": "微信扫码登录",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 21,
+        "operateTime": "2026-07-16 16:00:00",
+        "operatorName": "张三",
+        "module": "员工管理",
+        "operateType": "停用",
+        "content": "停用员工：赵六（已离职）",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 22,
+        "operateTime": "2026-07-16 10:30:00",
+        "operatorName": "王五",
+        "module": "商品管理",
+        "operateType": "修改",
+        "content": "修改 SKU 价格：神笔马良-标准版",
+        "ip": "192.168.1.102"
+      },
+      {
+        "id": 23,
+        "operateTime": "2026-07-15 15:00:00",
+        "operatorName": "张三",
+        "module": "订单管理",
+        "operateType": "修改",
+        "content": "审核退款：订单号 20260715003",
+        "ip": "192.168.1.100"
+      },
+      {
+        "id": 24,
+        "operateTime": "2026-07-15 09:30:00",
+        "operatorName": "李四",
+        "module": "登录",
+        "operateType": "登录",
+        "content": "微信扫码登录",
+        "ip": "192.168.1.101"
+      },
+      {
+        "id": 25,
+        "operateTime": "2026-07-14 11:00:00",
+        "operatorName": "张三",
+        "module": "系统设置",
+        "operateType": "修改",
+        "content": "修改角色权限：App运营人员新增消息管理权限",
+        "ip": "192.168.1.100"
+      }
+    ],
+    "total": 25,
+    "pageNum": 1,
+    "pageSize": 20
+  },
+  "msg": "成功"
+}

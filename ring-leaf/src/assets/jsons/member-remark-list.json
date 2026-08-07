@@ -1,0 +1,41 @@
+{
+  "code": "200",
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "total": 5,
+    "list": [
+      {
+        "id": 1,
+        "operatorName": "管理员",
+        "content": "高价值用户，建议续费关怀",
+        "operateTime": "2026-08-01 14:30"
+      },
+      {
+        "id": 2,
+        "operatorName": "运营A",
+        "content": "用户咨询年卡续费优惠",
+        "operateTime": "2026-07-15 09:00"
+      },
+      {
+        "id": 3,
+        "operatorName": "运营B",
+        "content": "用户反馈会员未生效，已核实补发",
+        "operateTime": "2026-07-01 16:20"
+      },
+      {
+        "id": 4,
+        "operatorName": "管理员",
+        "content": "新用户，来自抖音渠道",
+        "operateTime": "2026-06-15 10:00"
+      },
+      {
+        "id": 5,
+        "operatorName": "运营A",
+        "content": "年卡购买用户",
+        "operateTime": "2026-06-01 08:30"
+      }
+    ]
+  }
+}

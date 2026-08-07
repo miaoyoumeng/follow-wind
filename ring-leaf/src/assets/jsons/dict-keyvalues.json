@@ -1,0 +1,144 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "spu_cat": [
+      {
+        "id": 1,
+        "key": "img",
+        "value": "图片处理",
+        "description": "图片类",
+        "updatedAt": "2026-06-01 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": false
+      },
+      {
+        "id": 2,
+        "key": "tool",
+        "value": "工具类",
+        "description": "工具类",
+        "updatedAt": "2026-01-01 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 3,
+        "key": "video",
+        "value": "视频处理",
+        "description": "视频类",
+        "updatedAt": "2026-03-01 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": false
+      }
+    ],
+    "msg_chnl": [
+      {
+        "id": 10,
+        "key": "wechat",
+        "value": "微信服务号",
+        "description": "微信服务号消息推送",
+        "updatedAt": "2026-01-02 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 11,
+        "key": "app_push",
+        "value": "App Push",
+        "description": "App推送消息",
+        "updatedAt": "2026-01-02 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 12,
+        "key": "站内信",
+        "value": "站内信",
+        "description": "站内信消息",
+        "updatedAt": "2026-01-02 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": false
+      }
+    ],
+    "pay_type": [
+      {
+        "id": 20,
+        "key": "wechat_pay",
+        "value": "微信支付",
+        "description": "微信支付渠道",
+        "updatedAt": "2026-01-03 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 21,
+        "key": "alipay",
+        "value": "支付宝",
+        "description": "支付宝支付渠道",
+        "updatedAt": "2026-01-03 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      }
+    ],
+    "protocol_type": [
+      {
+        "id": 30,
+        "key": "privacy",
+        "value": "隐私政策",
+        "description": "用户隐私政策",
+        "updatedAt": "2026-02-01 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 31,
+        "key": "user_agreement",
+        "value": "用户协议",
+        "description": "用户使用协议",
+        "updatedAt": "2026-02-01 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      }
+    ],
+    "order_status": [
+      {
+        "id": 40,
+        "key": "unpaid",
+        "value": "未支付",
+        "description": "订单已创建未支付",
+        "updatedAt": "2026-02-15 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 41,
+        "key": "fulfilling",
+        "value": "履约中",
+        "description": "订单已支付正在履约",
+        "updatedAt": "2026-02-15 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 42,
+        "key": "completed",
+        "value": "交易完成",
+        "description": "订单交易已完成",
+        "updatedAt": "2026-02-15 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      },
+      {
+        "id": 43,
+        "key": "refunded",
+        "value": "已退订",
+        "description": "订单已退订",
+        "updatedAt": "2026-02-15 10:00:00",
+        "updatedBy": "管理员",
+        "isReferenced": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "code": 200,
+  "data": {
+    "list": [
+      {
+        "id": 10001,
+        "name": "神笔马良 App",
+        "code": "shenbi-app",
+        "type": "app",
+        "status": "enabled",
+        "icon": "",
+        "description": "一款基于AI技术的图片处理应用，提供智能修图、模板换装等功能。",
+        "skuCount": 8,
+        "createdBy": "admin",
+        "createdAt": "2026-01-15 10:30:00",
+        "updatedBy": "运营员-A",
+        "updatedAt": "2026-07-20 14:22:00"
+      },
+      {
+        "id": 10002,
+        "name": "美颜相机 小程序",
+        "code": "beauty-wxmp",
+        "type": "mini-program",
+        "status": "enabled",
+        "icon": "",
+        "description": "微信小程序端美颜相机应用，提供拍照美化和滤镜功能。",
+        "skuCount": 5,
+        "createdBy": "admin",
+        "createdAt": "2026-02-10 09:15:00",
+        "updatedBy": "运营员-B",
+        "updatedAt": "2026-06-28 16:40:00"
+      },
+      {
+        "id": 10003,
+        "name": "极速记账 Web端",
+        "code": "jj-jizhang-web",
+        "type": "web",
+        "status": "disabled",
+        "icon": "",
+        "description": "Web端极速记账工具，支持多账本管理。",
+        "skuCount": 0,
+        "createdBy": "admin",
+        "createdAt": "2025-11-20 14:00:00",
+        "updatedBy": "admin",
+        "updatedAt": "2026-05-15 10:05:00"
+      },
+      {
+        "id": 10004,
+        "name": "AI写作助手 iOS",
+        "code": "ai-write-ios",
+        "type": "app",
+        "status": "enabled",
+        "icon": "",
+        "description": "iOS端AI写作助手，支持文章生成和润色。",
+        "skuCount": 3,
+        "createdBy": "admin",
+        "createdAt": "2026-06-01 08:30:00",
+        "updatedBy": "运营员-A",
+        "updatedAt": "2026-08-01 11:20:00"
+      }
+    ],
+    "total": 4
+  },
+  "msg": "成功"
+}

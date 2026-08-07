@@ -1,0 +1,100 @@
+{
+  "code": "200",
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "activeTotal": 3,
+    "activeList": [
+      {
+        "userId": 10001,
+        "userName": "user_001",
+        "nickname": "张三",
+        "avatar": "https://api.dicebear.com/9.x/adventurer/svg?seed=张三",
+        "wechatNickname": "微信名A",
+        "wechatGender": "male",
+        "phone": "138****1234",
+        "phoneReal": "13812341234",
+        "channel1": "抖音",
+        "channel2": "抖音-神笔马良图片处理专属渠道",
+        "registerTime": "2026-01-01 10:00:00",
+        "status": "normal",
+        "role": "普通用户",
+        "lastActiveTime": "2026-06-20 09:30:00"
+      },
+      {
+        "userId": 10002,
+        "userName": "user_002",
+        "nickname": "李四",
+        "avatar": "https://api.dicebear.com/9.x/adventurer/svg?seed=李四",
+        "wechatNickname": "微信名B",
+        "wechatGender": "female",
+        "phone": "139****5678",
+        "phoneReal": "13912345678",
+        "channel1": "抖音",
+        "channel2": "抖音-信息流投放",
+        "registerTime": "2026-02-15 14:30:00",
+        "status": "normal",
+        "role": "普通用户",
+        "lastActiveTime": "2026-06-19 18:00:00"
+      },
+      {
+        "userId": 10003,
+        "userName": "user_003",
+        "nickname": "王五",
+        "avatar": "",
+        "wechatNickname": "",
+        "wechatGender": "",
+        "phone": "137****9012",
+        "phoneReal": "13712349012",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "registerTime": "2026-03-20 09:15:00",
+        "status": "blacklisted",
+        "role": "普通用户",
+        "lastActiveTime": "2026-04-10 11:00:00"
+      }
+    ],
+    "cancelledTotal": 2,
+    "cancelledList": [
+      {
+        "userId": 10004,
+        "userName": "user_004",
+        "nickname": "赵六",
+        "avatar": "https://api.dicebear.com/9.x/adventurer/svg?seed=赵六",
+        "wechatNickname": "微信名C",
+        "wechatGender": "male",
+        "phone": "136****3456",
+        "phoneReal": "13612343456",
+        "channel1": "抖音",
+        "channel2": "抖音-神笔马良图片处理专属渠道",
+        "registerTime": "2026-04-01 11:20:00",
+        "status": "cancelled",
+        "role": "普通用户",
+        "cancelledTime": "2026-07-15 16:00:00",
+        "lastActiveTime": "2026-07-10 08:00:00"
+      },
+      {
+        "userId": 10005,
+        "userName": "user_005",
+        "nickname": "孙七",
+        "avatar": "",
+        "wechatNickname": "",
+        "wechatGender": "",
+        "phone": "135****7890",
+        "phoneReal": "13512347890",
+        "channel1": "快手",
+        "channel2": "快手-短视频引流",
+        "registerTime": "2026-05-10 08:45:00",
+        "status": "cancelled",
+        "role": "普通用户",
+        "cancelledTime": "2026-07-20 10:30:00",
+        "lastActiveTime": "2026-06-01 20:00:00"
+      }
+    ],
+    "channelOptions": [
+      { "value": "douyin", "label": "抖音" },
+      { "value": "kuaishou", "label": "快手" }
+    ]
+  }
+}

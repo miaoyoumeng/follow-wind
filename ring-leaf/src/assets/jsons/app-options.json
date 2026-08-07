@@ -1,0 +1,11 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": [
+    { "value": "all", "label": "全部" },
+    { "value": "douyin", "label": "抖音" },
+    { "value": "kuaishou", "label": "快手" }
+  ]
+}

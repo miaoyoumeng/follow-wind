@@ -1,0 +1,27 @@
+{
+  "code": 200,
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "productLineId": 10001,
+        "channelType": "wechat",
+        "channelName": "微信支付",
+        "merchantId": "1900000123",
+        "companyName": "北京某某科技有限公司",
+        "status": "enabled"
+      },
+      {
+        "id": 2,
+        "productLineId": 10001,
+        "channelType": "alipay",
+        "channelName": "支付宝",
+        "merchantId": "APPID20260001abcd",
+        "companyName": "上海某某信息技术有限公司",
+        "status": "enabled"
+      }
+    ],
+    "total": 2
+  },
+  "msg": "成功"
+}

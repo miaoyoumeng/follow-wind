@@ -1,0 +1,27 @@
+{
+  "code": 200,
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "productLineId": 10001,
+        "name": "客服微信号",
+        "value": "shenbi_kefu"
+      },
+      {
+        "id": 2,
+        "productLineId": 10001,
+        "name": "官网地址",
+        "value": "https://www.example.com"
+      },
+      {
+        "id": 3,
+        "productLineId": 10001,
+        "name": "隐私政策链接",
+        "value": "https://www.example.com/privacy"
+      }
+    ],
+    "total": 3
+  },
+  "msg": "成功"
+}

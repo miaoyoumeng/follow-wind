@@ -1,0 +1,17 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "userId": 100256,
+    "userName": "u_100256",
+    "nickname": "快乐的小鱼",
+    "phone": "138****5678",
+    "channel1": "抖音",
+    "channel2": "抖音-神笔马良图片处理专属渠道",
+    "registerTime": "2026-07-21 14:32:15",
+    "vipStatus": "vip-month",
+    "totalSpend": 68.0
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "code": "200",
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "total": 3,
+    "list": [
+      {
+        "memberId": 10001,
+        "userName": "user_001",
+        "nickname": "张三",
+        "avatar": "https://api.dicebear.com/9.x/adventurer/svg?seed=张三",
+        "wechatNickname": "微信名A",
+        "wechatGender": "male",
+        "phone": "138****1234",
+        "channel1": "抖音",
+        "registerTime": "2026-01-01 10:00:00",
+        "memberStatus": "active",
+        "memberExpireDate": "2026-07-01",
+        "totalConsume": 28.0,
+        "remark": ""
+      },
+      {
+        "memberId": 10002,
+        "userName": "user_002",
+        "nickname": "李四",
+        "avatar": "https://api.dicebear.com/9.x/adventurer/svg?seed=李四",
+        "wechatNickname": "微信名B",
+        "wechatGender": "female",
+        "phone": "139****5678",
+        "channel1": "抖音",
+        "registerTime": "2026-02-15 14:30:00",
+        "memberStatus": "active",
+        "memberExpireDate": "2027-01-01",
+        "totalConsume": 238.0,
+        "remark": "高价值用户"
+      },
+      {
+        "memberId": 10003,
+        "userName": "user_003",
+        "nickname": "王五",
+        "avatar": "",
+        "wechatNickname": "",
+        "wechatGender": "",
+        "phone": "137****9012",
+        "channel1": "快手",
+        "registerTime": "2026-03-20 09:15:00",
+        "memberStatus": "expired",
+        "memberExpireDate": "2026-03-01",
+        "totalConsume": 68.0,
+        "remark": ""
+      }
+    ]
+  }
+}

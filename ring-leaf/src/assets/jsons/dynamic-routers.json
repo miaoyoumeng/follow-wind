@@ -67,6 +67,19 @@
             "isAffix": false,
             "isKeepAlive": true
           }
+        },
+        {
+          "path": "/member/profile",
+          "name": "MemberProfile",
+          "component": "/member/profile",
+          "meta": {
+            "title": "会员详情",
+            "isLink": false,
+            "isHide": true,
+            "isFull": false,
+            "isAffix": false,
+            "isKeepAlive": true
+          }
         }
       ]
     },
@@ -115,7 +128,7 @@
     {
       "path": "/product/manager",
       "name": "ProductManager",
-      "redirect": "/product/spu",
+      "redirect": "/product/lines",
       "meta": {
         "icon": "shop",
         "title": "商品管理",
@@ -127,11 +140,11 @@
       },
       "children": [
         {
-          "path": "/product/spu",
-          "name": "SpuManager",
-          "component": "/product/spu",
+          "path": "/product/lines",
+          "name": "ProductLineManager",
+          "component": "/product/lines",
           "meta": {
-            "title": "SPU管理",
+            "title": "产品线",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -185,7 +198,7 @@
       "name": "OrderManager",
       "redirect": "/order/unpaid",
       "meta": {
-        "icon": "orders",
+        "icon": "cart",
         "title": "订单管理",
         "isLink": false,
         "isHide": false,
@@ -195,11 +208,11 @@
       },
       "children": [
         {
-          "path": "/order/unpaid",
-          "name": "UnpaidOrderList",
-          "component": "/order/unpaid",
+          "path": "/order/today",
+          "name": "TodayOrderList",
+          "component": "/order/today",
           "meta": {
-            "title": "未支付订单列表",
+            "title": "今日订单",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -208,11 +221,11 @@
           }
         },
         {
-          "path": "/order/fulfilling",
-          "name": "FulfillingOrderList",
-          "component": "/order/fulfilling",
+          "path": "/order/execution",
+          "name": "ExecutionOrderList",
+          "component": "/order/execution",
           "meta": {
-            "title": "在履约订单列表",
+            "title": "履约订单",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -221,50 +234,11 @@
           }
         },
         {
-          "path": "/order/refunded",
-          "name": "RefundedOrderList",
-          "component": "/order/refunded",
+          "path": "/order/done",
+          "name": "DoneOrderList",
+          "component": "/order/done",
           "meta": {
-            "title": "订单退订列表",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/order/completed",
-          "name": "CompletedOrderList",
-          "component": "/order/completed",
-          "meta": {
-            "title": "交易完成订单列表",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/order/note",
-          "name": "OrderNote",
-          "component": "/order/note",
-          "meta": {
-            "title": "订单备注",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/order/refund",
-          "name": "RefundManager",
-          "component": "/order/refund",
-          "meta": {
-            "title": "退款",
+            "title": "完成订单",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -279,7 +253,7 @@
       "name": "FinanceManager",
       "redirect": "/finance/overview",
       "meta": {
-        "icon": "brightness",
+        "icon": "money",
         "title": "财务管理",
         "isLink": false,
         "isHide": false,
@@ -339,42 +313,13 @@
             "isAffix": false,
             "isKeepAlive": true
           }
-        }
-      ]
-    },
-    {
-      "path": "/payment/manager",
-      "name": "PaymentManager",
-      "redirect": "/payment/channels",
-      "meta": {
-        "icon": "wallet",
-        "title": "支付管理",
-        "isLink": false,
-        "isHide": false,
-        "isFull": false,
-        "isAffix": false,
-        "isKeepAlive": true
-      },
-      "children": [
+        },
         {
           "path": "/payment/channels",
           "name": "PaymentChannelList",
           "component": "/payment/channels",
           "meta": {
-            "title": "支付渠道列表",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/payment/channel-binding",
-          "name": "ChannelAppBinding",
-          "component": "/payment/channel-binding",
-          "meta": {
-            "title": "支付渠道与app绑定",
+            "title": "支付渠道",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -384,6 +329,7 @@
         }
       ]
     },
+
     {
       "path": "/ad/manager",
       "name": "AdManager",
@@ -440,53 +386,11 @@
       ]
     },
     {
-      "path": "/content/manager",
-      "name": "ContentManager",
-      "redirect": "/content/agreements",
-      "meta": {
-        "icon": "document",
-        "title": "内容管理",
-        "isLink": false,
-        "isHide": false,
-        "isFull": false,
-        "isAffix": false,
-        "isKeepAlive": true
-      },
-      "children": [
-        {
-          "path": "/content/agreements",
-          "name": "AgreementManager",
-          "component": "/content/agreements",
-          "meta": {
-            "title": "协议/政策管理",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/content/app-version",
-          "name": "AppVersionManager",
-          "component": "/content/app-version",
-          "meta": {
-            "title": "App版本信息",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        }
-      ]
-    },
-    {
       "path": "/message/manager",
       "name": "MessageManager",
       "redirect": "/message/channels",
       "meta": {
-        "icon": "message",
+        "icon": "mail",
         "title": "消息管理",
         "isLink": false,
         "isHide": false,
@@ -500,7 +404,7 @@
           "name": "MessageChannelManager",
           "component": "/message/channels",
           "meta": {
-            "title": "消息渠道管理",
+            "title": "渠道管理",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -514,19 +418,6 @@
           "component": "/message/templates",
           "meta": {
             "title": "消息模板",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/message/template-binding",
-          "name": "MessageTemplateBinding",
-          "component": "/message/template-binding",
-          "meta": {
-            "title": "消息模板绑定",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -568,7 +459,7 @@
           "name": "LogAuditList",
           "component": "/system/logs",
           "meta": {
-            "title": "日志与审计列表",
+            "title": "日志列表",
             "isLink": false,
             "isHide": false,
             "isFull": false,
@@ -595,19 +486,6 @@
           "component": "/system/dict",
           "meta": {
             "title": "字典",
-            "isLink": false,
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/system/roles",
-          "name": "RoleList",
-          "component": "/system/roles",
-          "meta": {
-            "title": "角色列表",
             "isLink": false,
             "isHide": false,
             "isFull": false,

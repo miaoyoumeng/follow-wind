@@ -1,0 +1,58 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "namespace": "spu_cat",
+        "description": "商品分类",
+        "createdAt": "2026-01-01 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-01-01 10:00:00",
+        "updatedBy": "管理员"
+      },
+      {
+        "id": 2,
+        "namespace": "msg_chnl",
+        "description": "消息渠道",
+        "createdAt": "2026-01-02 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-01-02 10:00:00",
+        "updatedBy": "管理员"
+      },
+      {
+        "id": 3,
+        "namespace": "pay_type",
+        "description": "支付类型",
+        "createdAt": "2026-01-03 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-01-03 10:00:00",
+        "updatedBy": "管理员"
+      },
+      {
+        "id": 4,
+        "namespace": "protocol_type",
+        "description": "协议类型",
+        "createdAt": "2026-02-01 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-02-01 10:00:00",
+        "updatedBy": "管理员"
+      },
+      {
+        "id": 5,
+        "namespace": "order_status",
+        "description": "订单状态",
+        "createdAt": "2026-02-15 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-02-15 10:00:00",
+        "updatedBy": "管理员"
+      }
+    ],
+    "total": 5,
+    "pageNum": 1,
+    "pageSize": 20
+  }
+}

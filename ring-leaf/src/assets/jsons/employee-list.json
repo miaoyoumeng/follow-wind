@@ -1,0 +1,56 @@
+{
+  "code": "200",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "username": "zhangsan",
+        "name": "张三",
+        "phone": "13800131234",
+        "wechatNickname": "张三的微信",
+        "role": "admin",
+        "joinDate": "2025-03-01",
+        "apps": ["全部"],
+        "status": "active",
+        "createdBy": "系统",
+        "createdAt": "2025-03-01 10:00:00",
+        "updatedBy": "张三",
+        "updatedAt": "2026-01-01 10:00:00"
+      },
+      {
+        "id": 2,
+        "username": "lisi",
+        "name": "李四",
+        "phone": "13900135678",
+        "wechatNickname": "李四的微信",
+        "role": "operator",
+        "joinDate": "2025-06-15",
+        "apps": ["神笔马良"],
+        "status": "active",
+        "createdBy": "张三",
+        "createdAt": "2025-06-15 10:00:00",
+        "updatedBy": "张三",
+        "updatedAt": "2026-06-15 14:30:00"
+      },
+      {
+        "id": 3,
+        "username": "wangwu",
+        "name": "王五",
+        "phone": "13700139012",
+        "wechatNickname": "王五的微信",
+        "role": "operator",
+        "joinDate": "2025-09-10",
+        "apps": ["神笔马良", "AppB"],
+        "status": "inactive",
+        "createdBy": "张三",
+        "createdAt": "2025-09-10 09:00:00",
+        "updatedBy": "张三",
+        "updatedAt": "2026-03-20 11:00:00"
+      }
+    ],
+    "total": 3,
+    "pageNum": 1,
+    "pageSize": 20
+  },
+  "msg": "成功"
+}

@@ -1,0 +1,65 @@
+{
+  "code": 200,
+  "data": {
+    "todayMetrics": {
+      "todayRevenue": 1234.0,
+      "todayConfirmed": 456.0,
+      "todayRefund": 180.0,
+      "todayOrder": 2345.0
+    },
+    "monthSummary": {
+      "monthRevenue": 45678.0,
+      "monthConfirmed": 38900.0,
+      "monthRefund": 1234.0,
+      "pendingConfirmed": 6778.0
+    },
+    "trendData": [
+      { "date": "7/1", "revenue": 1200, "confirmed": 1000, "refund": 50 },
+      { "date": "7/2", "revenue": 1500, "confirmed": 1200, "refund": 80 },
+      { "date": "7/3", "revenue": 1800, "confirmed": 1500, "refund": 60 },
+      { "date": "7/4", "revenue": 1100, "confirmed": 900, "refund": 40 },
+      { "date": "7/5", "revenue": 2000, "confirmed": 1700, "refund": 100 },
+      { "date": "7/6", "revenue": 1600, "confirmed": 1300, "refund": 70 },
+      { "date": "7/7", "revenue": 1900, "confirmed": 1600, "refund": 90 },
+      { "date": "7/8", "revenue": 1400, "confirmed": 1100, "refund": 55 },
+      { "date": "7/9", "revenue": 1700, "confirmed": 1400, "refund": 65 },
+      { "date": "7/10", "revenue": 2100, "confirmed": 1800, "refund": 110 },
+      { "date": "7/11", "revenue": 1300, "confirmed": 1050, "refund": 45 },
+      { "date": "7/12", "revenue": 1600, "confirmed": 1300, "refund": 75 },
+      { "date": "7/13", "revenue": 1800, "confirmed": 1500, "refund": 85 },
+      { "date": "7/14", "revenue": 1200, "confirmed": 950, "refund": 50 },
+      { "date": "7/15", "revenue": 2200, "confirmed": 1900, "refund": 120 },
+      { "date": "7/16", "revenue": 1500, "confirmed": 1200, "refund": 60 },
+      { "date": "7/17", "revenue": 1700, "confirmed": 1400, "refund": 70 },
+      { "date": "7/18", "revenue": 1900, "confirmed": 1600, "refund": 95 },
+      { "date": "7/19", "revenue": 1400, "confirmed": 1150, "refund": 55 },
+      { "date": "7/20", "revenue": 1600, "confirmed": 1300, "refund": 65 },
+      { "date": "7/21", "revenue": 2000, "confirmed": 1700, "refund": 100 },
+      { "date": "7/22", "revenue": 1800, "confirmed": 1500, "refund": 80 },
+      { "date": "7/23", "revenue": 1500, "confirmed": 1250, "refund": 70 },
+      { "date": "7/24", "revenue": 1700, "confirmed": 1400, "refund": 75 },
+      { "date": "7/25", "revenue": 2100, "confirmed": 1800, "refund": 110 },
+      { "date": "7/26", "revenue": 1600, "confirmed": 1300, "refund": 60 },
+      { "date": "7/27", "revenue": 1900, "confirmed": 1600, "refund": 90 },
+      { "date": "7/28", "revenue": 1400, "confirmed": 1100, "refund": 50 },
+      { "date": "7/29", "revenue": 1234, "confirmed": 456, "refund": 180 }
+    ],
+    "appRevenueList": [
+      {
+        "appName": "神笔马良",
+        "revenue": 32000.0,
+        "percentage": 70,
+        "confirmed": 27200.0,
+        "refund": 890.0
+      },
+      {
+        "appName": "App B",
+        "revenue": 13678.0,
+        "percentage": 30,
+        "confirmed": 11700.0,
+        "refund": 344.0
+      }
+    ]
+  },
+  "msg": "成功"
+}

@@ -1,0 +1,76 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "total": 56,
+    "list": [
+      {
+        "id": 1,
+        "name": "订单完成通知",
+        "productLine": "神笔马良",
+        "scene": "订单通知",
+        "channel": "wechat",
+        "channelName": "微信推送",
+        "status": "active",
+        "content": "尊敬的{用户名}，您的订单{订单号}已完成，感谢您的使用。",
+        "createdAt": "2026-06-01 10:00:00",
+        "arrivalCount": 95,
+        "sendCount": 100
+      },
+      {
+        "id": 2,
+        "name": "活动提醒",
+        "productLine": "神笔马良",
+        "scene": "营销推广",
+        "channel": "sms",
+        "channelName": "短信",
+        "status": "active",
+        "content": "活动即将结束，快来参与吧！",
+        "createdAt": "2026-06-05 14:30:00",
+        "arrivalCount": 180,
+        "sendCount": 200
+      },
+      {
+        "id": 3,
+        "name": "系统通知",
+        "productLine": "AppB",
+        "scene": "系统通知",
+        "channel": "inapp",
+        "channelName": "站内信",
+        "status": "inactive",
+        "content": "系统维护通知，请知晓。",
+        "createdAt": "2026-05-20 09:15:00",
+        "arrivalCount": 50,
+        "sendCount": 60
+      },
+      {
+        "id": 4,
+        "name": "会员到期提醒",
+        "productLine": "神笔马良",
+        "scene": "会员通知",
+        "channel": "email",
+        "channelName": "邮件",
+        "status": "active",
+        "content": "您的会员将于{天数}天后到期，请及时续费。",
+        "createdAt": "2026-06-10 08:00:00",
+        "arrivalCount": 420,
+        "sendCount": 450
+      },
+      {
+        "id": 5,
+        "name": "新用户欢迎信",
+        "productLine": "AppB",
+        "scene": "用户引导",
+        "channel": "push",
+        "channelName": "App Push",
+        "status": "active",
+        "content": "欢迎加入{平台名称}，开启精彩体验！",
+        "createdAt": "2026-06-12 11:30:00",
+        "arrivalCount": 300,
+        "sendCount": 320
+      }
+    ]
+  }
+}

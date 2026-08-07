@@ -1,0 +1,120 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "summary": {
+      "todayPayCount": 45,
+      "todayPayAmount": 1234.56,
+      "todayRefundAmount": 180.0
+    },
+    "list": [
+      {
+        "id": 1,
+        "flowNo": "TXN20260620001",
+        "orderNo": "ORD20260620001",
+        "userId": "10001",
+        "userName": "张三",
+        "appName": "神笔马良",
+        "txType": "pay",
+        "amount": 28.0,
+        "channel": "wechat",
+        "channelName": "微信支付",
+        "txTime": "2026-06-20 10:05:00"
+      },
+      {
+        "id": 2,
+        "flowNo": "TXN20260620002",
+        "orderNo": "REF20260620001",
+        "userId": "10001",
+        "userName": "张三",
+        "appName": "神笔马良",
+        "txType": "refund",
+        "amount": 14.0,
+        "channel": "wechat",
+        "channelName": "微信支付",
+        "txTime": "2026-06-20 11:30:00"
+      },
+      {
+        "id": 3,
+        "flowNo": "TXN20260620003",
+        "orderNo": "ORD20260620002",
+        "userId": "10002",
+        "userName": "李四",
+        "appName": "神笔马良",
+        "txType": "pay",
+        "amount": 58.0,
+        "channel": "alipay",
+        "channelName": "支付宝",
+        "txTime": "2026-06-20 14:20:00"
+      },
+      {
+        "id": 4,
+        "flowNo": "TXN20260620004",
+        "orderNo": "ORD20260620003",
+        "userId": "10003",
+        "userName": "王五",
+        "appName": "App B",
+        "txType": "pay",
+        "amount": 128.0,
+        "channel": "wechat",
+        "channelName": "微信支付",
+        "txTime": "2026-06-20 15:45:00"
+      },
+      {
+        "id": 5,
+        "flowNo": "TXN20260620005",
+        "orderNo": "REF20260620002",
+        "userId": "10002",
+        "userName": "李四",
+        "appName": "神笔马良",
+        "txType": "refund",
+        "amount": 58.0,
+        "channel": "alipay",
+        "channelName": "支付宝",
+        "txTime": "2026-06-20 16:10:00"
+      },
+      {
+        "id": 6,
+        "flowNo": "TXN20260620006",
+        "orderNo": "ORD20260620004",
+        "userId": "10004",
+        "userName": "赵六",
+        "appName": "App B",
+        "txType": "pay",
+        "amount": 99.0,
+        "channel": "alipay",
+        "channelName": "支付宝",
+        "txTime": "2026-06-21 09:00:00"
+      },
+      {
+        "id": 7,
+        "flowNo": "TXN20260620007",
+        "orderNo": "ORD20260620005",
+        "userId": "10005",
+        "userName": "孙七",
+        "appName": "神笔马良",
+        "txType": "pay",
+        "amount": 18.7,
+        "channel": "wechat",
+        "channelName": "微信支付",
+        "txTime": "2026-06-21 10:30:00"
+      },
+      {
+        "id": 8,
+        "flowNo": "TXN20260620008",
+        "orderNo": "ORD20260620006",
+        "userId": "10006",
+        "userName": "周八",
+        "appName": "神笔马良",
+        "txType": "pay",
+        "amount": 360.0,
+        "channel": "wechat",
+        "channelName": "微信支付",
+        "txTime": "2026-06-21 11:15:00"
+      }
+    ],
+    "total": 8
+  }
+}

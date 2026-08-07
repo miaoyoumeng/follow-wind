@@ -1,0 +1,17 @@
+{
+  "code": 200,
+  "data": {
+    "userId": 10001,
+    "userName": "zhangsan",
+    "name": "张三",
+    "phone": "138****1234",
+    "wechatNickname": "张*",
+    "wechatId": "zhangsan",
+    "passwordSet": true,
+    "role": "管理者",
+    "channels": ["抖音", "快手"],
+    "joinDate": "2025-03-01",
+    "tenure": "1年4个月24天"
+  },
+  "msg": "成功"
+}

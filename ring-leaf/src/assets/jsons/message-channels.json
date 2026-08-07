@@ -1,0 +1,88 @@
+{
+  "code": "200",
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "name": "站内信-神笔马良",
+        "type": "inapp",
+        "typeName": "站内信",
+        "appKey": "-",
+        "platformName": "神笔马良",
+        "status": "active",
+        "templateCount": 8,
+        "createdAt": "2026-01-01 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-01-01 10:00:00",
+        "updatedBy": "管理员",
+        "remark": "神笔马良 App 站内信推送渠道"
+      },
+      {
+        "id": 2,
+        "name": "App Push-神笔马良",
+        "type": "push",
+        "typeName": "App Push",
+        "appKey": "push_key01",
+        "platformName": "神笔马良",
+        "status": "active",
+        "templateCount": 3,
+        "createdAt": "2026-01-02 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-01-02 10:00:00",
+        "updatedBy": "管理员",
+        "remark": "神笔马良 App Push 推送渠道"
+      },
+      {
+        "id": 3,
+        "name": "微信消息-神笔马良",
+        "type": "wechat",
+        "typeName": "微信消息",
+        "appKey": "wx_abc123",
+        "platformName": "神笔马良",
+        "status": "active",
+        "templateCount": 5,
+        "createdAt": "2026-02-15 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-02-15 10:00:00",
+        "updatedBy": "管理员",
+        "remark": "神笔马良微信服务号消息渠道"
+      },
+      {
+        "id": 4,
+        "name": "短信-阿里云",
+        "type": "sms",
+        "typeName": "短信",
+        "appKey": "sms_aliyun_prod",
+        "platformName": "AppB",
+        "status": "inactive",
+        "templateCount": 0,
+        "createdAt": "2026-03-10 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-03-10 10:00:00",
+        "updatedBy": "管理员",
+        "remark": "AppB 阿里云短信推送渠道"
+      },
+      {
+        "id": 5,
+        "name": "邮件-腾讯企业邮",
+        "type": "email",
+        "typeName": "邮件",
+        "appKey": "email_qq_exmail",
+        "platformName": "神笔马良",
+        "status": "active",
+        "templateCount": 2,
+        "createdAt": "2026-03-15 10:00:00",
+        "createdBy": "管理员",
+        "updatedAt": "2026-03-15 10:00:00",
+        "updatedBy": "管理员",
+        "remark": "神笔马良腾讯企业邮件渠道"
+      }
+    ],
+    "total": 5,
+    "pageNum": 1,
+    "pageSize": 20
+  }
+}

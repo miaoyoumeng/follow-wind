@@ -56,7 +56,30 @@ src/
 ### 路由机制 — 静态 + 动态混合
 
 - **静态路由** (`staticRouter.ts`): 登录页、主框架、错误页面
-- **动态路由** (`dynamicRouter.ts`): 登录后从后端获取，通过 `import.meta.glob` 映射 `@/views/**/*.vue` 组件
+
+*路由文件写在目录`src/pages`下，严禁写在其他文件下。*
+
+*修改静态路由文件地址`src/routers/modules/staticRouter.ts`。*
+
+*示例：`import('@/pages/login/Login.vue')`, 对应的文件应该是`src/pages/login/Login.vue`，而不是其他文件。*
+```text
+{
+  path: TO_LOGIN_URL, //首页
+  name: 'toLogin',
+  component: () => import('@/pages/login/Login.vue'),
+  meta: {
+    title: '登录'
+  }
+}
+```
+- **动态路由** (`dynamicRouter.ts`): 登录后从后端获取，通过 `import.meta.glob` 映射 `@/views/**/*.vue` 组件，`动态路由`调用 skill `/solo:vue-developer` 按流程严格实现。
+
+*读取`动态路由`管理逻辑代码文件，地址`src/routers/modules/dynamicRouter.ts`(只读文件，严禁修改)。*
+
+*路由文件写在目录`src/views`下，严禁写在其他文件下。*
+
+*示例：动态路由:`/finance/settlement`，对应的文件应该是`src/views/finance/settlement.vue`，而不是`src/views/finance/settlement/index.vue`*
+
 - **路由守卫**: 白名单放行 → 无 token 跳转登录 → 加载动态路由
 - 路由模式通过环境变量 `VITE_ROUTER_MODE` 切换 `hash` / `history`
 
@@ -69,12 +92,6 @@ src/
 - `request/index.ts`: 导出的 `http` 实例
 - `request/modules.ts`: 类型定义
 
-### 状态管理 (Pinia)
-
-- **user**: token、用户信息 (localStorage 持久化)
-- **auth**: 角色编码、动态路由列表 (localStorage 持久化)
-- **page**: 布局配置
-- **keepAlive**: 缓存列表
 
 ### 左侧菜单
 

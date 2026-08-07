@@ -34,7 +34,7 @@ module.exports = {
     "no-use-before-define": "off", // 禁止在 函数/类/变量 定义之前使用它们
     "no-unused-vars": "off",
     // typeScript (https://typescript-eslint.io/rules)
-    "@typescript-eslint/no-unused-vars": "error", // 禁止定义未使用的变量
+    "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }], // 禁止定义未使用的变量（允许下划线前缀）
     "@typescript-eslint/no-empty-function": "error", // 禁止空函数
     "@typescript-eslint/prefer-ts-expect-error": "error", // 禁止使用 @ts-ignore
     "@typescript-eslint/ban-ts-comment": "error", // 禁止 @ts-<directive> 使用注释或要求在指令后进行描述
@@ -50,7 +50,7 @@ module.exports = {
     "vue/v-slot-style": "error", // 强制执行 v-slot 指令样式
     "vue/no-mutating-props": "error", // 不允许改变组件 prop
     "vue/custom-event-name-casing": "error", // 为自定义事件名称强制使用特定大小写
-    "vue/html-closing-bracket-newline": "error", // 在标签的右括号之前要求或禁止换行
+    "vue/html-closing-bracket-newline": "off", // 在标签的右括号之前要求或禁止换行（与 prettier 冲突，交由 prettier 处理）
     "vue/attribute-hyphenation": "error", // 对模板中的自定义组件强制执行属性命名样式：my-prop="prop"
     "vue/attributes-order": "off", // vue api使用顺序，强制执行属性顺序
     "vue/no-v-html": "off", // 禁止使用 v-html

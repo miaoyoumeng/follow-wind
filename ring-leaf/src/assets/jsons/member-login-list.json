@@ -1,0 +1,35 @@
+{
+  "code": "200",
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "total": 3,
+    "list": [
+      {
+        "id": 1,
+        "loginTime": "2026-08-06 09:15:32",
+        "device": "iPhone 15 Pro",
+        "ip": "192.168.1.100",
+        "loginMethod": "微信授权",
+        "loginStatus": "success"
+      },
+      {
+        "id": 2,
+        "loginTime": "2026-08-05 21:45:18",
+        "device": "iPhone 15 Pro",
+        "ip": "192.168.1.100",
+        "loginMethod": "微信授权",
+        "loginStatus": "success"
+      },
+      {
+        "id": 3,
+        "loginTime": "2026-08-04 14:22:05",
+        "device": "iPhone 15 Pro",
+        "ip": "192.168.1.100",
+        "loginMethod": "微信授权",
+        "loginStatus": "success"
+      }
+    ]
+  }
+}

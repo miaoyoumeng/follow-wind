@@ -1,0 +1,14 @@
+{
+  "code": 200,
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "registerCount": 156,
+    "activeCount": 2345,
+    "payCount": 89,
+    "registerCompare": 12.5,
+    "activeCompare": -3.2,
+    "payCompare": 8.1
+  }
+}

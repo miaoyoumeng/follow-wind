@@ -1,0 +1,27 @@
+{
+  "code": "200",
+  "msg": "成功",
+  "displayMsg": "",
+  "uniqCode": "",
+  "data": {
+    "total": 2,
+    "list": [
+      {
+        "orderId": "ORD20260101001",
+        "orderTime": "2026-01-01 10:30:00",
+        "productName": "年卡会员",
+        "orderAmount": 28.0,
+        "payStatus": "paid",
+        "payMethod": "微信支付"
+      },
+      {
+        "orderId": "ORD20260315002",
+        "orderTime": "2026-03-15 14:20:00",
+        "productName": "月卡会员",
+        "orderAmount": 68.0,
+        "payStatus": "refunded",
+        "payMethod": "微信支付"
+      }
+    ]
+  }
+}
