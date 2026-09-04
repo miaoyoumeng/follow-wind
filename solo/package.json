@@ -1,0 +1,27 @@
+{
+  "name": "solo",
+  "version": "1.0.0",
+  "description": "通过 tmux 管理多个 Claude 命令窗口的 CLI 工具",
+  "bin": {
+    "solo": "./dist/bin/solo.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/bin/solo.js",
+    "dev": "tsc --watch",
+    "test": "node --test test/*.test.ts"
+  },
+  "keywords": ["cli", "tmux", "claude"],
+  "author": "miao.you.meng",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
