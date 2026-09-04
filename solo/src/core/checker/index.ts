@@ -1,3 +1,3 @@
-export { checkSettings } from './settings.js';
-export { checkClaude } from './claude.js';
-export { checkTmux } from './tmux.js';
+export { checkSettings } from './settings';
+export { checkClaude } from './claude';
+export { checkTmux } from './tmux';

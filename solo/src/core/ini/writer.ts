@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
+import { SOLO_DIR, CONFIG_PATH } from '../../config';
 
 // INI 文件结构类型
 export interface IniData {
@@ -7,10 +7,6 @@ export interface IniData {
     [key: string]: string;
   };
 }
-
-// 默认配置文件路径
-const CONFIG_DIR = join(process.cwd(), '.solo');
-const CONFIG_PATH = join(CONFIG_DIR, 'config');
 
 /**
  * 解析 INI 文件内容
@@ -82,8 +78,8 @@ export function readConfig(): IniData {
  * 写入配置文件
  */
 export function writeConfig(data: IniData): void {
-  if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true });
+  if (!existsSync(SOLO_DIR)) {
+    mkdirSync(SOLO_DIR, { recursive: true });
   }
   const content = stringifyIni(data);
   writeFileSync(CONFIG_PATH, content, 'utf-8');

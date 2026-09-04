@@ -1,10 +1,9 @@
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { CONFIG_PATH } from '../../config';
 
 export function checkSettings(): { exists: boolean; path: string } {
-  const settingsPath = join(process.cwd(), '.solo', 'config');
   return {
-    exists: existsSync(settingsPath),
-    path: settingsPath,
+    exists: existsSync(CONFIG_PATH),
+    path: CONFIG_PATH
   };
 }

@@ -8,5 +8,5 @@ export {
   deleteConfigValue,
   deleteSection,
   configExists,
-  type IniData,
-} from './writer.js';
+  type IniData
+} from './writer';

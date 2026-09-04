@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { createSession, listSessions, killSession } from '../tmux/index.js';
-import { startClaude } from '../claude/index.js';
-import { runInit } from '../commander/init/index.js';
-import { runVersion } from '../commander/version/index.js';
+import { getSessionName, listSessions, killSession } from '../tmux';
+import { runInit } from '../commander/init';
+import { runVersion } from '../commander/version';
+import { runStatus } from '../commander/status';
+import { runStart } from '../commander/start';
+import { runStop } from '../commander/stop';
+import { runDashboard } from '../commander/dashboard';
+import { getVersion } from '../core/version';
 
 const program = new Command();
 
-program
-  .name('solo')
-  .description('通过 tmux 管理多个 Claude 命令窗口')
-  .version('1.0.0');
+program.name('solo').description('通过 tmux 管理多个 Claude 命令窗口').version(getVersion());
 
 program
   .command('init')
@@ -28,14 +29,31 @@ program
   });
 
 program
-  .command('start [name]')
-  .description('启动新的 Claude 会话')
-  .option('-d, --dir <path>', '工作目录', process.cwd())
-  .action(async (name: string | undefined, options: { dir: string }) => {
-    const sessionName = name || `claude-${Date.now()}`;
-    await createSession(sessionName, options.dir);
-    await startClaude(sessionName);
-    console.log(`会话 ${sessionName} 已启动`);
+  .command('status')
+  .description('检查工作目录是否为合规的 solo 工作区')
+  .action(async () => {
+    await runStatus();
+  });
+
+program
+  .command('start')
+  .description('启动本项目的 tmux session')
+  .action(async () => {
+    await runStart();
+  });
+
+program
+  .command('stop')
+  .description('终止本项目的 tmux session')
+  .action(async () => {
+    await runStop();
+  });
+
+program
+  .command('dashboard')
+  .description('进入本项目的 tmux session')
+  .action(async () => {
+    await runDashboard();
   });
 
 program
@@ -51,11 +69,12 @@ program
   });
 
 program
-  .command('kill <name>')
-  .description('终止指定会话')
-  .action(async (name: string) => {
-    await killSession(name);
-    console.log(`会话 ${name} 已终止`);
+  .command('kill')
+  .description('终止会话')
+  .action(async () => {
+    const sessionName = getSessionName();
+    await killSession(sessionName);
+    console.log(`会话 ${sessionName} 已终止`);
   });
 
 program.parse();
