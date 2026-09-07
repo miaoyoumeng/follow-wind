@@ -1,0 +1,85 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readConfig, type SoloConfig } from '../../../src/core/yaml';
+import { getAgentPanes, getAgents, getAgent } from '../../../src/core/agents/manager';
+
+// 文件 IO 是最低层外部依赖，mock 读取函数以隔离 manager 逻辑
+vi.mock('../../../src/core/yaml', () => ({
+  readConfig: vi.fn(),
+  writeConfig: vi.fn()
+}));
+
+const mockReadConfig = vi.mocked(readConfig);
+
+// 新语义：key = 位置，value = pane tag 名称
+const sampleConfig: SoloConfig = {
+  name: 'l2yzf501k6yxyde',
+  agents: {
+    'admin-pm': {
+      workspace: '/tmp',
+      panes: { left: 'claude', 'right-bottom': 'shell' }
+    },
+    'javaer-item': {
+      workspace: '/aasdfadsf'
+    },
+    'pm-only-claude': {
+      workspace: '/pm',
+      panes: { left: 'claude' }
+    },
+    'act-true': {
+      workspace: '/act',
+      activate: true,
+      panes: { left: 'claude', right: 'shell' }
+    },
+    'act-false': {
+      workspace: '/off',
+      activate: false
+    }
+  }
+};
+
+describe('getAgents activate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockReadConfig.mockReturnValue(sampleConfig);
+  });
+
+  it('activate: true 的 agent 返回 activate true', () => {
+    expect(getAgent('act-true')?.activate).toBe(true);
+  });
+
+  it('activate: false 的 agent 返回 activate false', () => {
+    expect(getAgent('act-false')?.activate).toBe(false);
+  });
+
+  it('未配置 activate 的 agent 视为 false', () => {
+    const agents = getAgents();
+    expect(agents.find(a => a.name === 'admin-pm')?.activate).toBe(false);
+    expect(agents.find(a => a.name === 'javaer-item')?.activate).toBe(false);
+  });
+});
+
+describe('getAgentPanes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockReadConfig.mockReturnValue(sampleConfig);
+  });
+
+  it('应该返回指定 agent 的完整 panes 对象', () => {
+    expect(getAgentPanes('admin-pm')).toEqual({
+      left: 'claude',
+      'right-bottom': 'shell'
+    });
+  });
+
+  it('agent 存在但未配置 panes 时返回 undefined', () => {
+    expect(getAgentPanes('javaer-item')).toBeUndefined();
+  });
+
+  it('agent 不存在时返回 undefined', () => {
+    expect(getAgentPanes('ghost')).toBeUndefined();
+  });
+
+  it('panes 只返回实际配置的键', () => {
+    expect(getAgentPanes('pm-only-claude')).toEqual({ left: 'claude' });
+  });
+});

@@ -1,9 +1,10 @@
 import { existsSync } from 'fs';
 import { CONFIG_PATH } from '../../config';
+import type { SettingsCheckResult } from './types';
 
-export function checkSettings(): { exists: boolean; path: string } {
+export const checkSettings = (): SettingsCheckResult => {
   return {
     exists: existsSync(CONFIG_PATH),
     path: CONFIG_PATH
   };
-}
+};

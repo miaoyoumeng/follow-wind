@@ -1,18 +1,30 @@
 #!/usr/bin/env node
 
+import chalk from 'chalk';
 import { Command } from 'commander';
-import { getSessionName, listSessions, killSession } from '../tmux';
 import { runInit } from '../commander/init';
 import { runVersion } from '../commander/version';
 import { runStatus } from '../commander/status';
-import { runStart } from '../commander/start';
+import { registerStartCommand } from '../commander/start';
 import { runStop } from '../commander/stop';
 import { runDashboard } from '../commander/dashboard';
+import { runAgents } from '../commander/agents';
+import { registerAgentCommand } from '../commander/agent';
+import { runWindows } from '../commander/windows';
 import { getVersion } from '../core/version';
+
+// 未捕获异常统一输出友好错误（不打印堆栈）
+process.on('unhandledRejection', (reason: unknown) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  console.error(chalk.red(`❌ ${message}`));
+  process.exit(1);
+});
 
 const program = new Command();
 
 program.name('solo').description('通过 tmux 管理多个 Claude 命令窗口').version(getVersion());
+
+registerAgentCommand(program);
 
 program
   .command('init')
@@ -35,12 +47,7 @@ program
     await runStatus();
   });
 
-program
-  .command('start')
-  .description('启动本项目的 tmux session')
-  .action(async () => {
-    await runStart();
-  });
+registerStartCommand(program);
 
 program
   .command('stop')
@@ -57,24 +64,17 @@ program
   });
 
 program
-  .command('list')
-  .description('列出所有会话')
+  .command('agents')
+  .description('显示 .solo/config 中的 agent 列表')
   .action(async () => {
-    const sessions = await listSessions();
-    if (sessions.length === 0) {
-      console.log('没有活动会话');
-      return;
-    }
-    sessions.forEach(s => console.log(`  ${s.name} (${s.dir})`));
+    await runAgents();
   });
 
 program
-  .command('kill')
-  .description('终止会话')
+  .command('windows')
+  .description('显示当前 session 中的 windows')
   .action(async () => {
-    const sessionName = getSessionName();
-    await killSession(sessionName);
-    console.log(`会话 ${sessionName} 已终止`);
+    await runWindows();
   });
 
 program.parse();

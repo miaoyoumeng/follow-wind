@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { checkSettings, checkClaude, checkTmux } from '../../core/checker';
 import { getVersion } from '../../core/version';
 
-export async function runVersion(): Promise<void> {
+export const runVersion = async (): Promise<void> => {
   const errors: string[] = [];
 
   // 检查 .solo/config
@@ -31,4 +31,4 @@ export async function runVersion(): Promise<void> {
 
   // 显示 solo 版本
   console.log(chalk.yellow.bold(`solo v${getVersion()}`));
-}
+};

@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { sessionExists, killSession } from '../../tmux';
 import { validateWorkspace } from '../status';
 
-export async function runStop(): Promise<void> {
+export const runStop = async (): Promise<void> => {
   const sessionName = validateWorkspace();
   const exists = await sessionExists(sessionName);
 
@@ -12,4 +12,4 @@ export async function runStop(): Promise<void> {
   } else {
     console.log(chalk.yellow(`⚠️ session ${sessionName} is already terminated`));
   }
-}
+};

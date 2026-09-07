@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { sessionExists } from '../../tmux';
 import { validateWorkspace } from '../status';
 
-export async function runDashboard(): Promise<void> {
+export const runDashboard = async (): Promise<void> => {
   const sessionName = validateWorkspace();
   const exists = await sessionExists(sessionName);
 
@@ -18,6 +18,6 @@ export async function runDashboard(): Promise<void> {
   });
 
   tmux.on('exit', code => {
-    process.exit(code || 0);
+    process.exit(code ?? 0);
   });
-}
+};

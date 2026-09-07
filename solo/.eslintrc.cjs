@@ -23,6 +23,8 @@ module.exports = {
     // eslint
     'no-var': 'error',
     'no-multiple-empty-lines': ['error', { max: 1 }],
+    // 函数逻辑代码（不含空行和注释）不得超过 35 行
+    'max-lines-per-function': ['error', { max: 35, skipBlankLines: true, skipComments: true }],
     // 禁止 import 带 .js 后缀或 /index
     'no-restricted-syntax': [
       'error',
