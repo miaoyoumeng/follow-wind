@@ -1,4 +1,4 @@
 export { getAgents, getAgent, getAgentPanes, addAgent, removeAgent, resolveWorkspace } from './manager';
-export type { Agent, SplitPlan } from './types';
+export type { Agent, SplitPlan, WorkspaceCheckResult } from './types';
 export { resolveSplitAxis, resolveSplitPlan, panesLayout } from './layout';
-export { checkAgentWorkspaces, type WorkspaceCheckResult } from './workspace';
+export { checkAgentWorkspaces } from './workspace';

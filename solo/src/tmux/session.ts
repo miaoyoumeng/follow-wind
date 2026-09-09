@@ -1,9 +1,6 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import chalk from 'chalk';
+import { execAsync } from '../core/process';
 import type { CurrentSessionInfo } from './types';
-
-const execAsync = promisify(exec);
 
 /**
  * 检查 session 是否存在

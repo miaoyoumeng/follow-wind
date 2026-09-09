@@ -1,23 +1,26 @@
-import { sendKeys, capturePane } from '../tmux';
-import { delay } from './delay';
+import { sendKeys, waitForText } from '../tmux';
 
 /**
- * 检测 pane 中是否出现 claude 的安全信任提示，若是则发送 Enter 自动信任该工作目录
+ * 解析 tmux target 字符串（格式：session:window.paneIndex）
  */
-export const trustFolder = async (target: string): Promise<void> => {
-  const content = await capturePane(target);
-  if (content.includes('Security guide')) {
-    await sendKeys(target, 'Enter');
-  }
+const parseTarget = (target: string) => {
+  const colonIdx = target.indexOf(':');
+  const session = target.slice(0, colonIdx);
+  const rest = target.slice(colonIdx + 1);
+  const dotIdx = rest.lastIndexOf('.');
+  return { session, window: rest.slice(0, dotIdx), paneIndex: parseInt(rest.slice(dotIdx + 1), 10) };
 };
 
 /**
- * 在指定 pane 中启动 claude 并自动处理信任提示
- * @param target pane 定位，形如 sessionName:windowName.paneIndex
+ * 等待 pane 中出现 claude 安全信任提示，出现则发送 Enter 自动信任
+ * 等待 10 秒，每 1 秒轮询一次，取最近 2000 行内容
  */
-export const startClaude = async (target: string): Promise<void> => {
-  await sendKeys(target, 'claude');
-  await sendKeys(target, 'Enter');
-  await delay(5000);
-  await trustFolder(target);
+export const trustFolder = async (target: string): Promise<void> => {
+  const { session, window, paneIndex } = parseTarget(target);
+  try {
+    await waitForText(session, window, paneIndex, 'Security guide', 'Security guide', 10000, 1000, 2000);
+    await sendKeys(session, window, paneIndex, 'Enter');
+  } catch {
+    // 未检测到信任提示，无需操作
+  }
 };

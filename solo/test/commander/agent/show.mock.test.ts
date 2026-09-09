@@ -10,13 +10,13 @@ vi.mock('../../../src/core/yaml', () => ({
 
 const mockReadConfig = vi.mocked(readConfig);
 
-// 新语义：key = 位置，value = pane tag 名称
+// 新语义：key = tag 名，value = { layout: 位置 }
 const sampleConfig: SoloConfig = {
   name: 'l2yzf501k6yxyde',
   agents: {
     'admin-pm': {
       workspace: '/tmp',
-      panes: { left: 'claude', 'right-bottom': 'shell' }
+      panes: { claude: { layout: 'left' }, shell: { layout: 'right-bottom' } }
     },
     'javaer-item': {
       workspace: '/aasdfadsf'
@@ -66,9 +66,9 @@ describe('runAgentPanes', () => {
     spy.mockRestore();
   });
 
-  it('存在 panes 时逐行打印 key: value（位置: tag）', () => {
+  it('存在 panes 时逐行打印 tag: layout', () => {
     runAgentPanes('admin-pm');
-    expect(logs).toEqual(['left: claude', 'right-bottom: shell']);
+    expect(logs).toEqual(['claude: left', 'shell: right-bottom']);
   });
 
   it('agent 未配置 panes 时打印提示', () => {

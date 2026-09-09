@@ -34,7 +34,7 @@ export const runAgentPanes = (name: string): void => {
     return;
   }
 
-  for (const [key, value] of Object.entries(panes)) {
-    console.log(`${key}: ${value}`);
+  for (const [tag, entry] of Object.entries(panes)) {
+    console.log(`${tag}: ${entry.layout}`);
   }
 };

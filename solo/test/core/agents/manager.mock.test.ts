@@ -10,25 +10,25 @@ vi.mock('../../../src/core/yaml', () => ({
 
 const mockReadConfig = vi.mocked(readConfig);
 
-// 新语义：key = 位置，value = pane tag 名称
+// 新语义：key = tag 名，value = { layout: 位置 }
 const sampleConfig: SoloConfig = {
   name: 'l2yzf501k6yxyde',
   agents: {
     'admin-pm': {
       workspace: '/tmp',
-      panes: { left: 'claude', 'right-bottom': 'shell' }
+      panes: { claude: { layout: 'left' }, shell: { layout: 'right-bottom' } }
     },
     'javaer-item': {
       workspace: '/aasdfadsf'
     },
     'pm-only-claude': {
       workspace: '/pm',
-      panes: { left: 'claude' }
+      panes: { claude: { layout: 'left' } }
     },
     'act-true': {
       workspace: '/act',
       activate: true,
-      panes: { left: 'claude', right: 'shell' }
+      panes: { claude: { layout: 'left' }, shell: { layout: 'right' } }
     },
     'act-false': {
       workspace: '/off',
@@ -66,8 +66,8 @@ describe('getAgentPanes', () => {
 
   it('应该返回指定 agent 的完整 panes 对象', () => {
     expect(getAgentPanes('admin-pm')).toEqual({
-      left: 'claude',
-      'right-bottom': 'shell'
+      claude: { layout: 'left' },
+      shell: { layout: 'right-bottom' }
     });
   });
 
@@ -79,7 +79,7 @@ describe('getAgentPanes', () => {
     expect(getAgentPanes('ghost')).toBeUndefined();
   });
 
-  it('panes 只返回实际配置的键', () => {
-    expect(getAgentPanes('pm-only-claude')).toEqual({ left: 'claude' });
+  it('panes 只返回实际配置的条目', () => {
+    expect(getAgentPanes('pm-only-claude')).toEqual({ claude: { layout: 'left' } });
   });
 });

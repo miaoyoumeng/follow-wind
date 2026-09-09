@@ -1,25 +1,29 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { sessionExists, createSession, attachSession, createWindow, listWindows, listPanes } from '../../tmux';
+import { sessionExists, createSession, attachSession, createWindow, listWindows, listPanes, registerHooks } from '../../tmux';
 import { getAgents, resolveSplitPlan, resolveSplitAxis, panesLayout } from '../../core/agents';
-import { isValidPanePosition, type AgentPanes } from '../../core/yaml';
+import { readConfig, isValidPanePosition, type AgentPanes } from '../../core/yaml';
+import { info } from '../../logging';
 import { validateWorkspace } from '../status';
 import type { Agent, SplitPlan } from '../../core/agents';
 
 /**
  * 校验 panes 配置，返回 { plan, axis }；不合法时打印错误并返回 null
+ * 新格式：panes 为 tag-keyed，layout 值须为合法位置
  */
 const validatePanesConfig = (agentName: string, panes: AgentPanes): { plan: SplitPlan | null; axis: 'h' | 'v' | null } | null => {
-  if (Object.keys(panes).length === 0) {
+  const entries = Object.entries(panes);
+  if (entries.length === 0) {
     console.log(chalk.yellow(`agent "${agentName}" 未配置 panes`));
     return null;
   }
-  const invalidKeys = Object.keys(panes).filter(k => !isValidPanePosition(k));
-  if (invalidKeys.length > 0) {
-    console.log(chalk.red(`invalid panes: 包含非法位置 key: ${invalidKeys.join(', ')}`));
+  const invalidLayouts = entries.filter(([, e]) => !isValidPanePosition(e.layout));
+  if (invalidLayouts.length > 0) {
+    const tags = invalidLayouts.map(([t]) => t).join(', ');
+    console.log(chalk.red(`invalid panes: ${tags} 包含非法 layout 值`));
     return null;
   }
-  const paneCount = Object.keys(panes).length;
+  const paneCount = entries.length;
   if (paneCount > 3) {
     console.log(chalk.red(`invalid panes: ${paneCount} panes is not supported, max 3`));
     return null;
@@ -58,18 +62,32 @@ const applyAgentLayout = async (sessionName: string, agent: Agent): Promise<void
   console.log(chalk.green(`✅ agent [${agent.name}] 已按 panes 配置完成分屏`));
 };
 
+/**
+ * 读取配置 hooks 段并在 session 中注册启用的事件回调
+ * 未知事件名会抛错终止 start（错误信息包含事件名）
+ */
+const registerConfiguredHooks = async (sessionName: string): Promise<void> => {
+  const { hooks } = readConfig();
+  const registered = await registerHooks(sessionName, hooks);
+  if (registered.length > 0) {
+    console.log(chalk.green(`✅ hooks 已注册: ${registered.join(', ')}`));
+  }
+};
+
 export const runStart = async (): Promise<void> => {
   const sessionName = validateWorkspace();
   const exists = await sessionExists(sessionName);
 
   if (!exists) {
     await createSession(sessionName, process.cwd());
+    info(`session ${sessionName} 已创建`);
     console.log(chalk.green(`✅ session ${sessionName} 已创建`));
 
     // 仅启动 activate: true 的 agent
     const activeAgents = getAgents().filter(agent => agent.activate);
     for (const agent of activeAgents) {
       await createWindow(sessionName, agent.name, agent.workspace);
+      info(`window [${agent.name}] 已创建`);
       console.log(chalk.green(`  ✅ window [${agent.name}] 已创建`));
     }
 
@@ -77,7 +95,12 @@ export const runStart = async (): Promise<void> => {
     for (const agent of activeAgents) {
       await applyAgentLayout(sessionName, agent);
     }
-  } else {
+  }
+
+  // 每次 start 都重新注册 hooks（set-hook 幂等覆盖，session 已存在时注册先于进入）
+  await registerConfiguredHooks(sessionName);
+
+  if (exists) {
     await attachSession(sessionName);
     console.log(chalk.green(`✅ 已进入 session ${sessionName}`));
   }

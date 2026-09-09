@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
 import chalk from 'chalk';
+import { terminal } from '../../core/process';
 import { sessionExists } from '../../tmux';
 import { validateWorkspace } from '../status';
 
@@ -12,12 +12,5 @@ export const runDashboard = async (): Promise<void> => {
     process.exit(1);
   }
 
-  // 使用 spawn 维持终端状态
-  const tmux = spawn('tmux', ['attach-session', '-t', sessionName], {
-    stdio: 'inherit'
-  });
-
-  tmux.on('exit', code => {
-    process.exit(code ?? 0);
-  });
+  terminal('tmux', ['attach-session', '-t', sessionName]);
 };

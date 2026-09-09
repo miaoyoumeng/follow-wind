@@ -35,7 +35,7 @@ describe('runStatus', () => {
 
     await runStatus();
 
-    const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
+    const output = consoleSpy.mock.calls.map((c: any[]) => c[0]).join('\n');
     expect(output).toContain('workspace is ready');
     expect(output).toContain('test-project');
   });
@@ -47,7 +47,7 @@ describe('runStatus', () => {
 
     await runStatus();
 
-    const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
+    const output = consoleSpy.mock.calls.map((c: any[]) => c[0]).join('\n');
     expect(output).toContain('frontend');
     expect(output).toContain('/path/frontend');
     expect(output).toContain('不存在');
@@ -60,7 +60,7 @@ describe('runStatus', () => {
 
     await runStatus();
 
-    const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
+    const output = consoleSpy.mock.calls.map((c: any[]) => c[0]).join('\n');
     expect(output).toContain('api');
     expect(output).toContain('settings.json');
     expect(output).toContain('已创建');
@@ -74,7 +74,7 @@ describe('runStatus', () => {
 
     await runStatus();
 
-    const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
+    const output = consoleSpy.mock.calls.map((c: any[]) => c[0]).join('\n');
     expect(output).toContain('workspace is ready');
     expect(output).toContain('frontend');
     expect(output).toContain('backend');

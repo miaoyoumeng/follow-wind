@@ -1,13 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { getAgents } from './manager';
-
-export interface WorkspaceCheckResult {
-  name: string;
-  workspace: string;
-  exists: boolean;
-  settingsCreated: boolean;
-}
+import type { WorkspaceCheckResult } from './types';
 
 /**
  * 检查单个 agent 的 workspace 状态

@@ -6,5 +6,6 @@ export {
   type SoloConfig,
   type AgentConfig,
   type AgentPanes,
-  type PanePosition
+  type PanePosition,
+  type PaneEntry
 } from './writer';

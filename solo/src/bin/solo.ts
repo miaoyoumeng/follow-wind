@@ -11,7 +11,16 @@ import { runDashboard } from '../commander/dashboard';
 import { runAgents } from '../commander/agents';
 import { registerAgentCommand } from '../commander/agent';
 import { runWindows } from '../commander/windows';
+import { registerChatCommand } from '../commander/chat';
+import { registerHookCommand } from '../commander/hook';
 import { getVersion } from '../core/version';
+import { getLoggingConfig, setup as setupLogger } from '../logging';
+
+/** 从 .solo/config 读取日志配置并初始化日志模块 */
+export const initLogger = (): void => {
+  const loggingConfig = getLoggingConfig();
+  if (loggingConfig) setupLogger(loggingConfig);
+};
 
 // 未捕获异常统一输出友好错误（不打印堆栈）
 process.on('unhandledRejection', (reason: unknown) => {
@@ -19,6 +28,8 @@ process.on('unhandledRejection', (reason: unknown) => {
   console.error(chalk.red(`❌ ${message}`));
   process.exit(1);
 });
+
+initLogger();
 
 const program = new Command();
 
@@ -76,5 +87,8 @@ program
   .action(async () => {
     await runWindows();
   });
+
+registerChatCommand(program);
+registerHookCommand(program);
 
 program.parse();

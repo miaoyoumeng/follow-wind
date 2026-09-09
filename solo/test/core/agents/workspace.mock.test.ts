@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkAgentWorkspaces, type WorkspaceCheckResult } from '../../../src/core/agents/workspace';
+import { checkAgentWorkspaces } from '../../../src/core/agents/workspace';
+import type { WorkspaceCheckResult } from '../../../src/core/agents/types';
 
 // mock fs 模块
 const mockExistsSync = vi.fn();

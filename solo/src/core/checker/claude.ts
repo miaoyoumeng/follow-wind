@@ -1,8 +1,5 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { execAsync } from '../process';
 import type { CheckResult } from './types';
-
-const execAsync = promisify(exec);
 
 export const checkClaude = async (): Promise<CheckResult> => {
   try {

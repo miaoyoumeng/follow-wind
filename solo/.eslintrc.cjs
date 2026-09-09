@@ -51,5 +51,17 @@ module.exports = {
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off'
-  }
+  },
+  overrides: [
+    {
+      files: ['*.ts', '*.tsx'], // 匹配所有的 ts 和 tsx 文件
+      rules: {
+        'max-lines': ['error', {
+          max: 500,
+          skipBlankLines: true,
+          skipComments: true
+        }],
+      },
+    },
+  ]
 };

@@ -92,11 +92,17 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 
 ## TypeScript 规范
 
-- 禁止使用 `any`；第三方库无类型声明时优先 `declare module` 或 `unknown` + 类型守卫，最后才允许 `any` 且限定作用域。
-- `interface` 定义对象结构/类契约；`type` 定义联合类型、元组、映射类型。
-- 弃用 `enum`，改用联合类型或 `const` 对象 + `as const`。
-- 命名：变量/函数 camelCase，常量 UPPER_SNAKE_CASE，类/接口/类型 PascalCase；布尔值用 is/has/can/should 前缀。
-- 顶层函数用 `function` 声明；箭头函数用于回调、闭包。
-- 安全访问：可选链（`?.`）+ 空值合并（`??`），替代 `&&` 链或 `||`。
-- 类型导入用 `import { value, type Type }` 内联语法；纯类型用 `import type`。
+- 禁止使用 `any`，除非兼容无类型声明的第三方库，否则必须使用具体类型、`unknown` 或泛型；若使用 `any` 需加注释说明原因。若第三方库无类型声明，优先尝试 `declare module` 补充声明或使用 `unknown` 配合类型守卫，最后才允许 `any` 且限定作用域。
+- 使用 interface 定义对象结构、类契约或扩展（extends），优先用 interface 表达公开 API；使用 type 定义联合类型、元组、映射类型或工具类型，用 type 处理内部组合。
+- 弃用 enum，改用联合类型或常量对象，使用 `type Status = 'pending' | 'success' | 'error'` 表达有限集合。需要映射值时，用 const 对象 + as const 配合 keyof typeof 推导。
+- 使用 `as const` 定义常量对象，确保类型推断为字面量类型而非宽泛类型。
+- 对只读属性添加 `readonly` 修饰符。
+- 统一命名约定：变量/函数使用 camelCase；常量使用 UPPER_SNAKE_CASE；类/接口/枚举/类型使用 PascalCase。
+- 布尔值命名：布尔类型的变量或状态，应使用 is、has、can、should 等前缀，使语义更清晰（如 `isLoading`）。
+- 使用 `function` 声明顶层函数和类方法；使用箭头函数作为回调、闭包或需要保留 `this` 上下文的内联函数。禁止强制统一使用箭头函数。
+- 函数定义中的每个参数都需要有注解。如`@param [name]  [description]`
+- 安全访问与默认值：使用可选链（?.）处理可能为 null/undefined 的属性访问，使用空值合并（??）提供默认值，替代 && 链或 ||（避免将 0、'' 等 falsy 值误判）。
+- 区分类型导入与值导入：推荐优先使用内联 `import { value, type Type }` 语法；仅在存在循环依赖或需显式区分时，才拆分单独 `import type`。务必使用 `import type` 标记纯类型，避免运行时引入无效依赖。
+- 所有需要对外 `export` 的 function、interface、type，都在文件名为 `index.ts` 中 export。 参考代码`src/agents/index.ts`
+- 模块中所有的 interface、type，都在文件名为 `types.ts` 中定义好。参考代码`src/agents/types.ts`
 

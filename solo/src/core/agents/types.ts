@@ -12,3 +12,10 @@ export interface SplitPlan {
   steps: Array<{ orientation: '-h' | '-v'; target: 'original' | 'left' | 'right' }>;
   paneMap: Record<string, number>; // position → pane index
 }
+
+export interface WorkspaceCheckResult {
+  name: string;
+  workspace: string;
+  exists: boolean;
+  settingsCreated: boolean;
+}
