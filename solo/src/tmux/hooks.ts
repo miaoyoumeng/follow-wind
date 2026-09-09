@@ -135,7 +135,7 @@ export const showHook = async (hook: TmuxHook, session?: string): Promise<string
  * @param hookName 事件名称
  */
 const buildRunShellCommand = (hookName: string): string =>
-  `run-shell "solo hook --name=${hookName} --session_name=#{session_name} --window_name=#{window_name} --pane_index=#{pane_index} --pane_id=#{pane_id}"`;
+  `run-shell "solo hook --name=${hookName} --session_name=#{session_name} --window_name=#{window_name} --pane_index=#{pane_index}"`;
 
 /**
  * 按配置在 session 中注册启用的事件回调

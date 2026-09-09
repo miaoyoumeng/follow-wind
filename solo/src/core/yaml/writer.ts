@@ -47,6 +47,7 @@ const buildAgentEntry = (raw: Record<string, unknown>): AgentConfig | null => {
   if (typeof raw.workspace !== 'string') return null;
   const entry: AgentConfig = { workspace: raw.workspace };
   if (typeof raw.activate === 'boolean') entry.activate = raw.activate;
+  if (typeof raw.waitTime === 'number') entry.waitTime = raw.waitTime;
   if (typeof raw.panes === 'object' && raw.panes !== null) {
     const panes = parsePanes(raw.panes as Record<string, unknown>);
     if (panes) entry.panes = panes;

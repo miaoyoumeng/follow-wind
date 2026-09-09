@@ -2,10 +2,11 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { validateWorkspace } from '../status';
 import { getAgent } from '../../core/agents';
-import { listPanesWithTitle, selectPane, sendKeys } from '../../tmux';
+import { listPanesWithTitle, selectPane, sendKeysEnter } from '../../tmux';
+import { waitForIdle } from './wait';
 
 /**
- * 向指定 agent 的 claude pane 发送消息
+ * 向指定 agent 的 claude pane 发送消息，并轮询等待 Claude 输出稳定
  * @param agentName agent 名称
  * @param content 要发送的内容
  */
@@ -39,8 +40,10 @@ export const runChat = async (agentName: string, content: string): Promise<void>
 
   // 选择 claude pane 并发送消息
   await selectPane(sessionName, agentName, claudePane.index);
-  await sendKeys(sessionName, agentName, claudePane.index, content);
-  await sendKeys(sessionName, agentName, claudePane.index, 'Enter');
+  await sendKeysEnter(sessionName, agentName, claudePane.index, content);
+
+  // 轮询等待 Claude 输出稳定
+  await waitForIdle(sessionName, agentName, claudePane.index, agentName);
 };
 
 export const registerChatCommand = (program: Command): void => {

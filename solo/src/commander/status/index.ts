@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { checkSettings } from '../../core/checker';
 import { readConfig } from '../../core/yaml';
 import { checkAgentWorkspaces } from '../../core/agents';
+import { getTaskSummary } from '../../task';
 
 // name 验证规则：英文字符开头，可包含数字、'-'、'_'
 const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
@@ -53,4 +54,10 @@ export const runStatus = async (): Promise<void> => {
       console.log(chalk.green(`  ✓ ${result.name}: ${result.workspace}`));
     }
   }
+
+  // 显示任务状态统计
+  const summary = getTaskSummary();
+  console.log(
+    chalk.gray(`  tasks: ${summary.pending} pending, ${summary.running} running, ${summary.completed} completed, ${summary.timeout} timeout`)
+  );
 };

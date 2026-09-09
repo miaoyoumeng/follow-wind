@@ -16,6 +16,8 @@ export interface AgentConfig {
   workspace: string;
   activate?: boolean;
   panes?: AgentPanes;
+  /** 等待 agent 空闲的最大时间（分钟），默认 60 */
+  waitTime?: number;
 }
 
 // 日志配置：level 为日志级别，file 为日志文件路径

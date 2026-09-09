@@ -5,13 +5,15 @@ const {
   mockGetAgent,
   mockListPanesWithTitle,
   mockSelectPane,
-  mockSendKeys
+  mockSendKeysEnter,
+  mockWaitForIdle
 } = vi.hoisted(() => ({
   mockValidateWorkspace: vi.fn(),
   mockGetAgent: vi.fn(),
   mockListPanesWithTitle: vi.fn(),
   mockSelectPane: vi.fn().mockResolvedValue(undefined),
-  mockSendKeys: vi.fn().mockResolvedValue(undefined)
+  mockSendKeysEnter: vi.fn().mockResolvedValue(undefined),
+  mockWaitForIdle: vi.fn().mockResolvedValue(undefined)
 }));
 
 vi.mock('../../../src/commander/status', () => ({
@@ -25,7 +27,11 @@ vi.mock('../../../src/core/agents', () => ({
 vi.mock('../../../src/tmux', () => ({
   listPanesWithTitle: mockListPanesWithTitle,
   selectPane: mockSelectPane,
-  sendKeys: mockSendKeys
+  sendKeysEnter: mockSendKeysEnter
+}));
+
+vi.mock('../../../src/commander/chat/wait', () => ({
+  waitForIdle: mockWaitForIdle
 }));
 
 import { runChat } from '../../../src/commander/chat';
@@ -45,7 +51,7 @@ describe('runChat', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('agent "nonexistent" 不存在'));
       expect(mockSelectPane).not.toHaveBeenCalled();
-      expect(mockSendKeys).not.toHaveBeenCalled();
+      expect(mockSendKeysEnter).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -65,7 +71,7 @@ describe('runChat', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('agent "myagent" 没有 claude pane'));
       expect(mockSelectPane).not.toHaveBeenCalled();
-      expect(mockSendKeys).not.toHaveBeenCalled();
+      expect(mockSendKeysEnter).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -90,14 +96,14 @@ describe('runChat', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('agent "myagent" 没有 claude pane'));
       expect(mockSelectPane).not.toHaveBeenCalled();
-      expect(mockSendKeys).not.toHaveBeenCalled();
+      expect(mockSendKeysEnter).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
   });
 
   describe('正常流程', () => {
-    it('找到 claude pane 后，先 selectPane 再 sendKeys', async () => {
+    it('找到 claude pane 后，先 selectPane 再 sendKeysEnter', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -118,11 +124,10 @@ describe('runChat', () => {
       expect(mockGetAgent).toHaveBeenCalledWith('myagent');
       expect(mockListPanesWithTitle).toHaveBeenCalledWith('test-session', 'myagent');
       expect(mockSelectPane).toHaveBeenCalledWith('test-session', 'myagent', 1);
-      expect(mockSendKeys).toHaveBeenCalledWith('test-session', 'myagent', 1, 'hello world');
-      expect(mockSendKeys).toHaveBeenCalledWith('test-session', 'myagent', 1, 'Enter');
+      expect(mockSendKeysEnter).toHaveBeenCalledWith('test-session', 'myagent', 1, 'hello world');
     });
 
-    it('sendKeys 分两次调用：内容 + Enter', async () => {
+    it('sendKeysEnter 一次调用：内容 + Enter', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -137,9 +142,8 @@ describe('runChat', () => {
 
       await runChat('myagent', 'test message');
 
-      expect(mockSendKeys).toHaveBeenCalledTimes(2);
-      expect(mockSendKeys).toHaveBeenNthCalledWith(1, 'test-session', 'myagent', 0, 'test message');
-      expect(mockSendKeys).toHaveBeenNthCalledWith(2, 'test-session', 'myagent', 0, 'Enter');
+      expect(mockSendKeysEnter).toHaveBeenCalledTimes(1);
+      expect(mockSendKeysEnter).toHaveBeenCalledWith('test-session', 'myagent', 0, 'test message');
     });
   });
 });

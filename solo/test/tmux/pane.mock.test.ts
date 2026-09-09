@@ -8,7 +8,7 @@ vi.mock('../../src/tmux/exec', () => ({
   exec: { fn: mockExecAsync }
 }));
 
-import { capturePane, sendKeys, setPaneTitle, splitPane, waitForText, notifyCompletion, selectPane, listPanesWithTitle } from '../../src/tmux/pane';
+import { capturePane, sendKeys, sendKeysEnter, setPaneTitle, splitPane, waitForText, notifyCompletion, selectPane, listPanesWithTitle } from '../../src/tmux/pane';
 
 describe('capturePane', () => {
   beforeEach(() => {
@@ -69,10 +69,52 @@ describe('sendKeys', () => {
     );
   });
 
+  it('文本内包含单引号时正确转义', async () => {
+    await sendKeys('sess', 'win', 1, "it's a test");
+    expect(mockExecAsync).toHaveBeenCalledWith(
+      "tmux send-keys -t sess:win.1 'it'\\''s a test'"
+    );
+  });
+
   it('paneIndex 为 number 类型', async () => {
     await sendKeys('s', 'w', 3, 'claude');
     expect(mockExecAsync).toHaveBeenCalledWith(
       'tmux send-keys -t s:w.3 claude'
+    );
+  });
+});
+
+describe('sendKeysEnter', () => {
+  beforeEach(() => {
+    mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
+  });
+
+  it('键名不加引号，末尾追加 Enter', async () => {
+    await sendKeysEnter('sess', 'win', 0, 'C-c');
+    expect(mockExecAsync).toHaveBeenCalledWith(
+      'tmux send-keys -t sess:win.0 C-c Enter'
+    );
+  });
+
+  it('文本内容加引号，末尾追加 Enter', async () => {
+    await sendKeysEnter('sess', 'win', 1, 'hello world');
+    expect(mockExecAsync).toHaveBeenCalledWith(
+      "tmux send-keys -t sess:win.1 'hello world' Enter"
+    );
+  });
+
+  it('文本内包含单引号时正确转义，末尾追加 Enter', async () => {
+    await sendKeysEnter('sess', 'win', 1, "it's a test");
+    expect(mockExecAsync).toHaveBeenCalledWith(
+      "tmux send-keys -t sess:win.1 'it'\\''s a test' Enter"
+    );
+  });
+
+  it('与 sendKeys 相同入参但只调用一次 exec', async () => {
+    await sendKeysEnter('s', 'w', 3, 'claude');
+    expect(mockExecAsync).toHaveBeenCalledTimes(1);
+    expect(mockExecAsync).toHaveBeenCalledWith(
+      'tmux send-keys -t s:w.3 claude Enter'
     );
   });
 });

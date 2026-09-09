@@ -110,7 +110,7 @@ describe('registerHooks', () => {
     // 每个启用事件执行一次 set-hook，回调为 solo hook 上报命令
     expect(mockExecAsync).toHaveBeenNthCalledWith(
       1,
-      `tmux set-hook -t sess-abc alert-activity 'run-shell "solo hook --name=alert-activity --session_name=#{session_name} --window_name=#{window_name} --pane_index=#{pane_index} --pane_id=#{pane_id}"'`
+      `tmux set-hook -t sess-abc alert-activity 'run-shell "solo hook --name=alert-activity --session_name=#{session_name} --window_name=#{window_name} --pane_index=#{pane_index}"'`
     );
     expect(mockExecAsync).toHaveBeenNthCalledWith(
       2,

@@ -10,9 +10,12 @@ import { runStop } from '../commander/stop';
 import { runDashboard } from '../commander/dashboard';
 import { runAgents } from '../commander/agents';
 import { registerAgentCommand } from '../commander/agent';
-import { runWindows } from '../commander/windows';
 import { registerChatCommand } from '../commander/chat';
 import { registerHookCommand } from '../commander/hook';
+import { registerCaptureCommand } from '../commander/capture';
+import { registerUsageCommand } from '../commander/usage';
+import { registerTasksCommand } from '../commander/tasks';
+import { registerTaskWorkerCommand } from '../task/worker';
 import { getVersion } from '../core/version';
 import { getLoggingConfig, setup as setupLogger } from '../logging';
 
@@ -81,14 +84,11 @@ program
     await runAgents();
   });
 
-program
-  .command('windows')
-  .description('显示当前 session 中的 windows')
-  .action(async () => {
-    await runWindows();
-  });
-
 registerChatCommand(program);
 registerHookCommand(program);
+registerCaptureCommand(program);
+registerUsageCommand(program);
+registerTasksCommand(program);
+registerTaskWorkerCommand(program);
 
 program.parse();

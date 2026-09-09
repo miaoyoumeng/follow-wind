@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+const { mockGetTaskSummary } = vi.hoisted(() => ({
+  mockGetTaskSummary: vi.fn()
+}));
+
 // mock checker
 vi.mock('../../../src/core/checker', () => ({
   checkSettings: vi.fn().mockReturnValue({ exists: true, path: '/.solo/config' })
@@ -15,8 +19,14 @@ vi.mock('../../../src/core/agents', () => ({
   checkAgentWorkspaces: vi.fn()
 }));
 
+// mock task
+vi.mock('../../../src/task', () => ({
+  getTaskSummary: mockGetTaskSummary
+}));
+
 import { runStatus } from '../../../src/commander/status';
 import { checkAgentWorkspaces, type WorkspaceCheckResult } from '../../../src/core/agents';
+import { getTaskSummary, type TaskSummary } from '../../../src/task';
 
 describe('runStatus', () => {
   let consoleSpy: ReturnType<typeof vi.spyOn>;
@@ -24,6 +34,7 @@ describe('runStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockGetTaskSummary.mockReturnValue({ pending: 0, running: 0, completed: 0, timeout: 0 });
   });
 
   afterEach(() => {
@@ -78,5 +89,32 @@ describe('runStatus', () => {
     expect(output).toContain('workspace is ready');
     expect(output).toContain('frontend');
     expect(output).toContain('backend');
+  });
+
+  it('显示各状态的任务数量', async () => {
+    vi.mocked(checkAgentWorkspaces).mockReturnValue([]);
+    mockGetTaskSummary.mockReturnValue({ pending: 1, running: 2, completed: 3, timeout: 1 });
+
+    await runStatus();
+
+    const output = consoleSpy.mock.calls.map((c: any[]) => c[0]).join('\n');
+    expect(output).toContain('pending');
+    expect(output).toContain('running');
+    expect(output).toContain('completed');
+    expect(output).toContain('timeout');
+    expect(output).toContain('1');
+    expect(output).toContain('2');
+    expect(output).toContain('3');
+  });
+
+  it('无任务时显示全零计数', async () => {
+    vi.mocked(checkAgentWorkspaces).mockReturnValue([]);
+    mockGetTaskSummary.mockReturnValue({ pending: 0, running: 0, completed: 0, timeout: 0 });
+
+    await runStatus();
+
+    const output = consoleSpy.mock.calls.map((c: any[]) => c[0]).join('\n');
+    expect(output).toContain('pending');
+    expect(output).toContain('0');
   });
 });

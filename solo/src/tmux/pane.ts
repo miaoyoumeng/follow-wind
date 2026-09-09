@@ -57,12 +57,28 @@ export const selectPane = async (session: string, window: string, paneIndex: num
 
 /**
  * 向 pane 发送按键序列
+ * @param session
+ * @param window
+ * @param paneIndex
  * @param keys tmux 键名（如 'Enter'、'C-m'）不加引号，文本内容（含空格或特殊字符）加引号
  */
 export const sendKeys = async (session: string, window: string, paneIndex: number, keys: string): Promise<void> => {
   const target = `${session}:${window}.${paneIndex}`;
-  const keysArg = /^[a-zA-Z0-9-]+$/.test(keys) ? keys : `'${keys}'`;
+  const keysArg = /^[a-zA-Z0-9-]+$/.test(keys) ? keys : `'${keys.replace(/'/g, `'\\''`)}'`;
   await exec.fn(`tmux send-keys -t ${target} ${keysArg}`);
+};
+
+/**
+ * 向 pane 发送按键序列并追加 Enter
+ * @param session
+ * @param window
+ * @param paneIndex
+ * @param keys tmux 键名（如 'C-c'）不加引号，文本内容（含空格或特殊字符）加引号
+ */
+export const sendKeysEnter = async (session: string, window: string, paneIndex: number, keys: string): Promise<void> => {
+  const target = `${session}:${window}.${paneIndex}`;
+  const keysArg = /^[a-zA-Z0-9-]+$/.test(keys) ? keys : `'${keys.replace(/'/g, `'\\''`)}'`;
+  await exec.fn(`tmux send-keys -t ${target} ${keysArg} Enter`);
 };
 
 /**
@@ -79,7 +95,14 @@ export const capturePane = async (session: string, window: string, paneIndex: nu
 
 /**
  * 轮询 pane 内容，等待匹配 pattern 的文本出现或超时
+ * @param session
+ * @param window
+ * @param paneIndex
+ * @param pattern
  * @param fixed 非空字符串按固定字符串匹配，空字符串按正则匹配
+ * @param timeout
+ * @param interval
+ * @param lines
  */
 export const waitForText = async (
   session: string,

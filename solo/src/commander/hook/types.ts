@@ -10,6 +10,4 @@ export interface HookCallbackParams {
   readonly windowName: string;
   /** 触发事件的 pane index */
   readonly paneIndex: string;
-  /** 触发事件的 pane id */
-  readonly paneId: string;
 }
