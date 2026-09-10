@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { getAgent, type Agent } from '../../../core/agents';
+import { getAgent, type Agent } from '../../../agents';
 
 /**
  * 查找 agent，不存在时打印错误提示并返回 undefined

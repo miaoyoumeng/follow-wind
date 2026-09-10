@@ -1,26 +1,37 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import md5 from 'md5';
+
 import { info, debug } from '../logging';
-import { readConfig } from '../core/yaml';
-import { compareWithStored } from '../core/comparison';
+import { readConfig } from '../config';
 import { updateTask } from './manager';
 import { capturePane } from '../tmux';
 import { CAPTURE_DIR } from '../config/paths';
+import { writeFile, readFile } from '../utils';
 
 const POLL_INTERVAL_MS = 30_000;
 const DEFAULT_WAIT_MINUTES = 60;
 
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-const formatTimestamp = (): string => {
-  const d = new Date();
-  const pad = (n: number): string => String(n).padStart(2, '0');
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+/**
+ * 纯字符串内容比较（无文件操作）
+ * - storedContent 为 null（无基线） → 返回 true
+ * - 内容一致 → 返回 false
+ * - 内容不一致 → 返回 true
+ * @param currentContent 当前 pane 内容
+ * @param storedContent 上次存储的 pane 内容（null 表示无基线）
+ */
+export const compareWithStored = (currentContent: string, storedContent: string | null): boolean => {
+  if (storedContent === null) return true;
+  const current_hash: string = md5(currentContent);
+  const stored_hash: string = md5(storedContent);
+  debug(`compareWithStored current_hash: ${current_hash} vs stored_hash ${stored_hash}, and result = ${current_hash !== stored_hash}`);
+  return current_hash !== stored_hash;
 };
 
 /**
  * 后台轮询 pane 内容，等待 Claude 输出稳定（空闲）
- * - 每次轮询保存 debug 快照（带时间戳）到 .solo/capture-debug/ 目录
- * - 每次轮询以 saveOnChange=true 调用 compareWithStored，确保存储文件始终更新为最新内容
+ * - 每次轮询只调用一次 capturePane，间隔至少 30 秒
+ * - 先 readFile 读取上次存储内容，再纯字符串比较，最后 writeFile 保存
  * - 内容不变 → 更新任务状态为 completed，输出 idle 日志
  * - 超过最大等待时间 → 更新任务状态为 timeout，输出 timeout 日志
  * @param taskId 任务 ID（用于更新任务状态）
@@ -36,7 +47,8 @@ export const runPoll = async (taskId: string, session: string, window: string, p
   const startTime = Date.now();
   const agentFilePath = `${CAPTURE_DIR}/${agentName ?? `${session}-${window}`}-${paneIndex}.md`;
 
-  mkdirSync(CAPTURE_DIR, { recursive: true });
+  // 先读取上次存储的内容（用于比较）
+  let storedContent: string | null = readFile(agentFilePath);
 
   let pollCount = 0;
 
@@ -44,21 +56,18 @@ export const runPoll = async (taskId: string, session: string, window: string, p
     await sleep(POLL_INTERVAL_MS);
     pollCount++;
 
-    const timestamp = formatTimestamp();
+    // 每次轮询只调用一次 capturePane
     const paneContent = await capturePane(session, window, paneIndex);
-    const paneMarkdown = `${CAPTURE_DIR}/${agentName}-${paneIndex}.md`;
-    writeFileSync(paneMarkdown, paneContent);
-    debug(`[task:${taskId}] screenshot #${pollCount} at ${timestamp}, saved to ${paneMarkdown}`);
-
-    debug(`[task:${taskId}] compare #${pollCount}: saveOnChange=true`);
-    const { changed } = await compareWithStored(session, window, paneIndex, agentFilePath, true);
-    debug(`[task:${taskId}] compare #${pollCount}: changed=${changed}`);
-
+    // 写入文件（作为 debug 快照 + 下次比较基线）
+    writeFile(agentFilePath, paneContent);
+    // 纯字符串比较
+    const changed = compareWithStored(paneContent, storedContent);
     if (!changed) {
       info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" idle: pane content stable`);
       updateTask(taskId, { status: 'completed', completedAt: new Date().toISOString() });
       return;
     }
+    storedContent = paneContent;
   }
 
   debug(`[task:${taskId}] timeout after ${pollCount} comparisons`);

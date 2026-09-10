@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { checkSettings, checkClaude, checkTmux } from '../../core/checker';
-import { getVersion } from '../../core/version';
+import { checkSettings, checkClaude, checkTmux } from '../../envs';
+import { getVersion } from '../../utils/version';
 
 export const runVersion = async (): Promise<void> => {
   const errors: string[] = [];

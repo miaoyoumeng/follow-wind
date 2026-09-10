@@ -1,29 +1,60 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { getAgent } from '../../core/agents';
+import { getAgent } from '../../agents';
 import { CLAUDE_PROJECTS_DIR, USAGE_PATH } from '../../config/paths';
-import { encodeProjectName, scanDateUsage, emptyTotals } from '../../usage';
-import type { UsageData, UsageTotals } from '../../usage';
+import { encodeProjectName, scanDateUsage, emptyTotals } from '../../claude/usage';
+import type { UsageData, UsageTotals } from '../../claude/usage';
 import { validateWorkspace } from '../status';
+import { formatDateOnly, readFile, writeFile } from '../../utils';
 
-const formatDate = (d: Date): string => {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/**
+ * 格式化数字为千位分隔符字符串
+ */
+const formatNumber = (n: number): string => n.toLocaleString('en-US');
+
+/**
+ * 格式化单模型的消耗为控制台输出（含缩进）
+ */
+const formatModelTotals = (model: string, t: UsageTotals): string =>
+  `    ${model}\n        input_cached: ${formatNumber(t.input_cached)},\n        input_missed: ${formatNumber(t.input_missed)},\n        output: ${formatNumber(t.output)}`;
+
+/**
+ * 格式化全部模型的消耗为控制台输出
+ */
+const formatModelsBlock = (models: Record<string, UsageTotals>): string =>
+  Object.entries(models)
+    .map(([model, t]) => formatModelTotals(model, t))
+    .join('\n');
+
+/**
+ * 合并所有日期的消耗，按 model 分组累加
+ */
+const sumAllDates = (data: UsageData): Record<string, UsageTotals> => {
+  const result: Record<string, UsageTotals> = {};
+  for (const models of Object.values(data)) {
+    for (const [model, t] of Object.entries(models)) {
+      if (!result[model]) result[model] = emptyTotals();
+      result[model].input_cached += t.input_cached;
+      result[model].input_missed += t.input_missed;
+      result[model].output += t.output;
+    }
+  }
+  return result;
 };
 
-const formatTotals = (t: UsageTotals): string =>
-  `input_cached: ${t.input_cached},\ninput_missed: ${t.input_missed},\noutput_missed: ${t.output_missed}`;
-
-const sumAllDates = (data: UsageData): UsageTotals => {
-  const totals = emptyTotals();
-  for (const t of Object.values(data)) {
-    totals.input_cached += t.input_cached;
-    totals.input_missed += t.input_missed;
-    totals.output_missed += t.output_missed;
+/**
+ * 合并扫描结果到已有数据中（按 model 分组累加）
+ */
+const mergeModels = (existing: Record<string, UsageTotals>, scanned: Record<string, UsageTotals>): Record<string, UsageTotals> => {
+  const merged = { ...existing };
+  for (const [model, t] of Object.entries(scanned)) {
+    if (!merged[model]) merged[model] = emptyTotals();
+    merged[model].input_cached += t.input_cached;
+    merged[model].input_missed += t.input_missed;
+    merged[model].output += t.output;
   }
-  return totals;
+  return merged;
 };
 
 /**
@@ -37,43 +68,45 @@ export const runUsage = async (agentName: string, dateStr?: string): Promise<voi
   const agent = getAgent(agentName);
   if (!agent) throw new Error(`agent "${agentName}" 不存在`);
 
-  const targetDate = dateStr ?? formatDate(new Date());
+  const targetDate = dateStr ?? formatDateOnly();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
     throw new Error(`日期格式错误: "${dateStr}"（应为 yyyy-mm-dd）。用法: solo usage [agent name] [日期(可选)]`);
   }
 
   // 读取已有 usage 数据
   let usageData: UsageData = {};
-  try {
-    usageData = JSON.parse(readFileSync(USAGE_PATH, 'utf-8'));
-  } catch {
-    // 文件不存在，初始化空对象
+  const content = readFile(USAGE_PATH);
+  if (content) {
+    try {
+      usageData = JSON.parse(content);
+    } catch {
+      // 解析失败，使用空对象
+    }
   }
 
   // 扫描 Claude 会话
   const projectName = encodeProjectName(agent.workspace);
   const projectDir = join(CLAUDE_PROJECTS_DIR, projectName);
-  const totals = scanDateUsage(projectDir, targetDate);
+  const scanned = scanDateUsage(projectDir, targetDate);
 
-  // 合并（覆盖写入同一日期）
-  const existing = usageData[targetDate] ?? emptyTotals();
-  usageData[targetDate] = {
-    input_cached: existing.input_cached + totals.input_cached,
-    input_missed: existing.input_missed + totals.input_missed,
-    output_missed: existing.output_missed + totals.output_missed
-  };
+  // 合并（按 model 分组累加同一日期）
+  const existing = usageData[targetDate] ?? {};
+  usageData[targetDate] = mergeModels(existing, scanned);
 
   // 按日期升序排序后写入
   const sorted: UsageData = {};
   for (const key of Object.keys(usageData).sort()) {
     sorted[key] = usageData[key];
   }
-  writeFileSync(USAGE_PATH, JSON.stringify(sorted, null, 2));
+  writeFile(USAGE_PATH, JSON.stringify(sorted, null, 2));
 
   // 控制台输出
-  const todayTotals = usageData[targetDate] ?? emptyTotals();
-  console.log(chalk.cyan(`[${targetDate}]消耗：`) + `\n${formatTotals(todayTotals)}`);
-  console.log(chalk.cyan('总消耗：') + `\n${formatTotals(sumAllDates(usageData))}`);
+  const todayModels = usageData[targetDate] ?? {};
+  const totalModels = sumAllDates(usageData);
+  console.log(chalk.cyan(`[${targetDate}]消耗：`));
+  console.log(formatModelsBlock(todayModels));
+  console.log(chalk.cyan('总消耗：'));
+  console.log(formatModelsBlock(totalModels));
 };
 
 /**

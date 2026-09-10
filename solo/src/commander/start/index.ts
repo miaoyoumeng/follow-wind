@@ -1,11 +1,11 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { sessionExists, createSession, attachSession, createWindow, listWindows, listPanes, registerHooks } from '../../tmux';
-import { getAgents, resolveSplitPlan, resolveSplitAxis, panesLayout } from '../../core/agents';
-import { readConfig, isValidPanePosition, type AgentPanes } from '../../core/yaml';
+import { getAgents, resolveSplitPlan, resolveSplitAxis, panesLayout } from '../../agents';
+import { readConfig, isValidPanePosition, type AgentPanes } from '../../config';
 import { info } from '../../logging';
 import { validateWorkspace } from '../status';
-import type { Agent, SplitPlan } from '../../core/agents';
+import type { Agent, SplitPlan } from '../../agents';
 
 /**
  * 校验 panes 配置，返回 { plan, axis }；不合法时打印错误并返回 null

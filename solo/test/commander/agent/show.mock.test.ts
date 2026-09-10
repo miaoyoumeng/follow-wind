@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { readConfig, type SoloConfig } from '../../../src/core/yaml';
+import { readConfig, type SoloConfig } from '../../../src/config';
 import { runAgentWorkspace, runAgentPanes } from '../../../src/commander/agent/show';
 
 // 文件 IO 是最低层外部依赖，mock 读取函数以隔离查询逻辑
-vi.mock('../../../src/core/yaml', () => ({
+vi.mock('../../../src/config', () => ({
   readConfig: vi.fn(),
   writeConfig: vi.fn()
 }));

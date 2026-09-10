@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import { checkSettings } from '../../core/checker';
-import { readConfig } from '../../core/yaml';
-import { checkAgentWorkspaces } from '../../core/agents';
+import { checkSettings } from '../../envs';
+import { readConfig } from '../../config';
+import { checkAgentWorkspaces } from '../../agents';
 import { getTaskSummary } from '../../task';
 
 // name 验证规则：英文字符开头，可包含数字、'-'、'_'

@@ -89,33 +89,32 @@ describe('sendKeysEnter', () => {
     mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
   });
 
-  it('键名不加引号，末尾追加 Enter', async () => {
+  it('分两次 exec 调用：先委托 sendKeys 发文本再发 Enter', async () => {
     await sendKeysEnter('sess', 'win', 0, 'C-c');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux send-keys -t sess:win.0 C-c Enter'
-    );
+    expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t sess:win.0 C-c");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t sess:win.0 Enter");
   });
 
-  it('文本内容加引号，末尾追加 Enter', async () => {
+  it('文本内容包引号，分两次 exec 调用', async () => {
     await sendKeysEnter('sess', 'win', 1, 'hello world');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux send-keys -t sess:win.1 'hello world' Enter"
-    );
+    expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t sess:win.1 'hello world'");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t sess:win.1 Enter");
   });
 
-  it('文本内包含单引号时正确转义，末尾追加 Enter', async () => {
+  it('文本内包含单引号时正确转义，分两次 exec 调用', async () => {
     await sendKeysEnter('sess', 'win', 1, "it's a test");
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux send-keys -t sess:win.1 'it'\\''s a test' Enter"
-    );
+    expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t sess:win.1 'it'\\''s a test'");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t sess:win.1 Enter");
   });
 
-  it('与 sendKeys 相同入参但只调用一次 exec', async () => {
+  it('委托 sendKeys 两次：第一次发内容，第二次发 Enter', async () => {
     await sendKeysEnter('s', 'w', 3, 'claude');
-    expect(mockExecAsync).toHaveBeenCalledTimes(1);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux send-keys -t s:w.3 claude Enter'
-    );
+    expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t s:w.3 claude");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t s:w.3 Enter");
   });
 });
 

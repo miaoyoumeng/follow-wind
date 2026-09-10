@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { validateWorkspace } from '../status';
-import { getAgent } from '../../core/agents';
+import { getAgent } from '../../agents';
 import { listPanesWithTitle, selectPane, sendKeysEnter } from '../../tmux';
 import { waitForIdle } from './wait';
 
@@ -43,7 +43,7 @@ export const runChat = async (agentName: string, content: string): Promise<void>
   await sendKeysEnter(sessionName, agentName, claudePane.index, content);
 
   // 轮询等待 Claude 输出稳定
-  await waitForIdle(sessionName, agentName, claudePane.index, agentName);
+  waitForIdle(sessionName, agentName, claudePane.index, agentName);
 };
 
 export const registerChatCommand = (program: Command): void => {

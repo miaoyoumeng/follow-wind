@@ -1,4 +1,4 @@
-import { execAsync } from '../core/process';
+import { execAsync } from '../process';
 import type { WindowInfo } from './types';
 
 /**

@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { terminal } from '../../core/process';
+import { terminal } from '../../process';
 import { sessionExists } from '../../tmux';
 import { validateWorkspace } from '../status';
 

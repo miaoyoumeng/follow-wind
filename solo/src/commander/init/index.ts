@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync } from 'fs';
 import { randomBytes } from 'crypto';
 import chalk from 'chalk';
-import { checkSettings, checkClaude, checkTmux } from '../../core/checker';
+import { checkSettings, checkClaude, checkTmux } from '../../envs';
 import { SOLO_DIR } from '../../config';
-import { readConfig, writeConfig, type SoloConfig } from '../../core/yaml';
+import { readConfig, writeConfig, type SoloConfig } from '../../config';
+import { exists, ensureDir } from '../../utils';
 
 // name 验证规则：英文字符开头，可包含数字、'-'、'_'
 const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
@@ -43,10 +43,10 @@ const checkToolInstalled = async (
 };
 
 const initSettings = (name: string): void => {
-  const { exists } = checkSettings();
-  if (!exists) {
+  const { exists: configExists } = checkSettings();
+  if (!configExists) {
     console.log(chalk.cyan('创建 .solo/config...'));
-    if (!existsSync(SOLO_DIR)) mkdirSync(SOLO_DIR, { recursive: true });
+    if (!exists(SOLO_DIR)) ensureDir(SOLO_DIR);
     writeConfig({ name });
     console.log(chalk.green(`✅ 已创建 .solo，name: ${name}`));
     return;

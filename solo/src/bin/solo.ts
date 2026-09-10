@@ -16,7 +16,7 @@ import { registerCaptureCommand } from '../commander/capture';
 import { registerUsageCommand } from '../commander/usage';
 import { registerTasksCommand } from '../commander/tasks';
 import { registerTaskWorkerCommand } from '../task/worker';
-import { getVersion } from '../core/version';
+import { getVersion } from '../utils/version';
 import { getLoggingConfig, setup as setupLogger } from '../logging';
 
 /** 从 .solo/config 读取日志配置并初始化日志模块 */

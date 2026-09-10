@@ -1,11 +1,11 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { mkdirSync, writeFileSync, statSync } from 'fs';
 import { capturePane } from '../../tmux';
-import { getAgent } from '../../core/agents';
+import { getAgent } from '../../agents';
 import { CAPTURE_DIR } from '../../config/paths';
 import { info } from '../../logging';
 import { validateWorkspace } from '../status';
+import { ensureDir, writeFile, stat } from '../../utils';
 
 const COOLDOWN_MS = 30_000;
 
@@ -23,8 +23,8 @@ export const runCapture = async (agentName: string, paneIndex: number): Promise<
   const filePath = `${CAPTURE_DIR}/${agentName}-${paneIndex}.md`;
 
   try {
-    const stat = statSync(filePath);
-    const elapsed = Date.now() - stat.mtimeMs;
+    const fileStat = stat(filePath);
+    const elapsed = Date.now() - fileStat.mtimeMs;
     if (elapsed < COOLDOWN_MS) {
       const waitSeconds = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
       const message = `截屏间隔时间少于30秒，继续等待${waitSeconds}秒`;
@@ -37,8 +37,8 @@ export const runCapture = async (agentName: string, paneIndex: number): Promise<
   }
 
   const content = await capturePane(sessionName, agentName, paneIndex);
-  mkdirSync(CAPTURE_DIR, { recursive: true });
-  writeFileSync(filePath, content);
+  ensureDir(CAPTURE_DIR);
+  writeFile(filePath, content);
 };
 
 /**

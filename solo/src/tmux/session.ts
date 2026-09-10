@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { execAsync } from '../core/process';
+import { execAsync } from '../process';
 import type { CurrentSessionInfo } from './types';
 
 /**

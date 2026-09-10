@@ -20,7 +20,7 @@ vi.mock('../../../src/commander/status', () => ({
   validateWorkspace: mockValidateWorkspace
 }));
 
-vi.mock('../../../src/core/agents', () => ({
+vi.mock('../../../src/agents', () => ({
   getAgent: mockGetAgent
 }));
 

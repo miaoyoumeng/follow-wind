@@ -76,9 +76,8 @@ export const sendKeys = async (session: string, window: string, paneIndex: numbe
  * @param keys tmux 键名（如 'C-c'）不加引号，文本内容（含空格或特殊字符）加引号
  */
 export const sendKeysEnter = async (session: string, window: string, paneIndex: number, keys: string): Promise<void> => {
-  const target = `${session}:${window}.${paneIndex}`;
-  const keysArg = /^[a-zA-Z0-9-]+$/.test(keys) ? keys : `'${keys.replace(/'/g, `'\\''`)}'`;
-  await exec.fn(`tmux send-keys -t ${target} ${keysArg} Enter`);
+  await sendKeys(session, window, paneIndex, keys);
+  await sendKeys(session, window, paneIndex, 'Enter');
 };
 
 /**

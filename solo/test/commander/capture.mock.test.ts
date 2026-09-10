@@ -39,7 +39,7 @@ vi.mock('../../src/commander/status', () => ({
 }));
 
 // agents 是配置解析依赖，mock 以隔离 agent 查找逻辑
-vi.mock('../../src/core/agents', () => ({
+vi.mock('../../src/agents', () => ({
   getAgent: mockGetAgent
 }));
 

@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { getAgents } from '../../core/agents';
+import { getAgents } from '../../agents';
 import { validateWorkspace } from '../status';
 
 export const runAgents = async (): Promise<void> => {

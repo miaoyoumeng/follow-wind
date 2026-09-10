@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { readConfig, type SoloConfig } from '../../../src/core/yaml';
+import { readConfig, type SoloConfig } from '../../../src/config';
 import { runStart } from '../../../src/commander/start';
 import {
   sessionExists,
@@ -14,14 +14,14 @@ import {
 } from '../../../src/tmux';
 
 // 文件 IO 与外部 tmux 命令均属外部依赖，mock 以隔离 start 调度逻辑
-vi.mock('../../../src/core/yaml', () => ({
+vi.mock('../../../src/config', () => ({
   readConfig: vi.fn(),
   writeConfig: vi.fn(),
   isValidPanePosition: (v: unknown) =>
     typeof v === 'string' && ['left', 'right', 'left-top', 'right-top', 'left-bottom', 'right-bottom'].includes(v)
 }));
 
-vi.mock('../../../src/core/checker', () => ({
+vi.mock('../../../src/envs', () => ({
   checkSettings: vi.fn(() => ({ exists: true, path: '.solo/config' })),
   checkClaude: vi.fn(),
   checkTmux: vi.fn()

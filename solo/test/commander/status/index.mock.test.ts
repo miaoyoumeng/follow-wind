@@ -5,17 +5,17 @@ const { mockGetTaskSummary } = vi.hoisted(() => ({
 }));
 
 // mock checker
-vi.mock('../../../src/core/checker', () => ({
+vi.mock('../../../src/envs', () => ({
   checkSettings: vi.fn().mockReturnValue({ exists: true, path: '/.solo/config' })
 }));
 
 // mock yaml
-vi.mock('../../../src/core/yaml', () => ({
+vi.mock('../../../src/config', () => ({
   readConfig: vi.fn().mockReturnValue({ name: 'test-project' })
 }));
 
 // mock agents
-vi.mock('../../../src/core/agents', () => ({
+vi.mock('../../../src/agents', () => ({
   checkAgentWorkspaces: vi.fn()
 }));
 
@@ -25,7 +25,7 @@ vi.mock('../../../src/task', () => ({
 }));
 
 import { runStatus } from '../../../src/commander/status';
-import { checkAgentWorkspaces, type WorkspaceCheckResult } from '../../../src/core/agents';
+import { checkAgentWorkspaces, type WorkspaceCheckResult } from '../../../src/agents';
 import { getTaskSummary, type TaskSummary } from '../../../src/task';
 
 describe('runStatus', () => {
