@@ -2,15 +2,34 @@ import md5 from 'md5';
 
 import { info, debug } from '../logging';
 import { readConfig } from '../config';
-import { updateTask } from './manager';
+import { updateTask } from './taskStorage';
 import { capturePane } from '../tmux';
 import { CAPTURE_DIR } from '../config/paths';
 import { writeFile, readFile } from '../utils';
+import type { TaskStatus } from './types';
 
 const POLL_INTERVAL_MS = 30_000;
 const DEFAULT_WAIT_MINUTES = 60;
 
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * 通知任务状态变更：优先使用回调，否则更新本地 manager
+ * @param taskId 任务 ID
+ * @param status 新状态
+ * @param onStateChange 可选回调
+ */
+const notifyStateChange = (
+  taskId: string,
+  status: TaskStatus,
+  onStateChange?: (id: string, s: TaskStatus) => void
+): void => {
+  if (onStateChange) {
+    onStateChange(taskId, status);
+  } else {
+    updateTask(taskId, { status, completedAt: new Date().toISOString() });
+  }
+};
 
 /**
  * 纯字符串内容比较（无文件操作）
@@ -24,7 +43,9 @@ export const compareWithStored = (currentContent: string, storedContent: string 
   if (storedContent === null) return true;
   const current_hash: string = md5(currentContent);
   const stored_hash: string = md5(storedContent);
-  debug(`compareWithStored current_hash: ${current_hash} vs stored_hash ${stored_hash}, and result = ${current_hash !== stored_hash}`);
+  debug(
+    `compareWithStored current_hash: ${current_hash} vs stored_hash ${stored_hash}, and result = ${current_hash !== stored_hash}`
+  );
   return current_hash !== stored_hash;
 };
 
@@ -39,8 +60,16 @@ export const compareWithStored = (currentContent: string, storedContent: string 
  * @param window tmux window 名
  * @param paneIndex pane 索引
  * @param agentName agent 名称（用于读取 waitTime 配置与构造存储文件路径）
+ * @param onStateChange 状态变更回调（可选）；提供时用它替代本地 updateTask
  */
-export const runPoll = async (taskId: string, session: string, window: string, paneIndex: number, agentName?: string): Promise<void> => {
+export const runPoll = async (
+  taskId: string,
+  session: string,
+  window: string,
+  paneIndex: number,
+  agentName?: string,
+  onStateChange?: (taskId: string, status: TaskStatus) => void
+): Promise<void> => {
   const config = readConfig();
   const waitMinutes = agentName ? (config.agents?.[agentName]?.waitTime ?? DEFAULT_WAIT_MINUTES) : DEFAULT_WAIT_MINUTES;
   const maxMs = waitMinutes * 60_000;
@@ -64,7 +93,7 @@ export const runPoll = async (taskId: string, session: string, window: string, p
     const changed = compareWithStored(paneContent, storedContent);
     if (!changed) {
       info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" idle: pane content stable`);
-      updateTask(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+      notifyStateChange(taskId, 'completed', onStateChange);
       return;
     }
     storedContent = paneContent;
@@ -72,5 +101,5 @@ export const runPoll = async (taskId: string, session: string, window: string, p
 
   debug(`[task:${taskId}] timeout after ${pollCount} comparisons`);
   info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" timeout after ${waitMinutes} minutes`);
-  updateTask(taskId, { status: 'timeout', completedAt: new Date().toISOString() });
+  notifyStateChange(taskId, 'timeout', onStateChange);
 };

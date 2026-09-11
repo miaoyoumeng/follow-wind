@@ -1,6 +1,14 @@
-import { mkdirSync, writeFileSync, readFileSync, existsSync, appendFileSync, statSync, readdirSync } from 'fs';
-import type { Stats } from 'fs';
 import { dirname } from 'path';
+import {
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  appendFileSync,
+  statSync,
+  readdirSync,
+  type Stats
+} from 'fs';
 
 /**
  * 确保目录存在（递归创建）

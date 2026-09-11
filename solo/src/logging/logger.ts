@@ -2,8 +2,7 @@
  * tslog 封装：提供文件日志输出
  */
 import { Logger, type ILogObjMeta } from 'tslog';
-import { formatLocalReadable } from '../utils/times';
-import { writeFile, appendFile } from '../utils/files';
+import { formatLocalReadable, writeFile, appendFile } from '../utils';
 import type { LoggingConfig } from '../config/yaml/types';
 import { readConfig } from '../config';
 

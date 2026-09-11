@@ -3,13 +3,18 @@ import { CONFIG_PATH, SOLO_DIR } from '..';
 import { exists, ensureDir, readFile, writeFile } from '../../utils';
 import type { PanePosition, PaneEntry, AgentPanes, AgentConfig, SoloConfig, LoggingConfig, TaskConfig } from './types';
 
-export type { PanePosition, PaneEntry, AgentPanes, AgentConfig, SoloConfig, LoggingConfig, TaskConfig } from './types';
-
 // dump 选项：与示例保持一致缩进
 const YAML_DUMP_OPTIONS = { indent: 4 } as const;
 
 // 允许的 pane 位置值
-const VALID_PANE_POSITIONS: ReadonlySet<string> = new Set(['left', 'right', 'left-top', 'right-top', 'left-bottom', 'right-bottom']);
+const VALID_PANE_POSITIONS: ReadonlySet<string> = new Set([
+  'left',
+  'right',
+  'left-top',
+  'right-top',
+  'left-bottom',
+  'right-bottom'
+]);
 
 /**
  * 校验位置值是否合法（panes 只允许 6 个值）
@@ -165,7 +170,8 @@ export const readConfig = (): SoloConfig => {
     // 解析失败（语法错误、重复键等）：包装为可读的错误信息
     const reason = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `无法解析配置文件 ${CONFIG_PATH}:\n${reason}\n` + `请检查 YAML 格式（如键重复、缩进错误），删除重复项后重试，或运行 \`solo init\` 重新初始化。`,
+      `无法解析配置文件 ${CONFIG_PATH}:\n${reason}\n` +
+        `请检查 YAML 格式（如键重复、缩进错误），删除重复项后重试，或运行 \`solo init\` 重新初始化。`,
       { cause: err }
     );
   }

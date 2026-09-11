@@ -1,4 +1,18 @@
-export { registerTask, getTask, listTasks, updateTask, getTaskSummary } from './manager';
-export type { Task, TaskStatus, TaskSummary } from './types';
+export {
+  registerTask,
+  getTask,
+  listTasks,
+  updateTask,
+  updateTaskState,
+  getRunningTasks,
+  evictTask,
+  statTask,
+  getTaskSummary,
+  initTaskManager,
+  getTaskConfig,
+  clearTaskStorage,
+  clearTasks
+} from './taskStorage';
+export type { Task, TaskStatus, TaskType, TaskStat } from './types';
 export { runPoll } from './polling';
 export { runTaskWorker, registerTaskWorkerCommand } from './worker';

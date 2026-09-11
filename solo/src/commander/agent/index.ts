@@ -10,7 +10,8 @@ const AGENT_USAGE = `用法:
   solo agent <name> workspace     显示指定 agent 的 workspace
   solo agent <name> panes         显示指定 agent 的 panes`;
 
-const ADD_MISSING_ARGS_MSG = "error: missing required argument 'name' and 'path'，please use `solo agent add [name] [path]`";
+const ADD_MISSING_ARGS_MSG =
+  "error: missing required argument 'name' and 'path'，please use `solo agent add [name] [path]`";
 
 const handleAgentAction = async (cmd: ReturnType<typeof parseAgentArgs>, tokens: string[]): Promise<void> => {
   switch (cmd.kind) {

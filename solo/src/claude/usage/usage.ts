@@ -20,7 +20,12 @@ export const emptyTotals = (): UsageTotals => ({
 /**
  * 解析单行 JSONL，累加 token 消耗到对应 model 的 totals；跳过非 assistant / 非目标日期 / 重复 id
  */
-const accumulateLine = (line: string, targetDate: string, seenIds: Set<string>, models: Record<string, UsageTotals>): void => {
+const accumulateLine = (
+  line: string,
+  targetDate: string,
+  seenIds: Set<string>,
+  models: Record<string, UsageTotals>
+): void => {
   if (!line.trim()) return;
   let parsed: Record<string, unknown>;
   try {

@@ -11,5 +11,5 @@ export const getVersion = (): string => {
     throw new Error(`Cannot read package.json at ${pkgPath}`);
   }
   const pkg = JSON.parse(content);
-  return pkg.version;
+  return pkg?.version ? pkg.version : typeof undefined;
 };

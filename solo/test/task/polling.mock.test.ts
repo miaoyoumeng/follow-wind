@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { join } from 'path';
 
-const { mockInfo, mockDebug, mockReadConfig, mockUpdateTask, mockCapturePane, mockReadFile, mockWriteFile } = vi.hoisted(() => ({
-  mockInfo: vi.fn(),
+const { mockDebug, mockReadConfig, mockUpdateTask, mockCapturePane, mockReadFile, mockWriteFile } = vi.hoisted(() => ({
   mockDebug: vi.fn(),
   mockReadConfig: vi.fn(),
   mockUpdateTask: vi.fn(),
@@ -12,7 +11,7 @@ const { mockInfo, mockDebug, mockReadConfig, mockUpdateTask, mockCapturePane, mo
 }));
 
 vi.mock(import('../../src/logging'), () => ({
-  info: mockInfo,
+  info: vi.fn(),
   debug: mockDebug,
   warn: vi.fn(),
   error: vi.fn(),
@@ -25,7 +24,7 @@ vi.mock('../../src/config', () => ({
   readConfig: mockReadConfig
 }));
 
-vi.mock('../../src/task/manager', () => ({
+vi.mock('../../src/task/taskStorage', () => ({
   updateTask: mockUpdateTask
 }));
 
@@ -85,8 +84,6 @@ describe('runPoll', () => {
     await promise;
 
     expect(mockUpdateTask).toHaveBeenCalledWith('task-001', { status: 'timeout', completedAt: expect.any(String) });
-    expect(mockInfo).toHaveBeenCalledTimes(1);
-    expect(mockInfo.mock.calls[0][0]).toContain('timeout');
   });
 
   it('无 agentName 时使用 session-window 作为路径前缀', async () => {
@@ -111,13 +108,35 @@ describe('runPoll', () => {
     );
   });
 
-  it('内容稳定后标记 completed 并输出 idle 日志', async () => {
+  it('内容稳定后标记 completed', async () => {
     const promise = runPoll('task-001', 'sess', 'win', 0, 'frontend');
     await vi.runAllTimersAsync();
     await promise;
 
     expect(mockUpdateTask).toHaveBeenCalledWith('task-001', { status: 'completed', completedAt: expect.any(String) });
-    expect(mockInfo).toHaveBeenCalledTimes(1);
-    expect(mockInfo.mock.calls[0][0]).toContain('idle');
+  });
+
+  it('提供 onStateChange 时，内容稳定后调用回调（completed）', async () => {
+    const onStateChange = vi.fn();
+    const promise = runPoll('task-001', 'sess', 'win', 0, 'frontend', onStateChange);
+    await vi.runAllTimersAsync();
+    await promise;
+
+    expect(onStateChange).toHaveBeenCalledWith('task-001', 'completed');
+    expect(mockUpdateTask).not.toHaveBeenCalled();
+  });
+
+  it('提供 onStateChange 时，超时后调用回调（timeout）', async () => {
+    mockReadConfig.mockReturnValue({ agents: { frontend: { workspace: '/app', waitTime: 1 } } });
+    let callCount = 0;
+    mockCapturePane.mockImplementation(() => Promise.resolve(`content-${++callCount}`));
+    const onStateChange = vi.fn();
+
+    const promise = runPoll('task-001', 'sess', 'win', 0, 'frontend', onStateChange);
+    await vi.advanceTimersByTimeAsync(61_000);
+    await promise;
+
+    expect(onStateChange).toHaveBeenCalledWith('task-001', 'timeout');
+    expect(mockUpdateTask).not.toHaveBeenCalled();
   });
 });

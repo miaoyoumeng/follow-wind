@@ -1,4 +1,5 @@
 import { join } from 'path';
+
 import { getAgents } from './manager';
 import { exists, ensureDir, writeFile } from '../utils';
 import type { WorkspaceCheckResult } from './types';

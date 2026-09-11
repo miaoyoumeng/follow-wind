@@ -3,7 +3,13 @@ import { exec } from './exec';
 /**
  * 在指定 pane 上分屏，返回新 pane 的 index
  */
-export const splitPane = async (session: string, window: string, paneIndex: number, orientation: '-h' | '-v', dir?: string): Promise<number> => {
+export const splitPane = async (
+  session: string,
+  window: string,
+  paneIndex: number,
+  orientation: '-h' | '-v',
+  dir?: string
+): Promise<number> => {
   const target = `${session}:${window}.${paneIndex}`;
   const cwd = dir ? ` -c ${dir}` : '';
   const { stdout } = await exec.fn(`tmux split-window -t ${target} ${orientation}${cwd} -P -F '#{pane_index}'`);
@@ -25,7 +31,10 @@ export const listPanes = async (session: string, window: string): Promise<number
 /**
  * 获取 window 中所有 pane 的 index 和 title
  */
-export const listPanesWithTitle = async (session: string, window: string): Promise<Array<{ index: number; title: string }>> => {
+export const listPanesWithTitle = async (
+  session: string,
+  window: string
+): Promise<Array<{ index: number; title: string }>> => {
   const { stdout } = await exec.fn(`tmux list-panes -t ${session}:${window} -F '#{pane_index} #{pane_title}'`);
   return stdout
     .trim()
@@ -42,7 +51,12 @@ export const listPanesWithTitle = async (session: string, window: string): Promi
 /**
  * 设置 pane 标题
  */
-export const setPaneTitle = async (session: string, window: string, paneIndex: number, title: string): Promise<void> => {
+export const setPaneTitle = async (
+  session: string,
+  window: string,
+  paneIndex: number,
+  title: string
+): Promise<void> => {
   const target = `${session}:${window}.${paneIndex}`;
   await exec.fn(`tmux select-pane -t ${target} -T '${title}'`);
 };
@@ -75,7 +89,12 @@ export const sendKeys = async (session: string, window: string, paneIndex: numbe
  * @param paneIndex
  * @param keys tmux 键名（如 'C-c'）不加引号，文本内容（含空格或特殊字符）加引号
  */
-export const sendKeysEnter = async (session: string, window: string, paneIndex: number, keys: string): Promise<void> => {
+export const sendKeysEnter = async (
+  session: string,
+  window: string,
+  paneIndex: number,
+  keys: string
+): Promise<void> => {
   await sendKeys(session, window, paneIndex, keys);
   await sendKeys(session, window, paneIndex, 'Enter');
 };
@@ -83,7 +102,13 @@ export const sendKeysEnter = async (session: string, window: string, paneIndex: 
 /**
  * 捕获 pane 内容，可选取最近 N 行并合并换行包裹
  */
-export const capturePane = async (session: string, window: string, paneIndex: number, lines?: number, joinWrapped?: boolean): Promise<string> => {
+export const capturePane = async (
+  session: string,
+  window: string,
+  paneIndex: number,
+  lines?: number,
+  joinWrapped?: boolean
+): Promise<string> => {
   const target = `${session}:${window}.${paneIndex}`;
   let cmd = `tmux capture-pane -t ${target} -p`;
   if (lines !== undefined) cmd += ` -S -${lines}`;

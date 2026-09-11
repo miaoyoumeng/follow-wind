@@ -106,3 +106,7 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 - 所有需要对外 `export` 的 function、interface、type，都在文件名为 `index.ts` 中 export。 参考代码`src/agents/index.ts`
 - 模块中所有的 interface、type，都在文件名为 `types.ts` 中定义好。参考代码`src/agents/types.ts`
 
+## 测试规范
+
+- 禁止编写仅验证日志输出（`debug`/`info`/`warn`/`error` 调用次数、参数、颜色）的单元测试。日志是副作用，不是行为。测试应关注函数的返回值、状态变更或外部调用，而非日志是否被打印。如果一个测试的全部断言都是 `expect(mockLog).toHaveBeenCalled(...)`，则该测试无意义，应删除。
+
