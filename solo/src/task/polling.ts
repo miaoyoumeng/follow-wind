@@ -1,12 +1,13 @@
 import md5 from 'md5';
 
-import { info, debug } from '../logging';
+import { logger } from '../logging';
 import { readConfig } from '../config';
 import { updateTask } from './taskStorage';
 import { capturePane } from '../tmux';
 import { CAPTURE_DIR } from '../config/paths';
 import { writeFile, readFile } from '../utils';
 import type { TaskStatus } from './types';
+import { detectIntervention } from '../claude';
 
 const POLL_INTERVAL_MS = 30_000;
 const DEFAULT_WAIT_MINUTES = 60;
@@ -41,12 +42,14 @@ const notifyStateChange = (
  */
 export const compareWithStored = (currentContent: string, storedContent: string | null): boolean => {
   if (storedContent === null) return true;
-  const current_hash: string = md5(currentContent);
-  const stored_hash: string = md5(storedContent);
-  debug(
-    `compareWithStored current_hash: ${current_hash} vs stored_hash ${stored_hash}, and result = ${current_hash !== stored_hash}`
-  );
-  return current_hash !== stored_hash;
+  const currentHash: string = md5(currentContent);
+  const storedHash: string = md5(storedContent);
+  if (logger.isDebugEnabled()) {
+    logger.debug(
+      `compareWithStored currentHash: ${currentHash} vs storedHash ${storedHash}, and result = ${currentHash !== storedHash}`
+    );
+  }
+  return currentHash !== storedHash;
 };
 
 /**
@@ -92,14 +95,18 @@ export const runPoll = async (
     // 纯字符串比较
     const changed = compareWithStored(paneContent, storedContent);
     if (!changed) {
-      info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" idle: pane content stable`);
+      logger.info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" idle: pane content stable`);
+      const intervention = detectIntervention({ content: paneContent });
+      if (logger.isInfoEnabled()) {
+        logger.info(`[hook] tmux pane claude intervention judge result: ${intervention}`);
+      }
       notifyStateChange(taskId, 'completed', onStateChange);
       return;
     }
     storedContent = paneContent;
   }
 
-  debug(`[task:${taskId}] timeout after ${pollCount} comparisons`);
-  info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" timeout after ${waitMinutes} minutes`);
+  logger.debug(`[task:${taskId}] timeout after ${pollCount} comparisons`);
+  logger.info(`[task:${taskId}] agent "${agentName ?? `${session}:${window}`}" timeout after ${waitMinutes} minutes`);
   notifyStateChange(taskId, 'timeout', onStateChange);
 };

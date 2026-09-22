@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { type Command } from 'commander';
 import chalk from 'chalk';
 import { parseAgentArgs } from './parse';
 import { runAgentAdd } from './add';
@@ -29,11 +29,11 @@ const handleAgentAction = async (cmd: ReturnType<typeof parseAgentArgs>, tokens:
       return;
     case 'workspace':
       validateWorkspace();
-      await runAgentWorkspace(cmd.name);
+      runAgentWorkspace(cmd.name);
       return;
     case 'panes':
       validateWorkspace();
-      await runAgentPanes(cmd.name);
+      runAgentPanes(cmd.name);
   }
 };
 

@@ -1,13 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 vi.mock('../../src/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+  logger: { trace: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLoggingConfig: vi.fn(),
-  setup: vi.fn(),
-  reset: vi.fn()
+  setup: vi.fn()
 }));
 
 import {
@@ -15,12 +11,10 @@ import {
   updateTaskState,
   getRunningTasks,
   evictTask,
-  statTask,
   clearTaskStorage,
   getTask,
   listTasks,
   updateTask,
-  getTaskSummary,
   initTaskManager,
   getTaskConfig,
   clearTasks
@@ -37,7 +31,9 @@ afterEach(() => {
 });
 
 /** 推进 1 秒以确保 formatUtcCompact 生成不同 ID */
-const tick = () => { vi.advanceTimersByTime(1000); };
+const tick = () => {
+  vi.advanceTimersByTime(1000);
+};
 
 // ============ 原 taskStorage 测试 ============
 
@@ -61,10 +57,7 @@ describe('updateTaskState', () => {
     const id = registerTask({ type: 'dream' });
     updateTaskState(id, 'running');
     updateTaskState(id, 'completed');
-    const stat = statTask();
-    expect(stat.completed).toBe(1);
-    expect(stat.pending).toBe(0);
-    expect(stat.running).toBe(0);
+    expect(getTask(id).status).toBe('completed');
   });
 
   it('任务不存在时抛错', () => {
@@ -96,52 +89,11 @@ describe('evictTask', () => {
   it('驱逐存在的任务返回 true', () => {
     const id = registerTask({ type: 'local_bash' });
     expect(evictTask(id)).toBe(true);
-    expect(statTask().pending).toBe(0);
+    expect(listTasks()).toEqual([]);
   });
 
   it('驱逐不存在的任务返回 false', () => {
     expect(evictTask('nonexistent')).toBe(false);
-  });
-});
-
-describe('statTask', () => {
-  it('统计各状态的任务数量', () => {
-    const id1 = registerTask({ type: 'local_bash' });
-    tick();
-    const id2 = registerTask({ type: 'local_agent' });
-    tick();
-    const id3 = registerTask({ type: 'dream' });
-    tick();
-    const id4 = registerTask({ type: 'local_bash' });
-    tick();
-    const id5 = registerTask({ type: 'dream' });
-    tick();
-    registerTask({ type: 'local_agent' });
-    updateTaskState(id1, 'running');
-    updateTaskState(id2, 'completed');
-    updateTaskState(id3, 'timeout');
-    updateTaskState(id4, 'failed');
-    updateTaskState(id5, 'killed');
-    const stat = statTask();
-    expect(stat).toEqual({
-      pending: 1,
-      running: 1,
-      completed: 1,
-      timeout: 1,
-      failed: 1,
-      killed: 1
-    });
-  });
-
-  it('无任务时返回全零', () => {
-    expect(statTask()).toEqual({
-      pending: 0,
-      running: 0,
-      completed: 0,
-      timeout: 0,
-      failed: 0,
-      killed: 0
-    });
   });
 });
 
@@ -197,32 +149,6 @@ describe('updateTask', () => {
     const updated = getTask(taskId);
     expect(updated.status).toBe('completed');
     expect(updated.pid).toBe(99);
-  });
-});
-
-describe('getTaskSummary（= statTask）', () => {
-  it('返回各状态的任务数量', () => {
-    const t1 = registerTask({ session: 's', window: 'w', paneIndex: 0 });
-    tick();
-    const t2 = registerTask({ session: 's', window: 'w', paneIndex: 1 });
-    tick();
-    const t3 = registerTask({ session: 's', window: 'w', paneIndex: 2 });
-    tick();
-    const t4 = registerTask({ session: 's', window: 'w', paneIndex: 3 });
-    tick();
-    const t5 = registerTask({ session: 's', window: 'w', paneIndex: 4 });
-
-    updateTask(t1, { status: 'pending' });
-    updateTask(t2, { status: 'running' });
-    updateTask(t3, { status: 'completed' });
-    updateTask(t4, { status: 'completed' });
-    updateTask(t5, { status: 'timeout' });
-
-    expect(getTaskSummary()).toEqual({ pending: 1, running: 1, completed: 2, timeout: 1, failed: 0, killed: 0 });
-  });
-
-  it('无任务时全部为 0', () => {
-    expect(getTaskSummary()).toEqual({ pending: 0, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 });
   });
 });
 

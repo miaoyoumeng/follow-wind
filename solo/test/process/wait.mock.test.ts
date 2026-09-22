@@ -14,17 +14,13 @@ vi.mock('child_process', () => ({
   exec: vi.fn()
 }));
 
-vi.mock(import('../../src/logging'), () => ({
-  info: vi.fn(),
-  debug: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+vi.mock('../../src/logging', () => ({
+  logger: { trace: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } as unknown,
   getLoggingConfig: vi.fn(),
-  setup: vi.fn(),
-  reset: vi.fn()
+  setup: vi.fn()
 }));
 
-import { waitForIdle } from '../../src/process/wait';
+import { waitForIdle, startWorker } from '../../src/process/wait';
 
 describe('waitForIdle', () => {
   beforeEach(() => {
@@ -69,5 +65,28 @@ describe('waitForIdle', () => {
     const spawnArgs = mockSpawn.mock.calls[0][1] as string[];
     // agentName 为 undefined 时不应追加到参数列表
     expect(spawnArgs.filter(a => a === 'frontend')).toHaveLength(0);
+  });
+
+  describe('传入已有 taskId 时跳过本地注册', () => {
+    it('waitForIdle 传入 existingTaskId 时不调用本地 registerTask', () => {
+      const result = waitForIdle('sess', 'win', 0, 'agent1', 'task-daemon-002');
+
+      expect(mockRegisterTask).not.toHaveBeenCalled();
+      expect(result.id).toBe('task-daemon-002');
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[];
+      expect(spawnArgs).toContain('task-daemon-002');
+    });
+
+    it('waitForIdle 未传 taskId 时照常本地注册', () => {
+      const result = waitForIdle('sess', 'win', 0, 'agent1');
+
+      expect(mockRegisterTask).toHaveBeenCalledWith({
+        agentName: 'agent1',
+        session: 'sess',
+        window: 'win',
+        paneIndex: 0
+      });
+      expect(result.id).toBe('task-001');
+    });
   });
 });

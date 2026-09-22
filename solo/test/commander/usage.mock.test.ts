@@ -22,7 +22,7 @@ const {
 
 // commander 是外部 CLI 框架，mock 以阻止命令注册副作用
 vi.mock('commander', () => {
-  const proxy = new Proxy(function () {} as unknown as Record<string, unknown>, {
+  const proxy: Record<string, unknown> = new Proxy(function () {} as unknown as Record<string, unknown>, {
     get: (_t, prop) => (prop === 'then' ? undefined : proxy),
     apply: () => proxy
   });
@@ -103,9 +103,10 @@ describe('runUsage', () => {
     await runUsage('frontend');
 
     expect(mockWriteFileSync).toHaveBeenCalledTimes(1);
-    const [writePath, writeData] = mockWriteFileSync.mock.calls[0];
+    const writePath = mockWriteFileSync.mock.calls[0][0] as string;
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
     expect(writePath).toBe(join(process.cwd(), '.solo', 'usage.json'));
-    const parsed = JSON.parse(writeData as string);
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     expect(parsed['2026-09-09']).toEqual({
       'claude-sonnet-4-5': {
         input_cached: 200,
@@ -137,8 +138,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend', '2026-09-08');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const parsed = JSON.parse(writeData as string);
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     expect(parsed['2026-09-08']).toEqual({
       'claude-sonnet-4-5': {
         input_cached: 200,
@@ -166,8 +167,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const parsed = JSON.parse(writeData as string);
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     // 2026-09-09 合并：10+200=210, 20+150=170, 30+300=330
     expect(parsed['2026-09-09']).toEqual({
       'claude-sonnet-4-5': {
@@ -197,8 +198,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const parsed = JSON.parse(writeData as string);
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     expect(parsed['2026-09-09']).toEqual({});
   });
 
@@ -219,8 +220,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const parsed = JSON.parse(writeData as string);
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     // 去重后与单次一致
     expect(parsed['2026-09-09']).toEqual({
       'claude-sonnet-4-5': {
@@ -255,8 +256,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const parsed = JSON.parse(writeData as string);
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     // 只统计今日，旧日期消息被跳过
     expect(parsed['2026-09-09']).toEqual({
       'claude-sonnet-4-5': {
@@ -291,8 +292,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const parsed = JSON.parse(writeData as string);
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     // 只统计 claude-sonnet-4-5，<synthetic> 被跳过
     expect(parsed['2026-09-09']).toEqual({
       'claude-sonnet-4-5': {
@@ -301,7 +302,7 @@ describe('runUsage', () => {
         output: 300
       }
     });
-    expect(parsed['2026-09-09']['<synthetic>']).toBeUndefined();
+    expect((parsed['2026-09-09'] as Record<string, unknown>)['<synthetic>']).toBeUndefined();
   });
 
   it('usage.json 按日期升序排序', async () => {
@@ -321,8 +322,8 @@ describe('runUsage', () => {
 
     await runUsage('frontend');
 
-    const [, writeData] = mockWriteFileSync.mock.calls[0];
-    const keys = Object.keys(JSON.parse(writeData as string));
+    const writeData = mockWriteFileSync.mock.calls[0][1] as string;
+    const keys = Object.keys(JSON.parse(writeData as string) as Record<string, unknown>);
     expect(keys).toEqual(['2026-09-07', '2026-09-09', '2026-09-10']);
   });
 

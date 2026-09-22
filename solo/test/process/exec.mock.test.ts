@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 const mockExec = vi.fn();
 
 vi.mock('child_process', () => ({
-  exec: (...args: unknown[]) => mockExec(...args)
+  exec: (...args: unknown[]): unknown => mockExec(...(args as []))
 }));
 
 import { execAsync } from '../../src/process';

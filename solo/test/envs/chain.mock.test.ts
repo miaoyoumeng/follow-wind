@@ -4,8 +4,8 @@ import { BaseEnvHandler, type EnvHandler, type EnvCheckResult } from '../../src/
 // 测试用 Handler 实现
 class MockHandler extends BaseEnvHandler {
   constructor(
-    private name: string,
-    private result: Partial<EnvCheckResult>
+    private readonly name: string,
+    private readonly result: Partial<EnvCheckResult>
   ) {
     super();
   }
@@ -43,7 +43,7 @@ describe('envs 责任链模式', () => {
     it('执行单个 handler 并返回结果', async () => {
       const { runEnvHandlers } = await import('../../src/envs');
       const handler = new MockHandler('settings', {
-        settings: { exists: true, path: '/test/config' },
+        settings: { exists: true, path: '/test/config' }
       });
 
       const result = await runEnvHandlers(handler);
@@ -54,13 +54,13 @@ describe('envs 责任链模式', () => {
     it('执行链式 handlers 并合并结果', async () => {
       const { runEnvHandlers } = await import('../../src/envs');
       const h1 = new MockHandler('settings', {
-        settings: { exists: true, path: '/test/config' },
+        settings: { exists: true, path: '/test/config' }
       });
       const h2 = new MockHandler('claude', {
-        claude: { installed: true, version: '1.0.0' },
+        claude: { installed: true, version: '1.0.0' }
       });
       const h3 = new MockHandler('tmux', {
-        tmux: { installed: false },
+        tmux: { installed: false }
       });
 
       h1.setNext(h2).setNext(h3);

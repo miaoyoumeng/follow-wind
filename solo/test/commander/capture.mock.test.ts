@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { join } from 'path';
 
 const {
@@ -21,7 +21,7 @@ const {
 
 // commander 是外部 CLI 框架，mock 以阻止命令注册副作用
 vi.mock('commander', () => {
-  const proxy = new Proxy(function () {} as unknown as Record<string, unknown>, {
+  const proxy: Record<string, unknown> = new Proxy(function () {} as unknown as Record<string, unknown>, {
     get: (_t, prop) => (prop === 'then' ? undefined : proxy),
     apply: () => proxy
   });
@@ -56,20 +56,16 @@ vi.mock('fs', () => ({
 }));
 
 // logging 是日志输出依赖，mock 以隔离日志写入
-vi.mock(import('../../src/logging'), () => ({
-  info: mockLoggerInfo,
-  debug: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+vi.mock('../../src/logging', () => ({
+  logger: { trace: vi.fn(), debug: vi.fn(), info: mockLoggerInfo, warn: vi.fn(), error: vi.fn() } as unknown,
   getLoggingConfig: vi.fn(),
-  setup: vi.fn(),
-  reset: vi.fn()
+  setup: vi.fn()
 }));
 
 import { runCapture } from '../../src/commander/capture';
 
 describe('runCapture', () => {
-  let consoleSpy: ReturnType<typeof vi.spyOn>;
+  let consoleSpy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();

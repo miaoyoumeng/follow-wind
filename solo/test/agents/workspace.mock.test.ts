@@ -8,9 +8,13 @@ const mockMkdirSync = vi.fn();
 const mockWriteFileSync = vi.fn();
 
 vi.mock('fs', () => ({
-  existsSync: (...args: unknown[]) => mockExistsSync(...args),
-  mkdirSync: (...args: unknown[]) => mockMkdirSync(...args),
-  writeFileSync: (...args: unknown[]) => mockWriteFileSync(...args)
+  existsSync: (...args: unknown[]): boolean => mockExistsSync(...(args as [])) as boolean,
+  mkdirSync: (...args: unknown[]): void => {
+    mockMkdirSync(...(args as []));
+  },
+  writeFileSync: (...args: unknown[]): void => {
+    mockWriteFileSync(...(args as []));
+  }
 }));
 
 // mock yaml 模块
@@ -40,9 +44,7 @@ describe('checkAgentWorkspaces', () => {
   });
 
   it('workspace 目录不存在时返回 exists: false', () => {
-    vi.mocked(getAgents).mockReturnValue([
-      { name: 'frontend', workspace: '/abs/path/frontend', activate: true }
-    ]);
+    vi.mocked(getAgents).mockReturnValue([{ name: 'frontend', workspace: '/abs/path/frontend', activate: true }]);
     mockExistsSync.mockReturnValue(false);
 
     const result = checkAgentWorkspaces();
@@ -53,9 +55,7 @@ describe('checkAgentWorkspaces', () => {
   });
 
   it('workspace 存在且 .claude/settings.json 已存在时不创建文件', () => {
-    vi.mocked(getAgents).mockReturnValue([
-      { name: 'backend', workspace: '/abs/path/backend', activate: true }
-    ]);
+    vi.mocked(getAgents).mockReturnValue([{ name: 'backend', workspace: '/abs/path/backend', activate: true }]);
     mockExistsSync.mockImplementation((p: string) => {
       if (p === '/abs/path/backend') return true;
       if (p === '/abs/path/backend/.claude/settings.json') return true;
@@ -64,17 +64,13 @@ describe('checkAgentWorkspaces', () => {
 
     const result = checkAgentWorkspaces();
 
-    expect(result).toEqual([
-      { name: 'backend', workspace: '/abs/path/backend', exists: true, settingsCreated: false }
-    ]);
+    expect(result).toEqual([{ name: 'backend', workspace: '/abs/path/backend', exists: true, settingsCreated: false }]);
     expect(mockMkdirSync).not.toHaveBeenCalled();
     expect(mockWriteFileSync).not.toHaveBeenCalled();
   });
 
   it('workspace 存在但 .claude/settings.json 不存在时创建空 JSON', () => {
-    vi.mocked(getAgents).mockReturnValue([
-      { name: 'api', workspace: '/abs/path/api', activate: false }
-    ]);
+    vi.mocked(getAgents).mockReturnValue([{ name: 'api', workspace: '/abs/path/api', activate: false }]);
     mockExistsSync.mockImplementation((p: string) => {
       if (p === '/abs/path/api') return true;
       return false;
@@ -82,17 +78,13 @@ describe('checkAgentWorkspaces', () => {
 
     const result = checkAgentWorkspaces();
 
-    expect(result).toEqual([
-      { name: 'api', workspace: '/abs/path/api', exists: true, settingsCreated: true }
-    ]);
+    expect(result).toEqual([{ name: 'api', workspace: '/abs/path/api', exists: true, settingsCreated: true }]);
     expect(mockMkdirSync).toHaveBeenCalledWith('/abs/path/api/.claude', { recursive: true });
     expect(mockWriteFileSync).toHaveBeenCalledWith('/abs/path/api/.claude/settings.json', '{}');
   });
 
   it('workspace 存在但 .claude 目录已存在时只创建 settings.json', () => {
-    vi.mocked(getAgents).mockReturnValue([
-      { name: 'web', workspace: '/abs/path/web', activate: true }
-    ]);
+    vi.mocked(getAgents).mockReturnValue([{ name: 'web', workspace: '/abs/path/web', activate: true }]);
     mockExistsSync.mockImplementation((p: string) => {
       if (p === '/abs/path/web') return true;
       if (p === '/abs/path/web/.claude') return true;
@@ -101,9 +93,7 @@ describe('checkAgentWorkspaces', () => {
 
     const result = checkAgentWorkspaces();
 
-    expect(result).toEqual([
-      { name: 'web', workspace: '/abs/path/web', exists: true, settingsCreated: true }
-    ]);
+    expect(result).toEqual([{ name: 'web', workspace: '/abs/path/web', exists: true, settingsCreated: true }]);
     // ensureDir 总是调用 mkdirSync（recursive: true 时目录存在是 no-op）
     expect(mockMkdirSync).toHaveBeenCalledWith('/abs/path/web/.claude', { recursive: true });
     expect(mockWriteFileSync).toHaveBeenCalledWith('/abs/path/web/.claude/settings.json', '{}');

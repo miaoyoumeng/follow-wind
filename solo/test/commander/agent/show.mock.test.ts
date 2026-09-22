@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { readConfig, type SoloConfig } from '../../../src/config';
 import { runAgentWorkspace, runAgentPanes } from '../../../src/commander/agent/show';
 
@@ -26,7 +26,7 @@ const sampleConfig: SoloConfig = {
 
 describe('runAgentWorkspace', () => {
   let logs: string[];
-  let spy: ReturnType<typeof vi.spyOn>;
+  let spy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,7 +53,7 @@ describe('runAgentWorkspace', () => {
 
 describe('runAgentPanes', () => {
   let logs: string[];
-  let spy: ReturnType<typeof vi.spyOn>;
+  let spy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();

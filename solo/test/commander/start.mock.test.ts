@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { readConfig, type SoloConfig } from '../../src/config';
-import { runStart } from '../../src/commander/start';
+import { runStart } from '../../src/commander';
+import type * as LoggingType from '../../src/logging';
 import {
   sessionExists,
   createSession,
@@ -27,7 +28,18 @@ vi.mock('../../src/envs', () => ({
   checkTmux: vi.fn()
 }));
 
-const { mockLoggerInfo, mockDebug, mockRegisterTask, mockStartWorker, mockWritePidFile, mockReadPidFile, mockIsProcessAlive, mockStartDaemon, mockStopDaemon, mockValidateWorkspace } = vi.hoisted(() => ({
+const {
+  mockLoggerInfo,
+  mockDebug,
+  mockRegisterTask,
+  mockStartWorker,
+  mockWritePidFile,
+  mockReadPidFile,
+  mockIsProcessAlive,
+  mockStartDaemon,
+  mockStopDaemon,
+  mockValidateWorkspace
+} = vi.hoisted(() => ({
   mockLoggerInfo: vi.fn(),
   mockDebug: vi.fn(),
   mockRegisterTask: vi.fn().mockReturnValue('task-001'),
@@ -40,9 +52,14 @@ const { mockLoggerInfo, mockDebug, mockRegisterTask, mockStartWorker, mockWriteP
   mockValidateWorkspace: vi.fn().mockReturnValue('sess-abc')
 }));
 
-vi.mock(import('../../src/logging'), async importOriginal => {
-  const actual = await importOriginal();
-  return { ...actual, info: mockLoggerInfo, debug: mockDebug };
+vi.mock('../../src/logging', async importOriginal => {
+  const actual = await importOriginal<typeof LoggingType>();
+  return {
+    ...actual,
+    logger: { trace: vi.fn(), debug: mockDebug, info: mockLoggerInfo, warn: vi.fn(), error: vi.fn() } as unknown,
+    info: mockLoggerInfo,
+    debug: mockDebug
+  };
 });
 
 vi.mock('../../src/tmux', () => ({
@@ -147,7 +164,7 @@ function setup(): void {
 
 describe('runStart', () => {
   let logs: string[];
-  let spy: ReturnType<typeof vi.spyOn>;
+  let spy: MockInstance;
 
   beforeEach(() => {
     setup();
@@ -208,8 +225,10 @@ describe('runStart', () => {
     mockRegisterHooks.mockResolvedValueOnce(['alert-activity', 'after-send-keys']);
     await runStart();
     expect(mockRegisterHooks).toHaveBeenCalledWith('sess-abc', sampleConfig.hooks);
-    const debugMessages = mockDebug.mock.calls.map((c: unknown[]) => c[0] as string);
-    expect(debugMessages.some(m => m.includes('hooks 已注册') && m.includes('alert-activity, after-send-keys'))).toBe(true);
+    const infoMessages = mockLoggerInfo.mock.calls.map((c: unknown[]) => c[0] as string);
+    expect(infoMessages.some(m => m.includes('hooks 已注册') && m.includes('alert-activity, after-send-keys'))).toBe(
+      true
+    );
   });
 
   it('session 已存在时：先注册 hooks 再启动 daemon', async () => {
@@ -256,9 +275,7 @@ describe('runStart', () => {
       paneIndex: 2
     });
     // 验证 startWorker 参数
-    expect(mockStartWorkerFn).toHaveBeenCalledWith(
-      'task-001', 'sess-abc', 'act-h', 1, 'act-h'
-    );
+    expect(mockStartWorkerFn).toHaveBeenCalledWith('task-001', 'sess-abc', 'act-h', 1, 'act-h');
   });
 
   it('session 已存在时也为 active agent 注册 task', async () => {

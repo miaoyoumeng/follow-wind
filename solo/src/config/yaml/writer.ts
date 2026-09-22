@@ -1,5 +1,6 @@
 import { dump, load } from 'js-yaml';
-import { CONFIG_PATH, SOLO_DIR } from '..';
+import { dirname } from 'path';
+import { LOG_FILE, getConfigPath } from '../paths';
 import { exists, ensureDir, readFile, writeFile } from '../../utils';
 import type { PanePosition, PaneEntry, AgentPanes, AgentConfig, SoloConfig, LoggingConfig, TaskConfig } from './types';
 
@@ -73,13 +74,27 @@ const parseHooks = (raw: unknown): Record<string, boolean> => {
 };
 
 /**
- * 解析顶级 logging 段：level 和 file 均为必填字符串，任一缺失则返回 undefined
+ * 解析顶级 logging 段：level 和 file 均为可选字符串，缺失则留空由 resolveLoggingConfig 补默认值。
+ * 若字段存在但类型非法（非字符串），则该字段丢弃。
  */
 const parseLogging = (raw: unknown): LoggingConfig | undefined => {
   if (typeof raw !== 'object' || raw === null) return undefined;
   const obj = raw as Record<string, unknown>;
-  if (typeof obj.level !== 'string' || typeof obj.file !== 'string') return undefined;
-  return { level: obj.level as LoggingConfig['level'], file: obj.file };
+  const result: LoggingConfig = {};
+  if (typeof obj.level === 'string') result.level = obj.level as LoggingConfig['level'];
+  if (typeof obj.file === 'string') result.file = obj.file;
+  return result;
+};
+
+/**
+ * 解析日志配置：对缺失字段补充默认值（level → warn，file → LOG_FILE）
+ * @param raw 从 readConfig 读取的部分配置，null/undefined 表示完全未配置
+ */
+export const resolveLoggingConfig = (raw: LoggingConfig | null | undefined): Required<LoggingConfig> => {
+  return {
+    level: raw?.level ?? 'warn',
+    file: raw?.file ?? LOG_FILE
+  };
 };
 
 /**
@@ -153,12 +168,14 @@ const normalize = (data: unknown): SoloConfig => {
 
 /**
  * 读取配置文件（不存在时返回空配置）
+ * @param configPath 配置文件路径（默认 getConfigPath()）
  */
-export const readConfig = (): SoloConfig => {
-  if (!exists(CONFIG_PATH)) {
+export const readConfig = (configPath?: string): SoloConfig => {
+  const path = configPath ?? getConfigPath();
+  if (!exists(path)) {
     return { name: '', hooks: {} };
   }
-  const content = readFile(CONFIG_PATH);
+  const content = readFile(path);
   if (!content) {
     return { name: '', hooks: {} };
   }
@@ -167,10 +184,9 @@ export const readConfig = (): SoloConfig => {
   try {
     parsed = load(content);
   } catch (err) {
-    // 解析失败（语法错误、重复键等）：包装为可读的错误信息
     const reason = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `无法解析配置文件 ${CONFIG_PATH}:\n${reason}\n` +
+      `无法解析配置文件 ${path}:\n${reason}\n` +
         `请检查 YAML 格式（如键重复、缩进错误），删除重复项后重试，或运行 \`solo init\` 重新初始化。`,
       { cause: err }
     );
@@ -180,17 +196,22 @@ export const readConfig = (): SoloConfig => {
 
 /**
  * 写入配置文件
+ * @param data 配置数据
+ * @param configPath 配置文件路径（默认 getConfigPath()）
  */
-export const writeConfig = (data: SoloConfig): void => {
-  if (!exists(SOLO_DIR)) {
-    ensureDir(SOLO_DIR);
+export const writeConfig = (data: SoloConfig, configPath?: string): void => {
+  const path = configPath ?? getConfigPath();
+  const dir = dirname(path);
+  if (!exists(dir)) {
+    ensureDir(dir);
   }
-  writeFile(CONFIG_PATH, dump(data, YAML_DUMP_OPTIONS));
+  writeFile(path, dump(data, YAML_DUMP_OPTIONS));
 };
 
 /**
  * 检查配置文件是否存在
+ * @param configPath 配置文件路径（默认 getConfigPath()）
  */
-export const configExists = (): boolean => {
-  return exists(CONFIG_PATH);
+export const configExists = (configPath?: string): boolean => {
+  return exists(configPath ?? getConfigPath());
 };

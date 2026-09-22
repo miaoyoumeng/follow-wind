@@ -1,7 +1,6 @@
-import chalk from 'chalk';
-
 import { execAsync } from '../process';
 import type { CurrentSessionInfo } from './types';
+import { logger } from '../logging';
 
 /**
  * 检查 session 是否存在
@@ -19,7 +18,7 @@ export const sessionExists = async (name: string): Promise<boolean> => {
  * 创建新的 session
  */
 export const createSession = async (name: string, dir?: string): Promise<void> => {
-  const cwd = dir || process.cwd();
+  const cwd = dir ?? process.cwd();
   await execAsync(`tmux new-session -d -s ${name} -c ${cwd}`);
 };
 
@@ -30,7 +29,7 @@ export const killSession = async (name: string): Promise<void> => {
   try {
     await execAsync(`tmux kill-session -t ${name}`);
   } catch {
-    console.log(chalk.yellow(`⚠️ session ${name} 不存在或已终止`));
+    logger.warn(`⚠️ session ${name} 不存在或已终止`);
   }
 };
 

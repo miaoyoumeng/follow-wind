@@ -83,6 +83,17 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 
 除 `init`、`version`、`status` 外，其他命令必须先调用 `validateWorkspace`（来自 `src/commander/status`）验证工作区合规性，再执行业务逻辑。
 
+### 日志规范
+
+- `console.log`（及其他 `console.*`）只能出现在 `src/commander/` 目录下的文件中，用于向用户输出终端信息。
+- `src/commander/` 以外的所有代码，禁止使用 `console.*`，必须使用 `logger`（来自 `src/logging`）的 `logger.trace`、`logger.debug`、`logger.info`、`logger.warn`、`logger.error` 方法记录日志。
+- 引入 `logger`：`import { logger } from '../logging';`（路径根据文件位置调整）。
+- 其中`logger.trace`、`logger.debug`、`logger.info`必需先判断日志级别是否支持，再输出对应级别的日志；其他函数的不需要判断，可以直接输出对应级别的日志。
+```
+if (logger.isDebugEnabled()) {                                                      
+  logger.debug(`[log message]`)                                  
+}
+```
 ### 核心流程
 
 1. `solo init` → 创建 `.solo/config`，写入 `name`
@@ -92,21 +103,28 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 
 ## TypeScript 规范
 
-- 禁止使用 `any`，除非兼容无类型声明的第三方库，否则必须使用具体类型、`unknown` 或泛型；若使用 `any` 需加注释说明原因。若第三方库无类型声明，优先尝试 `declare module` 补充声明或使用 `unknown` 配合类型守卫，最后才允许 `any` 且限定作用域。
+- 参考 `eslint` 和 `prettier` 配置。
 - 使用 interface 定义对象结构、类契约或扩展（extends），优先用 interface 表达公开 API；使用 type 定义联合类型、元组、映射类型或工具类型，用 type 处理内部组合。
 - 弃用 enum，改用联合类型或常量对象，使用 `type Status = 'pending' | 'success' | 'error'` 表达有限集合。需要映射值时，用 const 对象 + as const 配合 keyof typeof 推导。
 - 使用 `as const` 定义常量对象，确保类型推断为字面量类型而非宽泛类型。
-- 对只读属性添加 `readonly` 修饰符。
-- 统一命名约定：变量/函数使用 camelCase；常量使用 UPPER_SNAKE_CASE；类/接口/枚举/类型使用 PascalCase。
 - 布尔值命名：布尔类型的变量或状态，应使用 is、has、can、should 等前缀，使语义更清晰（如 `isLoading`）。
 - 使用 `function` 声明顶层函数和类方法；使用箭头函数作为回调、闭包或需要保留 `this` 上下文的内联函数。禁止强制统一使用箭头函数。
 - 函数定义中的每个参数都需要有注解。如`@param [name]  [description]`
 - 安全访问与默认值：使用可选链（?.）处理可能为 null/undefined 的属性访问，使用空值合并（??）提供默认值，替代 && 链或 ||（避免将 0、'' 等 falsy 值误判）。
-- 区分类型导入与值导入：推荐优先使用内联 `import { value, type Type }` 语法；仅在存在循环依赖或需显式区分时，才拆分单独 `import type`。务必使用 `import type` 标记纯类型，避免运行时引入无效依赖。
 - 所有需要对外 `export` 的 function、interface、type，都在文件名为 `index.ts` 中 export。 参考代码`src/agents/index.ts`
 - 模块中所有的 interface、type，都在文件名为 `types.ts` 中定义好。参考代码`src/agents/types.ts`
 
 ## 测试规范
 
 - 禁止编写仅验证日志输出（`debug`/`info`/`warn`/`error` 调用次数、参数、颜色）的单元测试。日志是副作用，不是行为。测试应关注函数的返回值、状态变更或外部调用，而非日志是否被打印。如果一个测试的全部断言都是 `expect(mockLog).toHaveBeenCalled(...)`，则该测试无意义，应删除。
-
+- 只 Mock 边界：网络、数据库、文件系统、时间、随机数、第三方 API 等外部依赖才 Mock；禁止 Mock 被测函数或类本身。
+- 优先依赖注入：通过构造函数、参数或工厂注入接口依赖，优于 `vi.mock` 整个模块。
+- Mock 必须遵守真实契约：返回值、异常、Promise、副作用须与真实依赖一致，用接口/类型约束，禁止「测试通过但生产失败」。
+- 选最轻的替身：fake > stub > spy > 完整 mock；避免创建庞大万能 Mock。
+- 类型安全创建 Mock：使用 `vi.mocked<T>`、`MockedFunction<T>`、`Partial<T>`；禁止 `as any` 和强制类型断言。
+- 只断言可观察行为：测试公共 API、返回值、状态变化和必要副作用；禁止断言私有方法、内部调用顺序或实现步骤。
+- 交互断言要克制：只有副作用、命令、通知等真正重要时才验证调用参数和次数；查询/计算逻辑优先断言返回结果。
+- 每个测试独立且可重复：`beforeEach` 新建 Mock，`afterEach` restore/reset/clear；禁止共享可变 Mock 状态。
+- 封装第三方依赖为适配器：Mock 自己定义的适配器接口，不直接 Mock 第三方库内部 API。
+- 保持确定、快速、可读：避免真实网络/时间/随机性；遵循 AAA（Arrange-Act-Assert）；命名说明行为而非实现。
+- 测试不得依赖 `.solo/config.yaml`。测试环境通过 `test/setup.ts`（vitest setupFiles）将配置路径切换为 `.solo/config-test.yaml`，确保 `pnpm run test` 不触及真实运行环境。新增涉及配置文件的测试时，同样依赖此机制，禁止读写 `.solo/config.yaml`。

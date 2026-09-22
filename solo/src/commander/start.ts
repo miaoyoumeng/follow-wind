@@ -1,10 +1,9 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
 
 import { sessionExists, createSession, createWindow, listWindows, listPanes, registerHooks } from '../tmux';
-import { getAgents, resolveSplitPlan, resolveSplitAxis, panesLayout, type Agent, SplitPlan } from '../agents';
+import { getAgents, resolveSplitPlan, resolveSplitAxis, panesLayout, type Agent, type SplitPlan } from '../agents';
 import { readConfig, isValidPanePosition, type AgentPanes } from '../config';
-import { debug } from '../logging';
+import { logger } from '../logging';
 import { validateWorkspace } from './status';
 import { registerTask } from '../task';
 import { startWorker } from '../process/wait';
@@ -20,28 +19,28 @@ const validatePanesConfig = (
 ): { plan: SplitPlan | null; axis: 'h' | 'v' | null } | null => {
   const entries = Object.entries(panes);
   if (entries.length === 0) {
-    debug(`[start] agent "${agentName}" 未配置 panes`);
+    logger.info(`[start] agent "${agentName}" 未配置 panes`);
     return null;
   }
   const invalidLayouts = entries.filter(([, e]) => !isValidPanePosition(e.layout));
   if (invalidLayouts.length > 0) {
     const tags = invalidLayouts.map(([t]) => t).join(', ');
-    debug(`[start] invalid panes: ${tags} 包含非法 layout 值`);
+    logger.info(`[start] invalid panes: ${tags} 包含非法 layout 值`);
     return null;
   }
   const paneCount = entries.length;
   if (paneCount > 3) {
-    debug(`[start] invalid panes: ${paneCount} panes is not supported, max 3`);
+    logger.info(`[start] invalid panes: ${paneCount} panes is not supported, max 3`);
     return null;
   }
   const plan = resolveSplitPlan(panes);
   const axis = paneCount <= 2 ? resolveSplitAxis(panes) : null;
   if (paneCount === 3 && !plan) {
-    debug('[start] invalid panes: unsupported 3-pane layout');
+    logger.info('[start] invalid panes: unsupported 3-pane layout');
     return null;
   }
   if (paneCount === 2 && !axis) {
-    debug('[start] invalid panes: positions must share same row or same column');
+    logger.info('[start] invalid panes: positions must share same row or same column');
     return null;
   }
   return { plan, axis };
@@ -59,19 +58,19 @@ const applyAgentLayout = async (sessionName: string, agent: Agent): Promise<void
   const windows = await listWindows(sessionName);
   const win = windows.find(w => w.name === agent.name);
   if (win && win.panes !== 1) {
-    debug(`[start] window [${agent.name}] 已按 panes 分屏，跳过`);
+    logger.info(`[start] window [${agent.name}] 已按 panes 分屏，跳过`);
     return;
   }
   if (!win) {
-    debug(`[start] window [${agent.name}] 不存在，创建中`);
+    logger.info(`[start] window [${agent.name}] 不存在，创建中`);
     await createWindow(sessionName, agent.name, agent.workspace);
   }
   const originalPane = Math.min(...(await listPanes(sessionName, agent.name)));
-  debug(
+  logger.info(
     `[start] agent "${agent.name}" originalPane=${originalPane}, plan=${plan?.pattern ?? 'null'}, axis=${axis ?? 'null'}`
   );
   await panesLayout(sessionName, agent.name, panes, plan, axis, originalPane, agent.workspace);
-  debug(`[start] ✅ agent [${agent.name}] 已按 panes 配置完成分屏`);
+  logger.info(`[start] ✅ agent [${agent.name}] 已按 panes 配置完成分屏`);
 };
 
 /**
@@ -82,7 +81,7 @@ const registerConfiguredHooks = async (sessionName: string): Promise<void> => {
   const { hooks } = readConfig();
   const registered = await registerHooks(sessionName, hooks);
   if (registered.length > 0) {
-    debug(`[start] ✅ hooks 已注册: ${registered.join(', ')}`);
+    logger.info(`[start] ✅ hooks 已注册: ${registered.join(', ')}`);
   }
 };
 
@@ -102,7 +101,7 @@ const isDaemonRunning = (): boolean => {
  */
 const registerAgentTasks = async (sessionName: string, agent: Agent): Promise<void> => {
   const panes = await listPanes(sessionName, agent.name);
-  debug(`[start] agent "${agent.name}" has ${panes.length} pane(s): [${panes.join(', ')}]`);
+  logger.debug(`[start] agent "${agent.name}" has ${panes.length} pane(s): [${panes.join(', ')}]`);
   for (const paneIndex of panes) {
     const taskId = registerTask({
       agentName: agent.name,
@@ -111,7 +110,7 @@ const registerAgentTasks = async (sessionName: string, agent: Agent): Promise<vo
       paneIndex
     });
     const pid = startWorker(taskId, sessionName, agent.name, paneIndex, agent.name);
-    debug(`[start] task ${taskId} registered (pid: ${pid}) for agent "${agent.name}" pane ${paneIndex}`);
+    logger.debug(`[start] task ${taskId} registered (pid: ${pid}) for agent "${agent.name}" pane ${paneIndex}`);
   }
 };
 
@@ -127,33 +126,33 @@ export const runStart = async (): Promise<void> => {
   }
 
   console.log(chalk.yellow(`solo name [${sessionName}]`));
-  debug(`[start] workspace validated, sessionName="${sessionName}"`);
+  logger.info(`[start] workspace validated, sessionName="${sessionName}"`);
 
   const exists = await sessionExists(sessionName);
-  debug(`[start] session "${sessionName}" exists=${exists}`);
+  logger.info(`[start] session "${sessionName}" exists=${exists}`);
 
   if (!exists) {
     await createSession(sessionName, process.cwd());
-    debug(`[start] session "${sessionName}" 已创建`);
+    logger.info(`[start] session "${sessionName}" 已创建`);
 
     // 仅启动 activate: true 的 agent
     const activeAgents = getAgents().filter(agent => agent.activate);
-    debug(`[start] active agents: [${activeAgents.map(a => a.name).join(', ')}]`);
+    logger.info(`[start] active agents: [${activeAgents.map(a => a.name).join(', ')}]`);
 
     for (const agent of activeAgents) {
-      debug(`[start] creating window "${agent.name}" workspace="${agent.workspace}"`);
+      logger.info(`[start] creating window "${agent.name}" workspace="${agent.workspace}"`);
       await createWindow(sessionName, agent.name, agent.workspace);
     }
 
     // 按 layout 分屏启动 activate 的 agent
     for (const agent of activeAgents) {
-      debug(`[start] applying layout for agent "${agent.name}"`);
+      logger.debug(`[start] applying layout for agent "${agent.name}"`);
       await applyAgentLayout(sessionName, agent);
     }
   }
 
   // 每次 start 都重新注册 hooks（set-hook 幂等覆盖，session 已存在时注册先于进入）
-  debug('[start] registering hooks');
+  logger.debug('[start] registering hooks');
   await registerConfiguredHooks(sessionName);
 
   // 为每个 active agent 的每个 pane 注册轮询任务并启动 worker
@@ -169,14 +168,4 @@ export const runStart = async (): Promise<void> => {
   startDaemon();
 
   console.log(chalk.green(`solo started, pid is ${process.pid}.`));
-};
-
-export const registerStartCommand = (program: Command): void => {
-  program
-    .command('start')
-    .description('启动本项目的 tmux session')
-    .allowExcessArguments(false)
-    .action(async () => {
-      await runStart();
-    });
 };

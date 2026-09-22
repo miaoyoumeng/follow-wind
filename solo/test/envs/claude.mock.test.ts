@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../../src/process', () => ({
-  execAsync: vi.fn(),
+  execAsync: vi.fn()
 }));
 
 import { execAsync } from '../../src/process';

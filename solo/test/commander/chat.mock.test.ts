@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { runChat } from '../../src/commander';
+
 const {
   mockValidateWorkspace,
   mockGetAgent,
@@ -9,8 +11,7 @@ const {
   mockWaitForIdle,
   mockReadPidFile,
   mockIsProcessAlive,
-  mockIpcRegisterTask,
-  mockIpcStatTask
+  mockIpcRegisterTask
 } = vi.hoisted(() => ({
   mockValidateWorkspace: vi.fn(),
   mockGetAgent: vi.fn(),
@@ -20,8 +21,7 @@ const {
   mockWaitForIdle: vi.fn().mockResolvedValue(undefined),
   mockReadPidFile: vi.fn(),
   mockIsProcessAlive: vi.fn(),
-  mockIpcRegisterTask: vi.fn(),
-  mockIpcStatTask: vi.fn()
+  mockIpcRegisterTask: vi.fn()
 }));
 
 vi.mock('../../src/commander/status', () => ({
@@ -38,21 +38,15 @@ vi.mock('../../src/tmux', () => ({
   sendKeysEnter: mockSendKeysEnter
 }));
 
-vi.mock('../../src/process/wait', () => ({
+vi.mock('../../src/process', () => ({
+  readPidFile: mockReadPidFile,
+  isProcessAlive: mockIsProcessAlive,
   waitForIdle: mockWaitForIdle
 }));
 
-vi.mock('../../src/process', () => ({
-  readPidFile: mockReadPidFile,
-  isProcessAlive: mockIsProcessAlive
-}));
-
 vi.mock('../../src/ipc', () => ({
-  registerTask: mockIpcRegisterTask,
-  statTask: mockIpcStatTask
+  registerTask: mockIpcRegisterTask
 }));
-
-import { runChat } from '../../src/commander/chat';
 
 describe('runChat', () => {
   beforeEach(() => {
@@ -61,7 +55,6 @@ describe('runChat', () => {
     mockReadPidFile.mockReturnValue(12345);
     mockIsProcessAlive.mockReturnValue(true);
     mockIpcRegisterTask.mockResolvedValue('task-ipc-001');
-    mockIpcStatTask.mockResolvedValue({ pending: 1, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 });
   });
 
   describe('agent 不存在', () => {
@@ -158,9 +151,7 @@ describe('runChat', () => {
           claude: { layout: 'left' }
         }
       });
-      mockListPanesWithTitle.mockResolvedValue([
-        { index: 0, title: 'claude' }
-      ]);
+      mockListPanesWithTitle.mockResolvedValue([{ index: 0, title: 'claude' }]);
 
       await runChat('myagent', 'test message');
 
@@ -198,7 +189,7 @@ describe('runChat', () => {
   });
 
   describe('IPC 注册任务', () => {
-    it('daemon 存活时，通过 IPC 注册 chat 任务', async () => {
+    it('daemon 存活时，通过 IPC 注册完整 chat 任务（含 pane 信息）', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -209,7 +200,28 @@ describe('runChat', () => {
 
       await runChat('myagent', 'hello');
 
-      expect(mockIpcRegisterTask).toHaveBeenCalledWith({ type: 'local_agent' });
+      expect(mockIpcRegisterTask).toHaveBeenCalledWith({
+        type: 'local_agent',
+        agentName: 'myagent',
+        session: 'test-session',
+        window: 'myagent',
+        paneIndex: 0
+      });
+    });
+
+    it('将 daemon 返回的 taskId 传给 waitForIdle，避免双重注册', async () => {
+      mockGetAgent.mockReturnValue({
+        name: 'myagent',
+        workspace: '/tmp',
+        activate: true,
+        panes: { claude: { layout: 'left' } }
+      });
+      mockListPanesWithTitle.mockResolvedValue([{ index: 2, title: 'claude' }]);
+      mockIpcRegisterTask.mockResolvedValue('task-daemon-xyz');
+
+      await runChat('myagent', 'hello');
+
+      expect(mockWaitForIdle).toHaveBeenCalledWith('test-session', 'myagent', 2, 'myagent', 'task-daemon-xyz');
     });
 
     it('IPC 注册失败时，显示连接异常提示', async () => {
@@ -226,27 +238,6 @@ describe('runChat', () => {
       await runChat('myagent', 'hello');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('IPC'));
-
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe('显示任务统计', () => {
-    it('任务注册成功后，通过 IPC 获取统计并显示', async () => {
-      mockGetAgent.mockReturnValue({
-        name: 'myagent',
-        workspace: '/tmp',
-        activate: true,
-        panes: { claude: { layout: 'left' } }
-      });
-      mockListPanesWithTitle.mockResolvedValue([{ index: 0, title: 'claude' }]);
-      mockIpcStatTask.mockResolvedValue({ pending: 1, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      await runChat('myagent', 'hello');
-
-      expect(mockIpcStatTask).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('pending'));
 
       consoleSpy.mockRestore();
     });

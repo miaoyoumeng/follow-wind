@@ -12,7 +12,7 @@ vi.mock('fs', () => ({
   mkdirSync: vi.fn()
 }));
 
-import { readConfig } from '../../../../src/config/yaml/writer';
+import { readConfig } from '../../../src/config/yaml/writer';
 
 describe('readConfig hooks 解析', () => {
   beforeEach(() => {
@@ -105,30 +105,30 @@ agents:
     expect(readConfig().logging).toBeUndefined();
   });
 
-  it('logging.level 非字符串时丢弃整个 logging 段', () => {
+  it('logging.level 非字符串时仅保留 file 字段', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 logging:
   level: 123
   file: '/tmp/solo.log'
 `);
-    expect(readConfig().logging).toBeUndefined();
+    expect(readConfig().logging).toEqual({ file: '/tmp/solo.log' });
   });
 
-  it('logging.file 非字符串时丢弃整个 logging 段', () => {
+  it('logging.file 非字符串时仅保留 level 字段', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 logging:
   level: 'info'
   file: 456
 `);
-    expect(readConfig().logging).toBeUndefined();
+    expect(readConfig().logging).toEqual({ level: 'info' });
   });
 
-  it('logging 段值全部非法时 logging 为 undefined', () => {
+  it('只配置 level 时保留 level 字段（file 由 resolveLoggingConfig 补默认值）', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 logging:
   level: 'info'
 `);
-    expect(readConfig().logging).toBeUndefined();
+    expect(readConfig().logging).toEqual({ level: 'info' });
   });
 });
 

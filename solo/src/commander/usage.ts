@@ -1,6 +1,6 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
 import { join } from 'path';
+
 import { getAgent } from '../agents';
 import { CLAUDE_PROJECTS_DIR, USAGE_PATH } from '../config/paths';
 import { encodeProjectName, scanDateUsage, emptyTotals } from '../claude/usage';
@@ -81,7 +81,7 @@ export const runUsage = async (agentName: string, dateStr?: string): Promise<voi
   const content = readFile(USAGE_PATH);
   if (content) {
     try {
-      usageData = JSON.parse(content);
+      usageData = JSON.parse(content) as UsageData;
     } catch {
       // 解析失败，使用空对象
     }
@@ -110,19 +110,4 @@ export const runUsage = async (agentName: string, dateStr?: string): Promise<voi
   console.log(formatModelsBlock(todayModels));
   console.log(chalk.cyan('总消耗：'));
   console.log(formatModelsBlock(totalModels));
-};
-
-/**
- * 注册 solo usage 子命令
- * @param program commander 实例
- */
-export const registerUsageCommand = (program: Command): void => {
-  program
-    .command('usage')
-    .description('统计指定 agent 的 Claude token 消耗')
-    .argument('<agent-name>', 'agent 名称')
-    .argument('[date]', '统计日期 yyyy-mm-dd（默认今天）')
-    .action(async (agentName: string, date?: string) => {
-      await runUsage(agentName, date);
-    });
 };

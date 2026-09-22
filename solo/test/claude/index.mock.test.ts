@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { trustFolder } from '../../src/claude';
 import { waitForText } from '../../src/tmux';
+import type * as TmuxType from '../../src/tmux';
 
 // vi.hoisted: 共享 mock 引用
 const { mockExecAsync } = vi.hoisted(() => ({
@@ -9,13 +10,13 @@ const { mockExecAsync } = vi.hoisted(() => ({
 
 // mock exec 模块：exec.fn 指向共享 mock
 // pane.ts 中函数通过 exec.fn() 调用 → 走 mock
-vi.mock('../../src/tmux/exec', () => ({
+vi.mock('../../src/process/exec', () => ({
   exec: { fn: mockExecAsync }
 }));
 
 // waitForText 是轮询函数，mock 以隔离 trustFolder 的条件逻辑
 vi.mock('../../src/tmux', async () => {
-  const actual = await vi.importActual<typeof import('../../src/tmux')>('../../src/tmux');
+  const actual = await vi.importActual<typeof TmuxType>('../../src/tmux');
   return { ...actual, waitForText: vi.fn().mockRejectedValue(new Error('Timed out')) };
 });
 

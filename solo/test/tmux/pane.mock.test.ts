@@ -4,11 +4,21 @@ const { mockExecAsync } = vi.hoisted(() => ({
   mockExecAsync: vi.fn().mockResolvedValue({ stdout: '', stderr: '' })
 }));
 
-vi.mock('../../src/tmux/exec', () => ({
+vi.mock('../../src/process/exec', () => ({
   exec: { fn: mockExecAsync }
 }));
 
-import { capturePane, sendKeys, sendKeysEnter, setPaneTitle, splitPane, waitForText, notifyCompletion, selectPane, listPanesWithTitle } from '../../src/tmux/pane';
+import {
+  capturePane,
+  sendKeys,
+  sendKeysEnter,
+  setPaneTitle,
+  splitPane,
+  waitForText,
+  notifyCompletion,
+  selectPane,
+  listPanesWithTitle
+} from '../../src/tmux/pane';
 
 describe('capturePane', () => {
   beforeEach(() => {
@@ -17,16 +27,12 @@ describe('capturePane', () => {
 
   it('接受 session/window/paneIndex 三个参数，paneIndex 为 number，内部拼接 target', async () => {
     await capturePane('my-session', 'my-window', 0);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux capture-pane -t my-session:my-window.0 -p'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t my-session:my-window.0 -p');
   });
 
   it('window 名含连字符时仍正确拼接', async () => {
     await capturePane('sess', 'win-name', 2);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux capture-pane -t sess:win-name.2 -p'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t sess:win-name.2 -p');
   });
 
   it('返回 stdout 内容', async () => {
@@ -37,16 +43,12 @@ describe('capturePane', () => {
 
   it('指定 lines 时拼接 -S -N 选项', async () => {
     await capturePane('s', 'w', 0, 500);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux capture-pane -t s:w.0 -p -S -500'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t s:w.0 -p -S -500');
   });
 
   it('lines + joinWrapped 时拼接 -J 选项', async () => {
     await capturePane('s', 'w', 0, 1000, true);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux capture-pane -t s:w.0 -p -S -1000 -J'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t s:w.0 -p -S -1000 -J');
   });
 });
 
@@ -57,30 +59,22 @@ describe('sendKeys', () => {
 
   it('接受 session/window/paneIndex 三个参数，键名不加引号', async () => {
     await sendKeys('sess', 'win', 0, 'Enter');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux send-keys -t sess:win.0 Enter'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux send-keys -t sess:win.0 Enter');
   });
 
   it('文本内容加引号', async () => {
     await sendKeys('sess', 'win', 1, 'hello world');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux send-keys -t sess:win.1 'hello world'"
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith("tmux send-keys -t sess:win.1 'hello world'");
   });
 
   it('文本内包含单引号时正确转义', async () => {
     await sendKeys('sess', 'win', 1, "it's a test");
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux send-keys -t sess:win.1 'it'\\''s a test'"
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith("tmux send-keys -t sess:win.1 'it'\\''s a test'");
   });
 
   it('paneIndex 为 number 类型', async () => {
     await sendKeys('s', 'w', 3, 'claude');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux send-keys -t s:w.3 claude'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux send-keys -t s:w.3 claude');
   });
 });
 
@@ -92,29 +86,29 @@ describe('sendKeysEnter', () => {
   it('分两次 exec 调用：先委托 sendKeys 发文本再发 Enter', async () => {
     await sendKeysEnter('sess', 'win', 0, 'C-c');
     expect(mockExecAsync).toHaveBeenCalledTimes(2);
-    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t sess:win.0 C-c");
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t sess:win.0 Enter");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, 'tmux send-keys -t sess:win.0 C-c');
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, 'tmux send-keys -t sess:win.0 Enter');
   });
 
   it('文本内容包引号，分两次 exec 调用', async () => {
     await sendKeysEnter('sess', 'win', 1, 'hello world');
     expect(mockExecAsync).toHaveBeenCalledTimes(2);
     expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t sess:win.1 'hello world'");
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t sess:win.1 Enter");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, 'tmux send-keys -t sess:win.1 Enter');
   });
 
   it('文本内包含单引号时正确转义，分两次 exec 调用', async () => {
     await sendKeysEnter('sess', 'win', 1, "it's a test");
     expect(mockExecAsync).toHaveBeenCalledTimes(2);
     expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t sess:win.1 'it'\\''s a test'");
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t sess:win.1 Enter");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, 'tmux send-keys -t sess:win.1 Enter');
   });
 
   it('委托 sendKeys 两次：第一次发内容，第二次发 Enter', async () => {
     await sendKeysEnter('s', 'w', 3, 'claude');
     expect(mockExecAsync).toHaveBeenCalledTimes(2);
-    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux send-keys -t s:w.3 claude");
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, "tmux send-keys -t s:w.3 Enter");
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, 'tmux send-keys -t s:w.3 claude');
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, 'tmux send-keys -t s:w.3 Enter');
   });
 });
 
@@ -125,16 +119,12 @@ describe('setPaneTitle', () => {
 
   it('接受 session/window/paneIndex 三个参数加 title', async () => {
     await setPaneTitle('sess', 'win', 0, 'my-title');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux select-pane -t sess:win.0 -T 'my-title'"
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith("tmux select-pane -t sess:win.0 -T 'my-title'");
   });
 
   it('paneIndex 为 number 类型', async () => {
     await setPaneTitle('s', 'w', 2, 'cli');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux select-pane -t s:w.2 -T 'cli'"
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith("tmux select-pane -t s:w.2 -T 'cli'");
   });
 });
 
@@ -145,9 +135,7 @@ describe('splitPane', () => {
 
   it('接受 session/window/paneIndex 三个参数，水平分屏', async () => {
     await splitPane('sess', 'win', 0, '-h');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux split-window -t sess:win.0 -h -P -F '#{pane_index}'"
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith("tmux split-window -t sess:win.0 -h -P -F '#{pane_index}'");
   });
 
   it('垂直分屏并指定工作目录', async () => {
@@ -175,9 +163,7 @@ describe('waitForText', () => {
     expect(result).toBeUndefined();
     // 只调用一次 capturePane（-S -lines -J）
     expect(mockExecAsync).toHaveBeenCalledTimes(1);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux capture-pane -t s:w.0 -p -S -1000 -J'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t s:w.0 -p -S -1000 -J');
   });
 
   it('首次未匹配，后续匹配后返回', async () => {
@@ -190,9 +176,7 @@ describe('waitForText', () => {
 
   it('超时抛出错误', async () => {
     mockExecAsync.mockResolvedValue({ stdout: 'loading...', stderr: '' });
-    await expect(
-      waitForText('s', 'w', 0, 'Done', 'yes', 200, 50, 1000)
-    ).rejects.toThrow('Timed out');
+    await expect(waitForText('s', 'w', 0, 'Done', 'yes', 200, 50, 1000)).rejects.toThrow('Timed out');
   });
 
   it('fixed 为空字符串时使用正则匹配', async () => {
@@ -212,9 +196,7 @@ describe('waitForText', () => {
   it('capturePane 使用指定的 lines 参数', async () => {
     mockExecAsync.mockResolvedValue({ stdout: 'text', stderr: '' });
     await waitForText('s', 'w', 0, 'text', 'text', 5000, 50, 500);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux capture-pane -t s:w.0 -p -S -500 -J'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t s:w.0 -p -S -500 -J');
   });
 });
 
@@ -227,10 +209,7 @@ describe('notifyCompletion', () => {
     mockExecAsync.mockResolvedValueOnce({ stdout: 'claude', stderr: '' });
     await notifyCompletion('sess', 'win', '0');
     expect(mockExecAsync).toHaveBeenCalledTimes(2);
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      1,
-      "tmux display-message -p -t sess:win.0 '#{pane_current_command}'"
-    );
+    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux display-message -p -t sess:win.0 '#{pane_current_command}'");
     expect(mockExecAsync).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining('agent-tracker/bin/agent tracker command')
@@ -240,26 +219,11 @@ describe('notifyCompletion', () => {
   it('通知命令包含正确的 window-id、pane 和 summary 参数', async () => {
     mockExecAsync.mockResolvedValueOnce({ stdout: 'claude', stderr: '' });
     await notifyCompletion('sess', 'win', '0');
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('-window-id win')
-    );
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('-pane 0')
-    );
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('-summary')
-    );
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('claude finished')
-    );
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('notify')
-    );
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('-window-id win'));
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('-pane 0'));
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('-summary'));
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('claude finished'));
+    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('notify'));
   });
 
   it('display-message 失败时不抛出错误', async () => {
@@ -281,16 +245,12 @@ describe('selectPane', () => {
 
   it('接受 session/window/paneIndex 三个参数，拼接 select-pane 命令', async () => {
     await selectPane('sess', 'win', 0);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux select-pane -t sess:win.0'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux select-pane -t sess:win.0');
   });
 
   it('paneIndex 为 number 类型，正确拼接 target', async () => {
     await selectPane('my-session', 'my-window', 2);
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      'tmux select-pane -t my-session:my-window.2'
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith('tmux select-pane -t my-session:my-window.2');
   });
 });
 
@@ -301,9 +261,7 @@ describe('listPanesWithTitle', () => {
 
   it('接受 session/window 两个参数，查询 pane index 和 title', async () => {
     await listPanesWithTitle('sess', 'win');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      "tmux list-panes -t sess:win -F '#{pane_index} #{pane_title}'"
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith("tmux list-panes -t sess:win -F '#{pane_index} #{pane_title}'");
   });
 
   it('解析多行输出为 { index, title }[] 数组', async () => {

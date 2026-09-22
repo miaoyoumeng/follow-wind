@@ -20,10 +20,10 @@ export interface AgentConfig {
   waitTime?: number;
 }
 
-// 日志配置：level 为日志级别，file 为日志文件路径
+// 日志配置：level 和 file 均为可选，未配置时使用默认值
 export interface LoggingConfig {
-  level: 'debug' | 'info' | 'warn' | 'error';
-  file: string;
+  level?: 'trace' | 'debug' | 'info' | 'warn' | 'error';
+  file?: string;
 }
 
 // Task 配置：coreSize 为默认维护数量，maxSize 为最大维护数量（上限 128）

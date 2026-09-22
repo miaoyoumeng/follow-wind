@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type * as ChildProcessType from 'child_process';
 
 // mock child_process：保留 exec（供 execAsync 使用），只 mock spawn
-vi.mock(import('child_process'), async importOriginal => {
-  const actual = await importOriginal();
+vi.mock('child_process', async importOriginal => {
+  const actual = await importOriginal<typeof ChildProcessType>();
   return {
     ...actual,
-    spawn: vi.fn(() => ({ on: vi.fn() }))
+    spawn: vi.fn(() => ({ on: vi.fn() })) as unknown
   };
 });
 
@@ -45,7 +46,7 @@ describe('terminal', () => {
 
     terminal('tmux', ['attach-session', '-t', 'solo']);
 
-    const exitHandler = mockOn.mock.calls[0][1];
+    const exitHandler = mockOn.mock.calls[0][1] as (code: number | null) => void;
     exitHandler(0);
 
     expect(mockExit).toHaveBeenCalledWith(0);
@@ -57,7 +58,7 @@ describe('terminal', () => {
 
     terminal('tmux', ['attach-session', '-t', 'solo']);
 
-    const exitHandler = mockOn.mock.calls[0][1];
+    const exitHandler = mockOn.mock.calls[0][1] as (code: number | null) => void;
     exitHandler(null);
 
     expect(mockExit).toHaveBeenCalledWith(0);

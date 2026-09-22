@@ -1,37 +1,31 @@
-import { Command } from 'commander';
-import { isTmuxHook } from '../tmux';
-import { debug } from '../logging';
-import type { HookCallbackParams } from '../tmux';
+import { isTmuxHook, capturePane, type HookCallbackParams } from '../tmux';
+import { logger } from '../logging';
+import { readConfig } from '../config';
+import { detectIntervention } from '../claude';
 
 /**
- * 处理 tmux hook 回调：校验事件名合法性，打印回调参数
+ * 处理 tmux hook 回调：
+ * 1. 校验事件名合法性
+ * 2. 判断 session 名称是否匹配当前项目，不匹配则终止
+ * 3. 记录 hook 回调参数（window 和 pane）
+ * 4. 读取 pane 内容并交给策略判断
  * @param params tmux 回调参数
+ * @returns 匹配的策略名称，或 null
  */
-export const runHook = (params: HookCallbackParams): void => {
+export const runHook = async (params: HookCallbackParams): Promise<string | null> => {
   if (!isTmuxHook(params.name)) {
     throw new Error(`未知 hook 事件 "${params.name}"（不在 tmux hook 池中）`);
   }
-  debug(`[hook] ${params.name} | session=${params.sessionName} window=${params.windowName} pane=${params.paneIndex}`);
-};
 
-/**
- * 注册 solo hook 子命令（tmux hook 回调入口）
- * @param program commander 实例
- */
-export const registerHookCommand = (program: Command): void => {
-  program
-    .command('hook')
-    .description('tmux hook 回调入口（由 tmux run-shell 自动调用）')
-    .requiredOption('--name <name>', 'hook 事件名')
-    .requiredOption('--session_name <session_name>', 'session 名称')
-    .requiredOption('--window_name <window_name>', 'window 名称')
-    .requiredOption('--pane_index <pane_index>', 'pane 索引')
-    .action((opts: Record<string, string>) => {
-      runHook({
-        name: opts.name,
-        sessionName: opts.session_name,
-        windowName: opts.window_name,
-        paneIndex: opts.pane_index
-      });
-    });
+  const currentSession = readConfig().name;
+  if (params.sessionName !== currentSession) {
+    return null;
+  }
+
+  if (logger.isDebugEnabled()) {
+    logger.debug(`[hook] ${params.name} | window=${params.windowName} pane=${params.paneIndex}`);
+  }
+
+  const paneContent = await capturePane(params.sessionName, params.windowName, Number(params.paneIndex));
+  return detectIntervention({ content: paneContent });
 };

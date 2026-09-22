@@ -10,14 +10,19 @@ const { mockDebug, mockReadConfig, mockUpdateTask, mockCapturePane, mockReadFile
   mockWriteFile: vi.fn()
 }));
 
-vi.mock(import('../../src/logging'), () => ({
-  info: vi.fn(),
-  debug: mockDebug,
-  warn: vi.fn(),
-  error: vi.fn(),
+vi.mock('../../src/logging', () => ({
+  logger: {
+    trace: vi.fn(),
+    debug: mockDebug,
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    isTraceEnabled: vi.fn().mockReturnValue(false),
+    isDebugEnabled: vi.fn().mockReturnValue(false),
+    isInfoEnabled: vi.fn().mockReturnValue(false)
+  } as unknown,
   getLoggingConfig: vi.fn(),
-  setup: vi.fn(),
-  reset: vi.fn()
+  setup: vi.fn()
 }));
 
 vi.mock('../../src/config', () => ({
@@ -70,7 +75,10 @@ describe('runPoll', () => {
     expect(mockReadFile).toHaveBeenCalledTimes(1);
     // writeFile 每次轮询都调用（debug 快照 + 下次比较基线）
     expect(mockWriteFile).toHaveBeenCalledTimes(2);
-    expect(mockUpdateTask).toHaveBeenCalledWith('task-001', { status: 'completed', completedAt: expect.any(String) });
+    expect(mockUpdateTask).toHaveBeenCalledWith('task-001', {
+      status: 'completed',
+      completedAt: expect.any(String) as unknown
+    });
   });
 
   it('内容持续变化直到超时，标记 timeout', async () => {
@@ -83,7 +91,10 @@ describe('runPoll', () => {
     await vi.advanceTimersByTimeAsync(61_000);
     await promise;
 
-    expect(mockUpdateTask).toHaveBeenCalledWith('task-001', { status: 'timeout', completedAt: expect.any(String) });
+    expect(mockUpdateTask).toHaveBeenCalledWith('task-001', {
+      status: 'timeout',
+      completedAt: expect.any(String) as unknown
+    });
   });
 
   it('无 agentName 时使用 session-window 作为路径前缀', async () => {
@@ -91,10 +102,7 @@ describe('runPoll', () => {
     await vi.runAllTimersAsync();
     await promise;
 
-    expect(mockWriteFile).toHaveBeenCalledWith(
-      expect.stringContaining('sess-win-0.md'),
-      'pane-content'
-    );
+    expect(mockWriteFile).toHaveBeenCalledWith(expect.stringContaining('sess-win-0.md'), 'pane-content');
   });
 
   it('构造存储路径时使用 agentName', async () => {
@@ -102,10 +110,7 @@ describe('runPoll', () => {
     await vi.runAllTimersAsync();
     await promise;
 
-    expect(mockWriteFile).toHaveBeenCalledWith(
-      expect.stringContaining('api-2.md'),
-      'pane-content'
-    );
+    expect(mockWriteFile).toHaveBeenCalledWith(expect.stringContaining('api-2.md'), 'pane-content');
   });
 
   it('内容稳定后标记 completed', async () => {
@@ -113,7 +118,10 @@ describe('runPoll', () => {
     await vi.runAllTimersAsync();
     await promise;
 
-    expect(mockUpdateTask).toHaveBeenCalledWith('task-001', { status: 'completed', completedAt: expect.any(String) });
+    expect(mockUpdateTask).toHaveBeenCalledWith('task-001', {
+      status: 'completed',
+      completedAt: expect.any(String) as unknown
+    });
   });
 
   it('提供 onStateChange 时，内容稳定后调用回调（completed）', async () => {

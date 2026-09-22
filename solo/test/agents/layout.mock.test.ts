@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { panesLayout } from '../../src/agents/layout';
 import { splitPane, setPaneTitle, sendKeys } from '../../src/tmux';
 
@@ -15,7 +15,7 @@ const mockSendKeys = vi.mocked(sendKeys);
 
 describe('panesLayout', () => {
   let logs: string[];
-  let spy: ReturnType<typeof vi.spyOn>;
+  let spy: MockInstance;
 
   beforeEach(() => {
     mockSplitPane.mockClear();

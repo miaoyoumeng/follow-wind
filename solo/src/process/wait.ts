@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
 import { registerTask, type Task } from '../task';
-import { info } from '../logging';
+import { logger } from '../logging';
 
 // 编译后 wait.js 在 dist/process/，solo.js 在 dist/bin/
 const DEFAULT_WORKER_PATH = join(__dirname, '..', 'bin', 'solo.js');
@@ -28,7 +28,8 @@ export const startWorker = (
 
   const child = spawn(process.execPath, [workerPath, ...args], {
     detached: true,
-    stdio: 'ignore'
+    stdio: 'ignore',
+    env: { ...process.env, SOLO_WORKER: '1' }
   });
   child.unref();
   return child.pid ?? 0;
@@ -41,12 +42,19 @@ export const startWorker = (
  * @param window tmux window 名
  * @param paneIndex pane 索引
  * @param agentName agent 名称（可选）
+ * @param existingTaskId 已有的任务 ID（可选）；由 daemon IPC 注册时传入，跳过本地注册避免双重注册
  * @returns 注册后的任务记录
  */
-export const waitForIdle = (session: string, window: string, paneIndex: number, agentName?: string): Task => {
-  const taskId = registerTask({ agentName, session, window, paneIndex });
+export const waitForIdle = (
+  session: string,
+  window: string,
+  paneIndex: number,
+  agentName?: string,
+  existingTaskId?: string
+): Task => {
+  const taskId = existingTaskId ?? registerTask({ agentName, session, window, paneIndex });
   const pid = startWorker(taskId, session, window, paneIndex, agentName);
-  info(`[chat] task ${taskId} registered (pid: ${pid}), polling in background`);
+  logger.info(`[chat] task ${taskId} registered (pid: ${pid}), polling in background`);
   return {
     completedAt: '',
     type: 'local_bash',

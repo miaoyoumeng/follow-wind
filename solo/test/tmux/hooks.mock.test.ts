@@ -4,7 +4,7 @@ const { mockExecAsync } = vi.hoisted(() => ({
   mockExecAsync: vi.fn().mockResolvedValue({ stdout: '', stderr: '' })
 }));
 
-vi.mock('../../src/tmux/exec', () => ({
+vi.mock('../../src/process/exec', () => ({
   exec: { fn: mockExecAsync }
 }));
 
@@ -31,9 +31,7 @@ describe('setHook', () => {
 
   it('全局设置 hook：拼接 tmux set-hook -g', async () => {
     await setHook('after-new-session', 'run-shell "echo created"');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      `tmux set-hook -g after-new-session 'run-shell "echo created"'`
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith(`tmux set-hook -g after-new-session 'run-shell "echo created"'`);
   });
 
   it('指定 session 设置 hook：拼接 -t sessionName', async () => {
@@ -45,16 +43,12 @@ describe('setHook', () => {
 
   it('command 不含引号时仍用单引号包裹', async () => {
     await setHook('after-kill-pane', 'display-message died');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      `tmux set-hook -g after-kill-pane 'display-message died'`
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith(`tmux set-hook -g after-kill-pane 'display-message died'`);
   });
 
   it('支持 after-* 系列 hook：after-new-session', async () => {
     await setHook('after-new-session', 'run-shell "echo new"');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      `tmux set-hook -g after-new-session 'run-shell "echo new"'`
-    );
+    expect(mockExecAsync).toHaveBeenCalledWith(`tmux set-hook -g after-new-session 'run-shell "echo new"'`);
   });
 });
 

@@ -1,5 +1,5 @@
 import { join } from 'path';
-import type { UsageTotals } from './types';
+import type { UsageTotals } from '../types';
 import { readFile, exists, readDir } from '../../utils';
 
 /**
@@ -29,7 +29,7 @@ const accumulateLine = (
   if (!line.trim()) return;
   let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(line);
+    parsed = JSON.parse(line) as Record<string, unknown>;
   } catch {
     return;
   }

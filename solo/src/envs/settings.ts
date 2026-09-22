@@ -1,4 +1,4 @@
-import { CONFIG_PATH } from '../config';
+import { getConfigPath } from '../config';
 import { BaseEnvHandler } from './base';
 import { exists } from '../utils/files';
 import type { EnvCheckResult } from './types';
@@ -8,10 +8,11 @@ import type { EnvCheckResult } from './types';
  */
 export class SettingsHandler extends BaseEnvHandler {
   handle(): EnvCheckResult {
+    const configPath = getConfigPath();
     return {
       settings: {
-        exists: exists(CONFIG_PATH),
-        path: CONFIG_PATH
+        exists: exists(configPath),
+        path: configPath
       }
     };
   }

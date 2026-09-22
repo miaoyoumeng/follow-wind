@@ -4,8 +4,8 @@ import { checkSettings } from '../envs';
 import { readConfig } from '../config';
 import { checkAgentWorkspaces, type WorkspaceCheckResult } from '../agents';
 import { readPidFile, isProcessAlive } from '../process';
-import { statTask } from '../ipc';
-import type { TaskStat } from '../task';
+import { listTasks as ipcListTasks } from '../ipc';
+import type { Task, TaskStat } from '../task';
 
 // name 验证规则：英文字符开头，可包含数字、'-'、'_'
 const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
@@ -100,7 +100,20 @@ const formatAgentTable = (results: WorkspaceCheckResult[]): string[] => {
 };
 
 /**
- * 格式化 tasks 状态统计（右对齐标签 + 缩进 + 彩色数值）
+ * 统计任务列表中各状态的数量（纯函数）
+ * @param tasks 任务列表
+ * @returns 各状态计数
+ */
+export const statTask = (tasks: Task[]): TaskStat => {
+  const stat: TaskStat = { pending: 0, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 };
+  for (const task of tasks) {
+    stat[task.status]++;
+  }
+  return stat;
+};
+
+/**
+ * 格式化 tasks 状态计数（右对齐标签 + 缩进 + 彩色数值）
  * 标签总宽度 = 最长标签长度 + 3（缓冲），所有冒号对齐在同一列
  * @param stat 各状态计数
  */
@@ -139,13 +152,21 @@ export const runStatus = async (): Promise<void> => {
   }
 
   // tasks（仅 daemon 存活时显示）
-  if (!isDaemonAlive) return;
+  if (!isDaemonAlive) {
+    return;
+  }
 
   try {
-    const stat = (await statTask()) as TaskStat;
-    console.log(chalk.gray('tasks:'));
-    for (const line of formatTaskStatus(stat)) {
-      console.log(line);
+    const tasks = (await ipcListTasks()) as Task[];
+    if (tasks.length === 0) {
+      console.log(chalk.yellow('  📋 暂无任务'));
+    } else {
+      const stat = statTask(tasks);
+
+      console.log(chalk.gray('tasks:'));
+      for (const line of formatTaskStatus(stat)) {
+        console.log(line);
+      }
     }
   } catch {
     // IPC 连接失败，静默跳过

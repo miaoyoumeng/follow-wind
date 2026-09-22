@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { join } from 'path';
+import type * as LoggingType from '../../src/logging';
 
 const { mockWriteFile, mockReadFile } = vi.hoisted(() => ({
   mockWriteFile: vi.fn(),
@@ -12,8 +13,8 @@ vi.mock('../../src/utils', () => ({
   readFile: mockReadFile
 }));
 
-vi.mock(import('../../src/logging'), async importOriginal => {
-  const actual = await importOriginal();
+vi.mock('../../src/logging', async importOriginal => {
+  const actual = await importOriginal<typeof LoggingType>();
   return { ...actual };
 });
 
@@ -34,12 +35,8 @@ describe('writePidFile', () => {
   it('将当前进程 PID 写入 PID_PATH', () => {
     writePidFile();
     expect(mockWriteFile).toHaveBeenCalledTimes(1);
-    expect(mockWriteFile).toHaveBeenCalledWith(
-      expect.stringContaining('pid'),
-      String(process.pid)
-    );
+    expect(mockWriteFile).toHaveBeenCalledWith(expect.stringContaining('pid'), String(process.pid));
   });
-
 });
 
 describe('readPidFile', () => {

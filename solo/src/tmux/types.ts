@@ -8,8 +8,6 @@ export interface WindowInfo {
   panes: number;
 }
 
-export type ExecFn = (cmd: string) => Promise<{ stdout: string; stderr: string }>;
-
 /**
  * tmux hook 回调参数（由 tmux run-shell 传入）
  */

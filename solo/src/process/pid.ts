@@ -1,6 +1,6 @@
 import { writeFile, readFile } from '../utils';
 import { PID_PATH } from '../config/paths';
-import { debug } from '../logging';
+import { logger } from '../logging';
 
 /**
  * 将当前进程 PID 写入 .solo/pid 文件
@@ -8,7 +8,7 @@ import { debug } from '../logging';
  */
 export const writePidFile = (): void => {
   writeFile(PID_PATH, String(process.pid));
-  debug(`[pid] wrote PID ${process.pid} to ${PID_PATH}`);
+  logger.debug(`[pid] wrote PID ${process.pid} to ${PID_PATH}`);
 };
 
 /**

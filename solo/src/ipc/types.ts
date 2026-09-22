@@ -1,8 +1,7 @@
 /** IPC 方法常量 */
 export const IPC_METHODS = {
   registerTask: 'registerTask',
-  getRunningTasks: 'getRunningTasks',
-  statTask: 'statTask',
+  listTasks: 'listTasks',
   updateTaskState: 'updateTaskState',
   exit: 'exit'
 } as const;
@@ -36,4 +35,14 @@ export interface IpcResponse {
 export interface HandleMessageOptions {
   /** exit 方法被调用时的回调，用于触发 daemon 进程优雅关闭 */
   onExit?: () => void;
+}
+
+/** registerTask IPC 请求参数 */
+export interface RegisterTaskParams {
+  type: 'local_bash' | 'local_agent' | 'dream';
+  pid?: number;
+  agentName?: string;
+  session?: string;
+  window?: string;
+  paneIndex?: number;
 }

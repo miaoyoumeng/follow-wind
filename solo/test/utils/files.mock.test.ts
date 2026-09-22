@@ -8,7 +8,7 @@ vi.mock('fs', () => ({
   existsSync: vi.fn(),
   appendFileSync: vi.fn(),
   statSync: vi.fn(),
-  readdirSync: vi.fn(),
+  readdirSync: vi.fn()
 }));
 
 import { ensureDir, writeFile, readFile, appendFile, exists, stat, readDir } from '../../src/utils/files';
@@ -74,7 +74,7 @@ describe('utils/files 文件操作工具', () => {
   describe('stat', () => {
     it('返回文件统计信息', () => {
       const mockStat = { mtimeMs: 1234567890, size: 100 };
-      vi.mocked(statSync).mockReturnValue(mockStat as any);
+      vi.mocked(statSync).mockReturnValue(mockStat as unknown as ReturnType<typeof statSync>);
       const result = stat('/test/file.txt');
       expect(result).toBe(mockStat);
       expect(statSync).toHaveBeenCalledWith('/test/file.txt');
@@ -83,7 +83,7 @@ describe('utils/files 文件操作工具', () => {
 
   describe('readDir', () => {
     it('返回目录条目列表', () => {
-      vi.mocked(readdirSync).mockReturnValue(['file1.txt', 'file2.txt'] as any);
+      vi.mocked(readdirSync).mockReturnValue(['file1.txt', 'file2.txt'] as unknown as ReturnType<typeof readdirSync>);
       const result = readDir('/test/dir');
       expect(result).toEqual(['file1.txt', 'file2.txt']);
       expect(readdirSync).toHaveBeenCalledWith('/test/dir');

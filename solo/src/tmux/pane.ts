@@ -1,4 +1,4 @@
-import { exec } from './exec';
+import { exec } from '../process';
 
 /**
  * 在指定 pane 上分屏，返回新 pane 的 index

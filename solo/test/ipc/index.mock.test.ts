@@ -15,12 +15,8 @@ describe('ipc/index', () => {
     expect(typeof ipc.registerTask).toBe('function');
   });
 
-  it('导出 getRunningTasks 客户端函数', () => {
-    expect(typeof ipc.getRunningTasks).toBe('function');
-  });
-
-  it('导出 statTask 客户端函数', () => {
-    expect(typeof ipc.statTask).toBe('function');
+  it('导出 listTasks 客户端函数', () => {
+    expect(typeof ipc.listTasks).toBe('function');
   });
 
   it('导出 exitDaemon 客户端函数', () => {

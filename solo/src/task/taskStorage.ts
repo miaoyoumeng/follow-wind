@@ -1,7 +1,7 @@
 import { formatUtcCompact } from '../utils';
-import { debug } from '../logging';
+import { logger } from '../logging';
 import type { TaskConfig } from '../config';
-import type { Task, TaskStatus, TaskType, TaskStat } from './types';
+import type { Task, TaskStatus, TaskType } from './types';
 
 // 内存任务存储
 const taskStore = new Map<string, Task>();
@@ -19,7 +19,9 @@ export const initTaskManager = (config: TaskConfig): void => {
     coreSize: config.coreSize ?? DEFAULT_CORE_SIZE,
     maxSize: config.maxSize
   };
-  debug(`[task-manager] 初始化配置: coreSize=${taskConfig.coreSize}, maxSize=${taskConfig.maxSize ?? 'undefined'}`);
+  logger.debug(
+    `[task-manager] 初始化配置: coreSize=${taskConfig.coreSize}, maxSize=${taskConfig.maxSize ?? 'undefined'}`
+  );
 };
 
 /**
@@ -115,20 +117,6 @@ export const getRunningTasks = (): Task[] => {
 export const evictTask = (taskId: string): boolean => {
   return taskStore.delete(taskId);
 };
-
-/**
- * 统计各状态的任务数量
- */
-export const statTask = (): TaskStat => {
-  const stat: TaskStat = { pending: 0, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 };
-  for (const task of taskStore.values()) {
-    stat[task.status]++;
-  }
-  return stat;
-};
-
-/** 统计各状态的任务数量（statTask 的别名） */
-export const getTaskSummary = statTask;
 
 /**
  * 清空所有任务（用于测试或重置）

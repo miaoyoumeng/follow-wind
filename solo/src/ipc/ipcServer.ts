@@ -1,16 +1,15 @@
 import * as net from 'net';
 import { unlinkSync, existsSync } from 'fs';
-import chalk from 'chalk';
 
-import { IPC_SOCKET_PATH } from '../config/paths';
 import { handleMessage } from './server';
 import type { IpcRequest } from './types';
-import { debug, info } from '../logging';
+import { logger } from '../logging';
 import { readPidFile } from '../process';
 import { killSession, sessionExists } from '../tmux';
-import { validateWorkspace } from '../commander/status';
+import { validateWorkspace } from '../commander';
 
 let ipcServerInstance: net.Server | null = null;
+let ipcSocketPath: string = '';
 
 /**
  * 处理单个 IPC 连接的请求和响应
@@ -24,53 +23,60 @@ const handleConnection = (conn: net.Socket, onExit: () => void): void => {
   });
   conn.on('end', () => {
     try {
-      const req: IpcRequest = JSON.parse(data);
+      const req = JSON.parse(data) as IpcRequest;
       const res = handleMessage(req, { onExit });
       const pid = readPidFile();
       conn.end(JSON.stringify(res));
+      logger.info(`[ipc-server] handle method ${req.method},  request info: ${JSON.stringify(res)}`);
       if (req.method === 'exit') {
         setImmediate(() => {
           const sessionName = validateWorkspace();
-          sessionExists(sessionName).then(tag => {
+          void sessionExists(sessionName).then(tag => {
             if (tag) {
-              killSession(sessionName).then(() => {
-                console.log(chalk.green(`✅ session ${sessionName} 已终止`));
+              logger.info(`✅️ session ${sessionName} exists: ${tag}`);
+              void killSession(sessionName).then(() => {
+                logger.info(`✅ session ${sessionName} 已终止`);
               });
             } else {
-              console.log(chalk.yellow(`⚠️ session ${sessionName} is already terminated`));
+              logger.info(`⚠️ session ${sessionName} is already terminated`);
             }
           });
 
-          info(`process exited with pid: ${pid}...`);
+          logger.info(`[ipc-server] process exited with pid: ${pid}...`);
+          conn.end();
           process.exit(0);
         });
       }
     } catch (err) {
-      debug(`[ipc-server] error handling request: ${String(err)}`);
+      logger.error(`[ipc-server] error handling request: ${String(err)}`);
       conn.end();
+    } finally {
+      logger.trace('[ipc-server] info connection terminated ');
     }
   });
 };
 
 /**
  * 启动 IPC Unix socket 服务端，接收请求并委托 handleMessage 处理
+ * @param socketPath socket 文件路径（如 .solo/ipc-[name].sock）
  * @param onExit exit 方法被调用时的回调（用于触发 daemon 优雅关闭）
  * @param onListening socket 开始监听后的回调
  */
-export const startIpcServer = (onExit: () => void, onListening?: () => void): void => {
+export const startIpcServer = (socketPath: string, onExit: () => void, onListening?: () => void): void => {
   if (ipcServerInstance !== null) return;
-  debug('[ipc-server] starting...');
-  if (existsSync(IPC_SOCKET_PATH)) {
-    unlinkSync(IPC_SOCKET_PATH);
+  ipcSocketPath = socketPath;
+  logger.info('[ipc-server] starting...');
+  if (existsSync(socketPath)) {
+    unlinkSync(socketPath);
   }
 
   const server = net.createServer(conn => handleConnection(conn, onExit));
   server.on('error', err => {
-    debug(`[ipc-server] error: ${String(err)}`);
+    logger.error(`[ipc-server] error: ${String(err)}`);
   });
-  server.listen(IPC_SOCKET_PATH, () => {
+  server.listen(socketPath, () => {
     ipcServerInstance = server;
-    debug(`[ipc-server] listening on ${IPC_SOCKET_PATH}`);
+    logger.info(`[ipc-server] listening on ${socketPath}`);
     onListening?.();
   });
 };
@@ -82,10 +88,11 @@ export const stopIpcServer = (): void => {
   if (ipcServerInstance !== null) {
     ipcServerInstance.close();
     ipcServerInstance = null;
-    if (existsSync(IPC_SOCKET_PATH)) {
-      unlinkSync(IPC_SOCKET_PATH);
+    if (ipcSocketPath && existsSync(ipcSocketPath)) {
+      unlinkSync(ipcSocketPath);
     }
-    debug('[ipc-server] stopped');
+    ipcSocketPath = '';
+    logger.info('[ipc-server] stopped');
   }
 };
 

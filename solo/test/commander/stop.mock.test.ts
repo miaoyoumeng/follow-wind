@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 const { mockSessionExists, mockKillSession, mockValidateWorkspace, mockExitDaemon } = vi.hoisted(() => ({
   mockSessionExists: vi.fn(),
@@ -24,7 +24,7 @@ import { runStop } from '../../src/commander/stop';
 
 describe('runStop', () => {
   let logs: string[];
-  let spy: ReturnType<typeof vi.spyOn>;
+  let spy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,13 +38,11 @@ describe('runStop', () => {
 
   it('session 存在时：killSession 终止 session 并调用 exitDaemon 退出 daemon', async () => {
     mockSessionExists.mockResolvedValue(true);
-    mockKillSession.mockResolvedValue();
+    mockKillSession.mockResolvedValue(undefined);
     await runStop();
     expect(mockKillSession).toHaveBeenCalledWith('test-session');
     expect(mockExitDaemon).toHaveBeenCalled();
-    expect(mockExitDaemon.mock.invocationCallOrder[0]).toBeGreaterThan(
-      mockKillSession.mock.invocationCallOrder[0]
-    );
+    expect(mockExitDaemon.mock.invocationCallOrder[0]).toBeGreaterThan(mockKillSession.mock.invocationCallOrder[0]);
   });
 
   it('session 不存在时：不调用 killSession，仍调用 exitDaemon', async () => {
@@ -56,7 +54,7 @@ describe('runStop', () => {
 
   it('session 存在时输出绿色成功消息', async () => {
     mockSessionExists.mockResolvedValue(true);
-    mockKillSession.mockResolvedValue();
+    mockKillSession.mockResolvedValue(undefined);
     await runStop();
     expect(logs.some(l => l.includes('已终止'))).toBe(true);
   });
@@ -69,7 +67,7 @@ describe('runStop', () => {
 
   it('exitDaemon 抛出异常时向上传播', async () => {
     mockSessionExists.mockResolvedValue(true);
-    mockKillSession.mockResolvedValue();
+    mockKillSession.mockResolvedValue(undefined);
     mockExitDaemon.mockImplementation(() => {
       throw new Error('PID file not found');
     });

@@ -1,4 +1,4 @@
-import { exec } from './exec';
+import { exec } from '../process';
 
 /**
  * tmux 3.6b 支持的全部 hook 名（单一数据源，TmuxHook 类型由此派生）

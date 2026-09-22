@@ -1,17 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IpcRequest } from '../../src/ipc/types';
 
-const { mockRegisterTask, mockGetRunningTasks, mockStatTask, mockUpdateTaskState } = vi.hoisted(() => ({
+const { mockRegisterTask, mockListTasks, mockUpdateTaskState } = vi.hoisted(() => ({
   mockRegisterTask: vi.fn().mockReturnValue('task-001'),
-  mockGetRunningTasks: vi.fn().mockReturnValue([]),
-  mockStatTask: vi.fn().mockReturnValue({ pending: 0, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 }),
+  mockListTasks: vi.fn().mockReturnValue([]),
   mockUpdateTaskState: vi.fn()
 }));
 
 vi.mock('../../src/task/taskStorage', () => ({
   registerTask: mockRegisterTask,
-  getRunningTasks: mockGetRunningTasks,
-  statTask: mockStatTask,
+  listTasks: mockListTasks,
   updateTaskState: mockUpdateTaskState
 }));
 
@@ -46,26 +44,16 @@ describe('handleMessage', () => {
     expect(mockRegisterTask).toHaveBeenCalledWith({ type: 'local_agent', pid: 12345 });
   });
 
-  it('处理 getRunningTasks 请求，委托 taskStorage.getRunningTasks', () => {
+  it('处理 listTasks 请求，委托 taskStorage.listTasks', () => {
     const tasks = [
       { id: 'task-1', status: 'running', type: 'local_bash', session: 's', window: 'w', paneIndex: 0, createdAt: '' }
     ];
-    mockGetRunningTasks.mockReturnValue(tasks);
-    const req: IpcRequest = { id: 'req-3', method: 'getRunningTasks' };
+    mockListTasks.mockReturnValue(tasks);
+    const req: IpcRequest = { id: 'req-3', method: 'listTasks' };
     const res = handleMessage(req);
     expect(res.success).toBe(true);
     expect(res.data).toEqual({ tasks });
-    expect(mockGetRunningTasks).toHaveBeenCalled();
-  });
-
-  it('处理 statTask 请求，委托 taskStorage.statTask', () => {
-    const stat = { pending: 1, running: 2, completed: 3, timeout: 0, failed: 0, killed: 0 };
-    mockStatTask.mockReturnValue(stat);
-    const req: IpcRequest = { id: 'req-4', method: 'statTask' };
-    const res = handleMessage(req);
-    expect(res.success).toBe(true);
-    expect(res.data).toEqual({ stat });
-    expect(mockStatTask).toHaveBeenCalled();
+    expect(mockListTasks).toHaveBeenCalled();
   });
 
   it('处理 updateTaskState 请求，委托 taskStorage.updateTaskState', () => {

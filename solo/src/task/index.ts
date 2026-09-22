@@ -6,8 +6,6 @@ export {
   updateTaskState,
   getRunningTasks,
   evictTask,
-  statTask,
-  getTaskSummary,
   initTaskManager,
   getTaskConfig,
   clearTaskStorage,
@@ -15,4 +13,4 @@ export {
 } from './taskStorage';
 export type { Task, TaskStatus, TaskType, TaskStat } from './types';
 export { runPoll } from './polling';
-export { runTaskWorker, registerTaskWorkerCommand } from './worker';
+export { runTaskWorker } from './worker';
