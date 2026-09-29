@@ -34,18 +34,20 @@ solo windows             # 显示当前 session 中的 windows
 
 ```
 src/
-├── bin/solo.ts                  # CLI 入口，commander 注册所有子命令
-├── commander/                   # 子命令实现（每个子命令一个目录）
-├── config/                      # 统一路径配置（.solo、.solo/config 等常量）
-│   ├── index.ts                 # 模块入口（re-export）
-│   └── paths.ts                 # 路径常量定义
-├── core/                        # 公共逻辑（无业务含义的工具模块）
-│   ├── agents/                  # Agent 配置解析与 tmux 布局编排
-│   ├── checker/                 # 环境检测（settings、claude、tmux）
-│   ├── yaml/                    # .solo/config YAML 配置文件读写
-│   └── version.ts               # 读取 package.json 版本号
-├── tmux/                        # tmux 操作封装（纯命令调用，无业务逻辑）
-└── claude/                      # Claude 进程启动逻辑
+├── agents/       # Agent 配置解析与 tmux 布局编排
+├── bin/          # CLI 入口，commander 注册所有子命令
+├── bootstrap/    # 常驻进程 daemon 管理（PID 文件、心跳、IPC 调度）
+├── claude/       # Claude 进程启动与干预检测
+├── cli/          # 子命令实现（每个子命令一个目录）
+├── config/       # 统一路径配置（.solo、.solo/config 等常量）
+├── envs/         # 环境检测（settings、claude、tmux）
+├── hooks/        # tmux hooks 注册与回调实现
+├── ipc/          # IPC 通信（roller 轮询、daemon 消息处理）
+├── logging/      # 日志模块
+├── process/      # 进程级操作（wait 等待 pane 空闲）
+├── task/         # 任务管理（注册、状态流转、存储、轮询循环）
+├── tmux/         # tmux 操作封装（纯命令调用，无业务逻辑）
+└── utils/        # 通用工具（文件 IO、时间、YAML 读写等）
 ```
 
 TypeScript 构建后输出到 `dist/` 目录，可执行文件为 `dist/bin/solo.js`。
@@ -67,9 +69,9 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 
 ### 目录与文件
 
-- 子命令实现都在 `src/commander/`，每个命令一个目录。
-- 公共逻辑放 `src/core/`，业务模块（如 `agents`、`tmux`、`claude`）各自独立顶级目录。
-- 所有约定的文件路径（如 `.solo`、`.solo/config`）统一在 `src/config/` 定义，其他地方引用。
+- 子命令实现都在 `src/cli/`，每个命令一个目录。
+- 业务逻辑（如 `src/agents`、`src/tmux`、`src/claude`）各自独立顶级目录。
+- 所有约定的文件路径（如 `.solo`、`.solo/config.yaml`）统一在 `src/config/` 定义，其他地方引用。
 
 ### 模块入口（index.ts）
 
@@ -81,25 +83,14 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 
 ### 命令开发规则
 
-除 `init`、`version`、`status` 外，其他命令必须先调用 `validateWorkspace`（来自 `src/commander/status`）验证工作区合规性，再执行业务逻辑。
+除 `init`、`version`、`status` 外，其他命令必须先调用 `validateWorkspace`（来自 `src/cli/status`）验证工作区合规性，再执行业务逻辑。
 
 ### 日志规范
 
-- `console.log`（及其他 `console.*`）只能出现在 `src/commander/` 目录下的文件中，用于向用户输出终端信息。
-- `src/commander/` 以外的所有代码，禁止使用 `console.*`，必须使用 `logger`（来自 `src/logging`）的 `logger.trace`、`logger.debug`、`logger.info`、`logger.warn`、`logger.error` 方法记录日志。
+- `console.log`（及其他 `console.*`）只能出现在 `src/cli/` 目录下的文件中，用于向用户输出终端信息。
+- `src/cli/` 以外的所有代码，禁止使用 `console.*`，必须使用 `logger`（来自 `src/logging`）的 `logger.trace`、`logger.debug`、`logger.info`、`logger.warn`、`logger.error` 方法记录日志。
 - 引入 `logger`：`import { logger } from '../logging';`（路径根据文件位置调整）。
-- 其中`logger.trace`、`logger.debug`、`logger.info`必需先判断日志级别是否支持，再输出对应级别的日志；其他函数的不需要判断，可以直接输出对应级别的日志。
-```
-if (logger.isDebugEnabled()) {                                                      
-  logger.debug(`[log message]`)                                  
-}
-```
-### 核心流程
-
-1. `solo init` → 创建 `.solo/config`，写入 `name`
-2. `solo start` → 读取配置 → tmux session 不存在则创建，已存在则附加；按 `panes` 配置分屏并设置标题，tag 为 `claude` 的 pane 自动启动 claude 并处理信任提示
-3. `solo stop` → 终止 session
-4. `solo dashboard` → 附加到 session（维持终端状态）
+- 直接调用 `logger.trace`、`logger.debug`、`logger.info`、`logger.warn`、`logger.error` 即可，tslog 内部会根据 `minLevel` 配置自动过滤低级别日志，无需调用方判断。禁止封装日志守卫为公共方法。
 
 ## TypeScript 规范
 
@@ -116,6 +107,7 @@ if (logger.isDebugEnabled()) {
 
 ## 测试规范
 
+- 禁止编写文件名为 `types.ts` 和 `index.ts` 对应的单元测试（它们只包含类型定义或 re-export，无可测试行为）。
 - 禁止编写仅验证日志输出（`debug`/`info`/`warn`/`error` 调用次数、参数、颜色）的单元测试。日志是副作用，不是行为。测试应关注函数的返回值、状态变更或外部调用，而非日志是否被打印。如果一个测试的全部断言都是 `expect(mockLog).toHaveBeenCalled(...)`，则该测试无意义，应删除。
 - 只 Mock 边界：网络、数据库、文件系统、时间、随机数、第三方 API 等外部依赖才 Mock；禁止 Mock 被测函数或类本身。
 - 优先依赖注入：通过构造函数、参数或工厂注入接口依赖，优于 `vi.mock` 整个模块。

@@ -77,3 +77,15 @@ export const stat = (filePath: string): Stats => {
 export const readDir = (dirPath: string): string[] => {
   return readdirSync(dirPath) as string[];
 };
+
+/**
+ * 从 process.stdin 读取全部内容（用于 hook 接收 JSON 输入）
+ * @returns stdin 的完整文本内容
+ */
+export const readStdin = async (): Promise<string> => {
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk as Uint8Array);
+  }
+  return Buffer.concat(chunks).toString('utf-8');
+};

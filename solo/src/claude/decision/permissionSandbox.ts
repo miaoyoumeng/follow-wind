@@ -18,9 +18,13 @@ const extractNumberedLines = (content: string): Array<{ num: number; line: strin
 
 /** 检查数字序列是否从 1 开始且连续 */
 const isContinuousFromOne = (numbers: number[]): boolean => {
-  if (numbers.length === 0 || numbers[0] !== 1) return false;
+  if (numbers.length === 0 || numbers[0] !== 1) {
+    return false;
+  }
   for (let i = 1; i < numbers.length; i++) {
-    if (numbers[i] !== numbers[i - 1] + 1) return false;
+    if (numbers[i] !== numbers[i - 1] + 1) {
+      return false;
+    }
   }
   return true;
 };
@@ -36,7 +40,9 @@ const isContinuousFromOne = (numbers: number[]): boolean => {
  */
 export const permissionSandbox: DecisionStrategy = (context: DecisionContext): string | null => {
   const { content } = context;
-  if (!content) return null;
+  if (!content) {
+    return null;
+  }
 
   // 检查固定提示
   if (!content.includes('Esc to cancel') || !content.includes('Tab to amend')) {
@@ -45,18 +51,24 @@ export const permissionSandbox: DecisionStrategy = (context: DecisionContext): s
 
   // 提取编号行
   const numberedLines = extractNumberedLines(content);
-  if (numberedLines.length < 2) return null;
+  if (numberedLines.length < 2) {
+    return null;
+  }
 
   const numbers = numberedLines.map(nl => nl.num);
 
   // 编号必须从 1 开始且连续
-  if (!isContinuousFromOne(numbers)) return null;
+  if (!isContinuousFromOne(numbers)) {
+    return null;
+  }
 
   // 至少有一个选项包含 "Yes"，一个包含 "No"
   const lines = numberedLines.map(nl => nl.line);
   const hasYes = lines.some(l => l.includes('Yes'));
   const hasNo = lines.some(l => l.includes('No'));
-  if (!hasYes || !hasNo) return null;
+  if (!hasYes || !hasNo) {
+    return null;
+  }
 
   return 'permissionSandbox';
 };

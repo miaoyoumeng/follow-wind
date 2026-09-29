@@ -111,59 +111,12 @@ export const capturePane = async (
 ): Promise<string> => {
   const target = `${session}:${window}.${paneIndex}`;
   let cmd = `tmux capture-pane -t ${target} -p`;
-  if (lines !== undefined) cmd += ` -S -${lines}`;
-  if (joinWrapped) cmd += ' -J';
+  if (lines !== undefined) {
+    cmd += ` -S -${lines}`;
+  }
+  if (joinWrapped) {
+    cmd += ' -J';
+  }
   const { stdout } = await exec.fn(cmd);
   return stdout;
-};
-
-/**
- * 轮询 pane 内容，等待匹配 pattern 的文本出现或超时
- * @param session
- * @param window
- * @param paneIndex
- * @param pattern
- * @param fixed 非空字符串按固定字符串匹配，空字符串按正则匹配
- * @param timeout
- * @param interval
- * @param lines
- */
-export const waitForText = async (
-  session: string,
-  window: string,
-  paneIndex: number,
-  pattern: string,
-  fixed: string,
-  timeout: number,
-  interval: number,
-  lines: number
-): Promise<void> => {
-  const deadline = Date.now() + timeout;
-  while (true) {
-    const content = await capturePane(session, window, paneIndex, lines, true);
-    const matched = fixed ? content.includes(fixed) : new RegExp(pattern).test(content);
-    if (matched) return;
-    if (Date.now() >= deadline) {
-      throw new Error(`Timed out after ${timeout}ms waiting for pattern: ${pattern}`);
-    }
-    await new Promise(resolve => setTimeout(resolve, interval));
-  }
-};
-
-/**
- * 通知 agent-tracker 指定 pane 中的任务已完成
- * 先获取 pane 当前运行的命令名，再调用 agent-tracker 发送通知
- * 任何步骤失败均静默返回，不抛出错误
- */
-export const notifyCompletion = async (session: string, window: string, paneIndex: string): Promise<void> => {
-  const target = `${session}:${window}.${paneIndex}`;
-  try {
-    const { stdout } = await exec.fn(`tmux display-message -p -t ${target} '#{pane_current_command}'`);
-    const currentCmd = stdout.trim();
-    const tracker = `${process.env.HOME}/.config/agent-tracker/bin/agent`;
-    const message = `${currentCmd} finished`;
-    await exec.fn(`${tracker} tracker command -window-id ${window} -pane ${paneIndex} -summary '${message}' notify`);
-  } catch {
-    // 静默处理：tracker 不存在或调用失败
-  }
 };

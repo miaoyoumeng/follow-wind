@@ -1,5 +1,5 @@
 import { isAbsolute, resolve } from 'path';
-import { readConfig, writeConfig, type AgentPanes } from '../config';
+import { readConfig } from '../config';
 import type { Agent } from './types';
 
 /**
@@ -27,7 +27,9 @@ export const getAgents = (): Agent[] => {
 export const getAgent = (name: string): Agent | undefined => {
   const { agents } = readConfig();
   const agent = agents?.[name];
-  if (!agent) return undefined;
+  if (!agent) {
+    return undefined;
+  }
   return {
     name,
     workspace: resolveWorkspace(agent.workspace),
@@ -37,38 +39,11 @@ export const getAgent = (name: string): Agent | undefined => {
 };
 
 /**
- * 获取指定 agent 的 panes 配置（不存在或未配置时返回 undefined）
- */
-export const getAgentPanes = (name: string): AgentPanes | undefined => {
-  return getAgent(name)?.panes;
-};
-
-/**
- * 添加 agent（写入 config 的 agents）
- */
-export const addAgent = (name: string, workspace: string): void => {
-  const config = readConfig();
-  const agents = { ...(config.agents ?? {}) };
-  agents[name] = { workspace };
-  writeConfig({ ...config, agents });
-};
-
-/**
- * 删除 agent（删除对应条目）
- */
-export const removeAgent = (name: string): boolean => {
-  const config = readConfig();
-  const agents = { ...(config.agents ?? {}) };
-  if (!agents[name]) return false;
-  delete agents[name];
-  writeConfig({ ...config, agents });
-  return true;
-};
-
-/**
  * 解析 workspace 路径："/" 开头为绝对路径，否则相对于 process.cwd()
  */
 export const resolveWorkspace = (workspace: string): string => {
-  if (isAbsolute(workspace)) return workspace;
+  if (isAbsolute(workspace)) {
+    return workspace;
+  }
   return resolve(process.cwd(), workspace);
 };

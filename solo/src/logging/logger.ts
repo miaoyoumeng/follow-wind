@@ -2,7 +2,8 @@
  * tslog 封装：Logger 类提供 trace/debug/info/warn/error 五级日志
  */
 import { Logger as TsLog, type ILogObjMeta } from 'tslog';
-import { formatLocalReadable, appendFile } from '../utils';
+import { formatLocalReadable } from '../utils/times';
+import { appendFile } from '../utils/files';
 import type { LoggingConfig } from '../config/yaml/types';
 import { readConfig, resolveLoggingConfig } from '../config';
 
@@ -82,30 +83,6 @@ export class Logger {
    */
   error(message: string): void {
     this._tslog?.error(message);
-  }
-
-  /**
-   * 判断 trace 级别日志是否启用（minLevel ≤ 1）
-   * @returns 当前配置是否允许输出 trace 日志
-   */
-  isTraceEnabled(): boolean {
-    return this._minLevel <= 1;
-  }
-
-  /**
-   * 判断 debug 级别日志是否启用（minLevel ≤ 2）
-   * @returns 当前配置是否允许输出 debug 日志
-   */
-  isDebugEnabled(): boolean {
-    return this._minLevel <= 2;
-  }
-
-  /**
-   * 判断 info 级别日志是否启用（minLevel ≤ 3）
-   * @returns 当前配置是否允许输出 info 日志
-   */
-  isInfoEnabled(): boolean {
-    return this._minLevel <= 3;
   }
 }
 

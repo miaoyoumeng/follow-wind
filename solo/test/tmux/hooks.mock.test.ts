@@ -8,7 +8,7 @@ vi.mock('../../src/process/exec', () => ({
   exec: { fn: mockExecAsync }
 }));
 
-import { setHook, unsetHook, showHook, isTmuxHook, HOOK_NAMES, registerHooks } from '../../src/tmux/hooks';
+import { setHook, isTmuxHook, HOOK_NAMES, registerHooks } from '../../src/tmux/hooks';
 
 describe('isTmuxHook', () => {
   it('HOOK_NAMES 中的每个名字都被识别为合法 hook', () => {
@@ -52,41 +52,6 @@ describe('setHook', () => {
   });
 });
 
-describe('unsetHook', () => {
-  beforeEach(() => {
-    mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
-  });
-
-  it('全局移除 hook：拼接 tmux set-hook -g -u', async () => {
-    await unsetHook('after-split-window');
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux set-hook -g -u after-split-window');
-  });
-
-  it('指定 session 移除 hook：拼接 -t sessionName', async () => {
-    await unsetHook('session-closed', 'my-session');
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux set-hook -t my-session -u session-closed');
-  });
-});
-
-describe('showHook', () => {
-  beforeEach(() => {
-    mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
-  });
-
-  it('全局查看 hook：拼接 tmux show-hooks -g，返回 stdout', async () => {
-    mockExecAsync.mockResolvedValueOnce({ stdout: 'after-new-session: run-shell "echo"', stderr: '' });
-    const result = await showHook('after-new-session');
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux show-hooks -g after-new-session');
-    expect(result).toBe('after-new-session: run-shell "echo"');
-  });
-
-  it('指定 session 查看 hook：拼接 -t sessionName', async () => {
-    mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
-    await showHook('after-rename-window', 'sess');
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux show-hooks -t sess after-rename-window');
-  });
-});
-
 describe('registerHooks', () => {
   beforeEach(() => {
     mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
@@ -104,7 +69,7 @@ describe('registerHooks', () => {
     // 每个启用事件执行一次 set-hook，回调为 solo hook 上报命令
     expect(mockExecAsync).toHaveBeenNthCalledWith(
       1,
-      `tmux set-hook -t sess-abc alert-activity 'run-shell "solo hook --name=alert-activity --session_name=#{session_name} --window_name=#{window_name} --pane_index=#{pane_index}"'`
+      `tmux set-hook -t sess-abc alert-activity 'run-shell "solo hook --endpoint=tmux --event=alert-activity"'`
     );
     expect(mockExecAsync).toHaveBeenNthCalledWith(
       2,

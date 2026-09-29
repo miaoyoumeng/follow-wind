@@ -91,7 +91,8 @@ module.exports = {
       "error",
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
     ],
-    "@typescript-eslint/prefer-readonly": "error"
+    "@typescript-eslint/prefer-readonly": "error",
+    'curly': ['error', 'all'],
   },
   overrides: [
     {

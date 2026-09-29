@@ -1,6 +1,18 @@
 import { execAsync } from '../process';
-import type { CurrentSessionInfo } from './types';
 import { logger } from '../logging';
+
+/**
+ * 判断 tmux server 是否运行中
+ * @returns tmux server 运行中返回 true，否则返回 false
+ */
+export const isTmuxRunning = async (): Promise<boolean> => {
+  try {
+    await execAsync('tmux list-sessions 2>/dev/null');
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * 检查 session 是否存在
@@ -30,25 +42,5 @@ export const killSession = async (name: string): Promise<void> => {
     await execAsync(`tmux kill-session -t ${name}`);
   } catch {
     logger.warn(`⚠️ session ${name} 不存在或已终止`);
-  }
-};
-
-/**
- * 附加到 session
- */
-export const attachSession = async (name: string): Promise<void> => {
-  await execAsync(`tmux attach-session -t ${name}`);
-};
-
-/**
- * 获取当前 session 信息
- */
-export const getCurrentSession = async (): Promise<CurrentSessionInfo | null> => {
-  try {
-    const { stdout } = await execAsync('tmux display-message -p "#{session_id}\\t#{session_name}"');
-    const [id, name] = stdout.trim().split('\t');
-    return { id, name };
-  } catch {
-    return null;
   }
 };

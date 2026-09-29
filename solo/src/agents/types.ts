@@ -7,13 +7,7 @@ export interface Agent {
   panes?: AgentPanes;
 }
 
-export interface SplitPlan {
-  pattern: 'left-split' | 'right-split';
-  steps: Array<{ orientation: '-h' | '-v'; target: 'original' | 'left' | 'right' }>;
-  paneMap: Record<string, number>; // position → pane index
-}
-
-export interface WorkspaceCheckResult {
+export interface WorkspaceChecker {
   name: string;
   workspace: string;
   exists: boolean;

@@ -35,7 +35,9 @@ describe('Logger 类', () => {
     it('level=info 时 trace 不写入文件', () => {
       setup({ level: 'debug', file: testLogFile });
       logger.trace('trace-msg-xyz');
-      if (!existsSync(testLogFile)) return;
+      if (!existsSync(testLogFile)) {
+        return;
+      }
       const content = readFileSync(testLogFile, 'utf-8');
       expect(content).not.toContain('trace-msg-xyz');
     });
@@ -43,7 +45,9 @@ describe('Logger 类', () => {
     it('level=info 时 debug 不写入文件', () => {
       setup({ level: 'info', file: testLogFile });
       logger.debug('debug-msg-abc');
-      if (!existsSync(testLogFile)) return;
+      if (!existsSync(testLogFile)) {
+        return;
+      }
       const content = readFileSync(testLogFile, 'utf-8');
       expect(content).not.toContain('debug-msg-abc');
     });
@@ -72,7 +76,9 @@ describe('Logger 类', () => {
     it('level=debug 时 trace 仍不写入文件（debug 为最低配置级别）', () => {
       setup({ level: 'debug', file: testLogFile });
       logger.trace('trace-should-not-appear');
-      if (!existsSync(testLogFile)) return;
+      if (!existsSync(testLogFile)) {
+        return;
+      }
       const content = readFileSync(testLogFile, 'utf-8');
       expect(content).not.toContain('trace-should-not-appear');
     });
@@ -87,7 +93,9 @@ describe('Logger 类', () => {
     it('level=error 时 info 不写入文件', () => {
       setup({ level: 'error', file: testLogFile });
       logger.info('info-should-not-appear');
-      if (!existsSync(testLogFile)) return;
+      if (!existsSync(testLogFile)) {
+        return;
+      }
       const content = readFileSync(testLogFile, 'utf-8');
       expect(content).not.toContain('info-should-not-appear');
     });

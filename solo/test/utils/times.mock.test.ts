@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { formatUtcCompact, formatLocalCompact, formatLocalReadable, formatDateOnly } from '../../src/utils/times';
+import { formatUtcCompact, formatLocalReadable, formatDateOnly } from '../../src/utils/times';
 
 describe('utils/times 时间格式化函数', () => {
   beforeEach(() => {
@@ -19,20 +19,6 @@ describe('utils/times 时间格式化函数', () => {
     it('使用 UTC 时区而非本地时区', () => {
       vi.setSystemTime(new Date('2026-01-15T08:05:03Z'));
       expect(formatUtcCompact()).toBe('20260115T080503');
-    });
-  });
-
-  describe('formatLocalCompact', () => {
-    it('本地时间格式化为 YYYYMMDD-HHmmss', () => {
-      const localDate = new Date(2026, 8, 9, 10, 30, 45);
-      vi.setSystemTime(localDate);
-      expect(formatLocalCompact()).toBe('20260909-103045');
-    });
-
-    it('个位数月份和日期补零', () => {
-      const localDate = new Date(2026, 0, 5, 3, 5, 7);
-      vi.setSystemTime(localDate);
-      expect(formatLocalCompact()).toBe('20260105-030507');
     });
   });
 

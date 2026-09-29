@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { Command } from 'commander';
 
 import { registerCommands } from '../../src/bin/solo';
-import type { CommandSpec } from '../../src/commander/types';
+import type { CommandSpec } from '../../src/cli/types';
 
 /**
  * 构造测试用 program：拦截 process.exit 并把输出丢弃，

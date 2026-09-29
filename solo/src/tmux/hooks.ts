@@ -2,7 +2,7 @@ import { exec } from '../process';
 
 /**
  * tmux 3.6b 支持的全部 hook 名（单一数据源，TmuxHook 类型由此派生）
- *
+ * 执行命令：`tmux show-hooks -g` 获取
  * 分类：
  * - after-*：命令执行后触发的钩子（38 个）
  * - alert-*：告警类钩子（3 个）
@@ -109,33 +109,10 @@ export const setHook = async (hook: TmuxHook, command: string, session?: string)
 };
 
 /**
- * 移除 hook
- * @param hook hook 名称
- * @param session 指定 session；省略则全局移除
- */
-export const unsetHook = async (hook: TmuxHook, session?: string): Promise<void> => {
-  const scope = scopeArg(session);
-  await exec.fn(`tmux set-hook ${scope} -u ${hook}`);
-};
-
-/**
- * 查看 hook 绑定的命令
- * @param hook hook 名称
- * @param session 指定 session；省略则查看全局
- * @returns hook 绑定内容（stdout 原文）
- */
-export const showHook = async (hook: TmuxHook, session?: string): Promise<string> => {
-  const scope = scopeArg(session);
-  const { stdout } = await exec.fn(`tmux show-hooks ${scope} ${hook}`);
-  return stdout;
-};
-
-/**
  * 事件回调命令模板：tmux 触发事件时调用 solo hook 上报事件上下文
  * @param hookName 事件名称
  */
-const buildRunShellCommand = (hookName: string): string =>
-  `run-shell "solo hook --name=${hookName} --session_name=#{session_name} --window_name=#{window_name} --pane_index=#{pane_index}"`;
+const buildRunShellCommand = (hookName: string): string => `run-shell "solo hook --endpoint=tmux --event=${hookName}"`;
 
 /**
  * 按配置在 session 中注册启用的事件回调
@@ -147,7 +124,9 @@ const buildRunShellCommand = (hookName: string): string =>
 export const registerHooks = async (sessionName: string, hooks?: Record<string, boolean>): Promise<string[]> => {
   const registered: string[] = [];
   for (const [event, enabled] of Object.entries(hooks ?? {})) {
-    if (!enabled) continue;
+    if (!enabled) {
+      continue;
+    }
     if (!isTmuxHook(event)) {
       throw new Error(`hooks 配置包含未知事件 "${event}"（tmux 不支持该事件名），请修正 .solo/config 的 hooks 段`);
     }

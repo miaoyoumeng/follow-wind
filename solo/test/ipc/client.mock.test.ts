@@ -5,19 +5,45 @@ import * as os from 'os';
 import * as path from 'path';
 import type { IpcRequest } from '../../src/ipc/types';
 
-const { mockRegisterTask, mockListTasks, mockUpdateTaskState } = vi.hoisted(() => ({
-  mockRegisterTask: vi.fn().mockReturnValue('task-001'),
-  mockListTasks: vi.fn().mockReturnValue([]),
-  mockUpdateTaskState: vi.fn()
-}));
+const { mockRegisterTask, mockListTasks, mockUpdateTaskState, mockGetTerminalCounts, mockGetTask, mockDispatch } =
+  vi.hoisted(() => ({
+    mockRegisterTask: vi.fn().mockReturnValue('task-001'),
+    mockListTasks: vi.fn().mockReturnValue([]),
+    mockUpdateTaskState: vi.fn(),
+    mockGetTerminalCounts: vi.fn().mockReturnValue({ completed: 0, timeout: 0, failed: 0, killed: 0 }),
+    mockGetTask: vi.fn().mockReturnValue({ id: 'task-001', type: 'tmux', status: 'running', createdAt: '' }),
+    mockDispatch: vi.fn().mockResolvedValue(true)
+  }));
 
-vi.mock('../../src/task/taskStorage', () => ({
+vi.mock('../../src/task/chatTaskStorage', () => ({
   registerTask: mockRegisterTask,
   listTasks: mockListTasks,
-  updateTaskState: mockUpdateTaskState
+  updateTaskState: mockUpdateTaskState,
+  getTerminalCounts: mockGetTerminalCounts,
+  getTask: mockGetTask
 }));
 
-import { registerTask, listTasks, exitDaemon, updateTaskState } from '../../src/ipc/client';
+vi.mock('../../src/pipe/dispatcher', () => ({
+  dispatch: mockDispatch
+}));
+
+vi.mock('../../src/logging', () => ({
+  logger: {
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  },
+  getLoggingConfig: vi.fn(),
+  setup: vi.fn()
+}));
+
+vi.mock('../../src/task/loop', () => ({
+  pollingWithTimeout: vi.fn()
+}));
+
+import { ipcRegisterTask, ipcListTasks, exitDaemon, ipcDispatch } from '../../src/ipc/client';
 import { handleMessage } from '../../src/ipc/server';
 
 describe('ipc/client（集成测试：真实 socket）', () => {
@@ -26,18 +52,32 @@ describe('ipc/client（集成测试：真实 socket）', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockDispatch.mockResolvedValue(true);
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipc-test-'));
     socketPath = path.join(tmpDir, 'test.sock');
     await new Promise<void>(resolve => {
-      server = net.createServer(conn => {
+      server = net.createServer({ allowHalfOpen: true }, conn => {
         let buf = '';
         conn.on('data', (chunk: Buffer) => {
           buf += chunk.toString();
         });
         conn.on('end', () => {
           const req = JSON.parse(buf) as IpcRequest;
-          const res = handleMessage(req);
-          conn.end(JSON.stringify(res));
+          const result = handleMessage(req);
+          const send = (res: unknown): void => {
+            try {
+              conn.end(JSON.stringify(res));
+            } catch {
+              // connection already closed
+            }
+          };
+          if (result instanceof Promise) {
+            void result.then(res => {
+              setImmediate(() => send(res));
+            });
+          } else {
+            send(result);
+          }
         });
       });
       server.listen(socketPath, () => resolve());
@@ -48,20 +88,20 @@ describe('ipc/client（集成测试：真实 socket）', () => {
     server.close();
   });
 
-  it('registerTask 通过 IPC 注册任务，返回 taskId', async () => {
-    const result = await registerTask({ type: 'local_bash' }, socketPath);
+  it('ipcRegisterTask 通过 IPC 注册任务，返回 taskId', async () => {
+    const result = await ipcRegisterTask({ type: 'tmux' }, socketPath);
     expect(result).toBe('task-001');
-    expect(mockRegisterTask).toHaveBeenCalledWith({ type: 'local_bash' });
+    expect(mockRegisterTask).toHaveBeenCalledWith({ type: 'tmux' });
   });
 
-  it('registerTask 支持传入完整 pane 信息（agentName/session/window/paneIndex）', async () => {
-    const result = await registerTask(
-      { type: 'local_agent', agentName: 'agent1', session: 'sess', window: 'win', paneIndex: 2 },
+  it('ipcRegisterTask 支持传入完整 pane 信息', async () => {
+    const result = await ipcRegisterTask(
+      { type: 'claude', agentName: 'agent1', session: 'sess', window: 'win', paneIndex: 2 },
       socketPath
     );
     expect(result).toBe('task-001');
     expect(mockRegisterTask).toHaveBeenCalledWith({
-      type: 'local_agent',
+      type: 'claude',
       agentName: 'agent1',
       session: 'sess',
       window: 'win',
@@ -69,19 +109,27 @@ describe('ipc/client（集成测试：真实 socket）', () => {
     });
   });
 
-  it('listTasks 通过 IPC 获取全部任务列表', async () => {
-    const tasks = [
-      { id: 'task-1', status: 'running' as const, type: 'local_bash' as const, createdAt: '' },
-      { id: 'task-2', status: 'completed' as const, type: 'local_bash' as const, createdAt: '' }
-    ];
-    mockListTasks.mockReturnValue(tasks);
-    const result = await listTasks(socketPath);
-    expect(result).toEqual(tasks);
+  it('ipcDispatch 通过 IPC 分发指令，返回 dispatched=true', async () => {
+    mockDispatch.mockResolvedValueOnce(true);
+    const result = await ipcDispatch('test-session', 'myagent', 0, 'hello world', socketPath);
+    expect(result).toBe(true);
+    expect(mockDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, { command: 'hello world' });
   });
 
-  it('updateTaskState 通过 IPC 更新任务状态', async () => {
-    await updateTaskState('task-001', 'running', socketPath);
-    expect(mockUpdateTaskState).toHaveBeenCalledWith('task-001', 'running');
+  it('ipcDispatch 在 dispatch 抛异常时抛出错误而非挂起', async () => {
+    mockDispatch.mockRejectedValueOnce(new Error('dispatch failed'));
+    await expect(ipcDispatch('test-session', 'myagent', 0, 'hello', socketPath)).rejects.toThrow('dispatch failed');
+  });
+
+  it('ipcListTasks 通过 IPC 获取全部任务列表和终态计数', async () => {
+    const tasks = [{ id: 'task-1', status: 'running' as const, type: 'tmux' as const, createdAt: '' }];
+    mockListTasks.mockReturnValue(tasks);
+    mockGetTerminalCounts.mockReturnValue({ completed: 2, timeout: 0, failed: 0, killed: 0 });
+    const result = await ipcListTasks(socketPath);
+    expect(result).toEqual({
+      tasks,
+      terminalCounts: { completed: 2, timeout: 0, failed: 0, killed: 0 }
+    });
   });
 });
 

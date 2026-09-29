@@ -13,7 +13,8 @@ vi.mock('fs', () => ({
 }));
 
 import { readConfig } from '../../../src/config/yaml/writer';
-import { resolveLoggingConfig, LOG_FILE } from '../../../src/config';
+import { resolveLoggingConfig } from '../../../src/config';
+import { LOG_FILE } from '../../../src/config/paths';
 
 describe('resolveLoggingConfig 默认值', () => {
   beforeEach(() => {

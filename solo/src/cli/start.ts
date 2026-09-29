@@ -1,0 +1,196 @@
+import chalk from 'chalk';
+
+import {
+  sessionExists,
+  createSession,
+  createTmuxWindow,
+  listPanes,
+  splitPane,
+  setPaneTitle,
+  sendKeys,
+  registerHooks
+} from '../tmux';
+import { getAgents, type Agent } from '../agents';
+import { readConfig } from '../config';
+import { logger } from '../logging';
+import { validateWorkspace } from './status';
+import { getAgentPanesLayout } from '../laytouts';
+import { registerRouter } from '../pipe';
+import { isDaemonRunning, writePidFile, startDaemon } from '../bootstrap';
+
+/**
+ * 执行水平双 pane 分屏，返回 position → pane index 映射
+ */
+const applyHorizontalSplit = async (
+  s: string,
+  w: string,
+  entries: [string, { layout: string; booter?: string }][],
+  orig: number,
+  dir: string
+): Promise<Record<string, number>> => {
+  const np = await splitPane(s, w, orig, '-h', dir);
+  const sorted = [...entries].sort(([, a], [, b]) => {
+    const o: Record<string, number> = { left: 0, right: 1 };
+    return (o[a.layout] ?? 0) - (o[b.layout] ?? 0);
+  });
+  return { [sorted[0][1].layout]: orig, [sorted[1][1].layout]: np };
+};
+
+/**
+ * 执行垂直双 pane 分屏，返回 position → pane index 映射
+ */
+const applyVerticalSplit = async (
+  s: string,
+  w: string,
+  entries: [string, { layout: string; booter?: string }][],
+  orig: number,
+  dir: string
+): Promise<Record<string, number>> => {
+  const np = await splitPane(s, w, orig, '-v', dir);
+  const sorted = [...entries].sort(([, a], [, b]) => {
+    const o: Record<string, number> = { top: 0, bottom: 1 };
+    return (o[a.layout] ?? 0) - (o[b.layout] ?? 0);
+  });
+  return { [sorted[0][1].layout]: orig, [sorted[1][1].layout]: np };
+};
+
+/**
+ * 执行三 pane 分屏（left-split 或 right-split），返回 position → pane index 映射
+ */
+const applyThreePaneSplit = async (
+  s: string,
+  w: string,
+  layout: string,
+  orig: number,
+  dir: string
+): Promise<Record<string, number>> => {
+  const rp = await splitPane(s, w, orig, '-h', dir);
+  if (layout === 'LeftThreePane') {
+    const rb = await splitPane(s, w, rp, '-v', dir);
+    return { left: orig, 'right-top': rp, 'right-bottom': rb };
+  }
+  const lb = await splitPane(s, w, orig, '-v', dir);
+  return { 'left-top': orig, 'left-bottom': lb, right: rp };
+};
+
+/**
+ * 为每个 pane 设置标题（tag 名）并执行 booter 命令
+ */
+const setPaneTitlesAndBooters = async (
+  s: string,
+  w: string,
+  panes: Agent['panes'],
+  tagToIdx: Record<string, number>
+): Promise<void> => {
+  if (!panes) {
+    return;
+  }
+  for (const [tag, idx] of Object.entries(tagToIdx)) {
+    await setPaneTitle(s, w, idx, tag);
+    const booter = panes[tag]?.booter;
+    if (booter) {
+      await sendKeys(s, w, idx, booter);
+      await sendKeys(s, w, idx, 'Enter');
+    }
+  }
+};
+
+/**
+ * 为指定 agent 执行 pane 分屏布局
+ * 根据 getAgentPanesLayout 返回的布局类型，内联执行 tmux split、设置标题、执行 booter
+ */
+const applyAgentLayout = async (sessionName: string, agent: Agent): Promise<void> => {
+  const panes = agent.panes;
+  if (!panes) {
+    return;
+  }
+  const layout = getAgentPanesLayout(panes);
+  if (!layout) {
+    return;
+  }
+  const agentName = agent.name;
+  const agentWorkspace = agent.workspace;
+  const originalPane = Math.min(...(await listPanes(sessionName, agentName)));
+  const entries = Object.entries(panes);
+  let posToIdx: Record<string, number>;
+  if (layout === 'One') {
+    posToIdx = { [entries[0][1].layout]: originalPane };
+  } else if (layout === 'Vertical') {
+    posToIdx = await applyHorizontalSplit(sessionName, agentName, entries, originalPane, agentWorkspace);
+  } else if (layout === 'LeftThreePane' || layout === 'RightThreePane') {
+    posToIdx = await applyThreePaneSplit(sessionName, agentName, layout, originalPane, agentWorkspace);
+  } else {
+    posToIdx = await applyVerticalSplit(sessionName, agentName, entries, originalPane, agentWorkspace);
+  }
+  const tagToIdx: Record<string, number> = {};
+  const positions = Object.keys(posToIdx);
+  entries.forEach(([tag], i) => {
+    tagToIdx[tag] = posToIdx[positions[i]];
+  });
+  for (const idx of Object.values(tagToIdx)) {
+    logger.debug(`register tmux router....session = ${sessionName}, window = ${agentName}, paneIndex = ${idx}`);
+    registerRouter(sessionName, agentName, idx);
+  }
+  await setPaneTitlesAndBooters(sessionName, agentName, panes, tagToIdx);
+};
+
+/**
+ * 读取配置 hooks.tmux 段并在 session 中注册启用的事件回调
+ * 未知事件名会抛错终止 start（错误信息包含事件名）
+ */
+const registerConfiguredHooks = async (sessionName: string): Promise<void> => {
+  const { hooks } = readConfig();
+  const registered = await registerHooks(sessionName, hooks?.tmux);
+  if (registered.length > 0) {
+    logger.info(`[start] ✅ hooks 已注册: ${registered.join(', ')}`);
+  }
+};
+
+export const runStart = async (): Promise<void> => {
+  console.log(chalk.cyan('solo starting...'));
+  const sessionName = validateWorkspace();
+  // 检查 daemon 是否已运行（重复执行检测）
+  if (isDaemonRunning()) {
+    console.log(chalk.yellow(`solo 已在运行中（session: ${sessionName}），无需重复启动`));
+    return;
+  }
+
+  console.log(chalk.yellow(`solo name [${sessionName}]`));
+  logger.info(`[start] workspace validated, session name="${sessionName}"`);
+
+  const exists = await sessionExists(sessionName);
+  logger.info(`[start] session "${sessionName}" exists=${exists}`);
+
+  if (exists) {
+    console.log(chalk.yellow(`session "${sessionName}" 已存在，请使用 solo dashboard 进入`));
+    return;
+  }
+
+  await createSession(sessionName, process.cwd());
+  logger.info(`[start] session "${sessionName}" 已创建`);
+
+  // 仅启动 activate: true 的 agent
+  const activeAgents = getAgents().filter(agent => agent.activate);
+  logger.info(`[start] active agents: [${activeAgents.map(a => a.name).join(', ')}]`);
+
+  for (const agent of activeAgents) {
+    const panes = agent.panes;
+    if (!panes || getAgentPanesLayout(panes) === undefined) {
+      console.log(chalk.red(`[agent:${agent.name}] panes 布局配置无效，请检查布局`));
+      return;
+    }
+    logger.info(`[start] creating window "${agent.name}" workspace="${agent.workspace}"`);
+    await createTmuxWindow(sessionName, agent.name, agent.workspace);
+    await applyAgentLayout(sessionName, agent);
+  }
+
+  // 注册 hooks
+  logger.debug('[start] registering tmux hooks.');
+  await registerConfiguredHooks(sessionName);
+
+  // 写入 PID 文件供后续 IPC 通信使用
+  writePidFile();
+  // 启动常住进程，维护 chatTaskStorage 单例
+  startDaemon();
+  console.log(chalk.green(`solo started, pid is ${process.pid}.`));
+};

@@ -19,36 +19,37 @@ describe('readConfig hooks 解析', () => {
     mockReadFileSync.mockReset();
   });
 
-  it('解析顶级 hooks 段：保留 boolean 值条目', () => {
+  it('解析 hooks.tmux 段：保留 boolean 值条目', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 agents:
   pm:
     workspace: '/pm'
 hooks:
-    alert-activity: true
-    after-send-keys: true
-    alert-bell: false
+    tmux:
+        alert-activity: true
+        after-send-keys: true
+        alert-bell: false
 `);
     const config = readConfig();
     expect(config.hooks).toEqual({
-      'alert-activity': true,
-      'after-send-keys': true,
-      'alert-bell': false
+      tmux: {
+        'alert-activity': true,
+        'after-send-keys': true,
+        'alert-bell': false
+      }
     });
   });
 
-  it('hooks 值为非 boolean（字符串/数字）时过滤丢弃', () => {
+  it('hooks.tmux 值为非 boolean（字符串/数字）时过滤丢弃', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
-agents:
-  pm:
-    workspace: '/pm'
 hooks:
-    alert-activity: true
-    after-send-keys: 'true'
-    alert-bell: 1
+    tmux:
+        alert-activity: true
+        after-send-keys: 'true'
+        alert-bell: 1
 `);
     const config = readConfig();
-    expect(config.hooks).toEqual({ 'alert-activity': true });
+    expect(config.hooks).toEqual({ tmux: { 'alert-activity': true } });
   });
 
   it('未配置 hooks 段时返回空对象 hooks', () => {
@@ -60,22 +61,33 @@ agents:
     expect(readConfig().hooks).toEqual({});
   });
 
+  it('未配置 hooks.tmux 段时返回空对象 hooks', () => {
+    mockReadFileSync.mockReturnValue(`name: 'sess-abc'
+hooks:
+    claude:
+        some-event: true
+`);
+    expect(readConfig().hooks).toEqual({});
+  });
+
   it('无 agents 段时 hooks 段仍然保留', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 hooks:
-    alert-activity: true
+    tmux:
+        alert-activity: true
 `);
     const config = readConfig();
     expect(config).toEqual({
       name: 'sess-abc',
-      hooks: { 'alert-activity': true }
+      hooks: { tmux: { 'alert-activity': true } }
     });
   });
 
-  it('hooks 段值全部非法时 hooks 为空对象', () => {
+  it('hooks.tmux 值全部非法时 hooks 为空对象', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 hooks:
-    alert-activity: 'yes'
+    tmux:
+        alert-activity: 'yes'
 `);
     expect(readConfig().hooks).toEqual({});
   });
@@ -164,6 +176,46 @@ agents:
 `);
     const config = readConfig();
     expect(config.agents?.console?.panes?.shell?.booter).toBeUndefined();
+  });
+});
+
+describe('readConfig panes top/bottom 解析', () => {
+  beforeEach(() => {
+    mockReadFileSync.mockReset();
+  });
+
+  it('layout 为 top/bottom 时正确解析到 AgentPanes（Horizontal 布局）', () => {
+    mockReadFileSync.mockReturnValue(`name: 'sess-abc'
+agents:
+  console:
+    workspace: '/workspace'
+    activate: true
+    panes:
+      claude:
+        layout: 'top'
+      shell:
+        layout: 'bottom'
+`);
+    const config = readConfig();
+    expect(config.agents?.console?.panes).toEqual({
+      claude: { layout: 'top' },
+      shell: { layout: 'bottom' }
+    });
+  });
+
+  it('layout 为 top 的单个 pane 也能正确解析', () => {
+    mockReadFileSync.mockReturnValue(`name: 'sess-abc'
+agents:
+  console:
+    workspace: '/workspace'
+    activate: true
+    panes:
+      main:
+        layout: 'top'
+        booter: 'vim'
+`);
+    const config = readConfig();
+    expect(config.agents?.console?.panes?.main).toEqual({ layout: 'top', booter: 'vim' });
   });
 });
 

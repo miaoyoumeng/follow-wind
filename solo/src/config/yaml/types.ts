@@ -1,5 +1,6 @@
 // pane 位置：只允许下列值
-export type PanePosition = 'left' | 'right' | 'left-top' | 'right-top' | 'left-bottom' | 'right-bottom';
+export type PanePosition =
+  'one' | 'top' | 'bottom' | 'left' | 'right' | 'left-top' | 'right-top' | 'left-bottom' | 'right-bottom';
 
 // pane 条目：layout 为位置，booter 为可选启动命令，hooks 为可选钩子配置
 export interface PaneEntry {
@@ -35,8 +36,10 @@ export interface TaskConfig {
 export interface SoloConfig {
   name: string;
   agents?: Record<string, AgentConfig>;
-  // 顶级 hooks：事件名称 → 是否启用（tmux hook 回调注册依据）
-  hooks?: Record<string, boolean>;
+  // hooks 按 endpoint 分组，目前仅支持 tmux
+  hooks?: {
+    tmux?: Record<string, boolean>;
+  };
   logging?: LoggingConfig;
   task?: TaskConfig;
 }

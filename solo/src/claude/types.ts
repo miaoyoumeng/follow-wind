@@ -3,34 +3,6 @@ import type { StopReason } from '@anthropic-ai/sdk/resources/messages';
 /** 扩展 stop_reason：在 SDK 标准值基础上追加 tool_deferred */
 export type ExtendedStopReason = StopReason | 'tool_deferred';
 
-/** 待处理的工具调用信息 */
-export interface DeferredToolUse {
-  readonly id: string;
-  readonly name: string;
-  readonly input: Record<string, unknown>;
-}
-
-/** 人工决策原因：API 信号 + 6 种策略 */
-export type DecisionReason =
-  | 'tool_deferred'
-  | 'refusal'
-  | 'sensitive_tool'
-  | 'structured_question'
-  | 'permission_sandbox'
-  | 'decision_classifier'
-  | 'plan_confirm_execute'
-  | 'conflict_exposure'
-  | 'failure_visibility'
-  | null;
-
-/** needsHumanDecision 的返回值 */
-export interface HumanDecisionResult {
-  readonly requiresHuman: boolean;
-  readonly reason: DecisionReason;
-  readonly deferredTool?: DeferredToolUse;
-  readonly message: string;
-}
-
 /** 单模型单日 token 消耗统计 */
 export interface UsageTotals {
   input_cached: number;

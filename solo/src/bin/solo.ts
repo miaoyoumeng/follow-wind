@@ -8,18 +8,16 @@ import {
   runStart,
   runStop,
   runDashboard,
-  runAgents,
-  registerAgentCommand,
   runChat,
   runHook,
   runCapture,
   runUsage,
+  runDoctor,
   type CommandSpec
-} from '../commander';
+} from '../cli';
 
-import { getVersion } from '../utils';
+import { getVersion } from '../utils/version';
 import { setConfigPath } from '../config';
-import { runTaskWorker } from '../task';
 import { getLoggingConfig, logger, setup as setupLogger } from '../logging';
 
 /** 从 .solo/config 读取日志配置并初始化日志模块（始终启用，缺失字段使用默认值） */
@@ -37,16 +35,24 @@ export const registerCommands = (program: Command, specs: readonly CommandSpec[]
     const cmd = program.command(spec.name).description(spec.description);
 
     for (const arg of spec.args ?? []) {
-      if (arg.parser) cmd.argument(arg.syntax, arg.description, arg.parser);
-      else cmd.argument(arg.syntax, arg.description);
+      if (arg.parser) {
+        cmd.argument(arg.syntax, arg.description, arg.parser);
+      } else {
+        cmd.argument(arg.syntax, arg.description);
+      }
     }
 
     for (const opt of spec.options ?? []) {
-      if (opt.isRequired) cmd.requiredOption(opt.flags, opt.description);
-      else cmd.option(opt.flags, opt.description);
+      if (opt.isRequired) {
+        cmd.requiredOption(opt.flags, opt.description);
+      } else {
+        cmd.option(opt.flags, opt.description);
+      }
     }
 
-    if (spec.allowExcessArguments === false) cmd.allowExcessArguments(false);
+    if (spec.allowExcessArguments === false) {
+      cmd.allowExcessArguments(false);
+    }
 
     cmd.action(async (...values: unknown[]) => {
       // CommandSpec.execute 声明为 (...args: never[]) 以兼容各命令各异的签名，此处收窄后调用
@@ -84,18 +90,15 @@ program.hook('preAction', (thisCommand: InstanceType<typeof Command>) => {
   }
 });
 
-// agent 使用 [args...] + 手写参数解析（见 commander/agent/parse.ts），无法用命令表表达
-registerAgentCommand(program);
-
 /** 命令表：声明顺序即 --help 的列出顺序 */
 const COMMANDS: readonly CommandSpec[] = [
   { name: 'init', description: '检查并初始化环境', execute: runInit },
   { name: 'version', description: '检查环境并显示版本', execute: runVersion },
+  { name: 'doctor', description: '诊断环境和配置', execute: runDoctor },
   { name: 'status', description: '检查工作目录是否为合规的 solo 工作区', execute: runStatus },
   { name: 'start', description: '启动本项目的 tmux session', allowExcessArguments: false, execute: runStart },
   { name: 'stop', description: '终止本项目的 tmux session', execute: runStop },
   { name: 'dashboard', description: '进入本项目的 tmux session', execute: runDashboard },
-  { name: 'agents', description: '显示 .solo/config 中的 agent 列表', execute: runAgents },
   {
     name: 'usage',
     description: '统计指定 agent 的 Claude token 消耗',
@@ -116,19 +119,17 @@ const COMMANDS: readonly CommandSpec[] = [
   },
   {
     name: 'hook',
-    description: 'tmux hook 回调入口（由 tmux run-shell 自动调用）',
+    description: 'hook 回调入口（由 tmux run-shell 自动调用）',
     options: [
-      { flags: '--name <name>', description: 'hook 事件名', isRequired: true },
-      { flags: '--session_name <session_name>', description: 'session 名称', isRequired: true },
-      { flags: '--window_name <window_name>', description: 'window 名称', isRequired: true },
-      { flags: '--pane_index <pane_index>', description: 'pane 索引', isRequired: true }
+      { flags: '--endpoint <endpoint>', description: 'hook 终端类型（tmux | claude）', isRequired: true },
+      { flags: '--event <event>', description: 'hook 事件名' },
+      { flags: '--workspace <workspace>', description: '工作目录（可选）' }
     ],
     execute: async (opts: Record<string, string>) => {
       await runHook({
-        name: opts.name,
-        sessionName: opts.session_name,
-        windowName: opts.window_name,
-        paneIndex: opts.pane_index
+        endpoint: opts.endpoint as 'tmux' | 'claude',
+        event: opts.event,
+        workspace: opts.workspace
       });
     }
   },
@@ -144,19 +145,6 @@ const COMMANDS: readonly CommandSpec[] = [
 ];
 
 registerCommands(program, COMMANDS);
-
-// 隐藏命令：由 startWorker 生成的后台 worker 进程调用，不暴露在 --help 中
-program
-  .command('_task-worker', { hidden: true })
-  .description('后台轮询 worker 入口（内部使用）')
-  .argument('<task-id>', '任务 ID')
-  .argument('<session>', 'tmux session 名')
-  .argument('<window>', 'tmux window 名')
-  .argument('<pane-index>', 'pane 索引', parseInt)
-  .argument('[agent-name]', 'agent 名称')
-  .action(async (taskId: string, session: string, window: string, paneIndex: number, agentName?: string) => {
-    await runTaskWorker(taskId, session, window, paneIndex, agentName);
-  });
 
 if (require.main === module) {
   program.parse();

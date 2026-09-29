@@ -1,7 +1,7 @@
 import { dump, load } from 'js-yaml';
 import { dirname } from 'path';
 import { LOG_FILE, getConfigPath } from '../paths';
-import { exists, ensureDir, readFile, writeFile } from '../../utils';
+import { exists, ensureDir, readFile, writeFile } from '../../utils/files';
 import type { PanePosition, PaneEntry, AgentPanes, AgentConfig, SoloConfig, LoggingConfig, TaskConfig } from './types';
 
 // dump 选项：与示例保持一致缩进
@@ -9,6 +9,9 @@ const YAML_DUMP_OPTIONS = { indent: 4 } as const;
 
 // 允许的 pane 位置值
 const VALID_PANE_POSITIONS: ReadonlySet<string> = new Set([
+  'one',
+  'top',
+  'bottom',
   'left',
   'right',
   'left-top',
@@ -28,12 +31,16 @@ export const isValidPanePosition = (value: unknown): boolean => {
  * 解析 panes 对象（新格式：key 为 tag 名，value 为含 layout 的对象）
  * 过滤非法 layout 值和非对象 value，保留 Object.keys 顺序
  */
-const parsePanes = (rawPanes: Record<string, unknown>): AgentPanes | undefined => {
+export const parsePanes = (rawPanes: Record<string, unknown>): AgentPanes | undefined => {
   const panes: AgentPanes = {};
   for (const [tag, raw] of Object.entries(rawPanes)) {
-    if (typeof raw !== 'object' || raw === null) continue;
+    if (typeof raw !== 'object' || raw === null) {
+      continue;
+    }
     const entry = raw as Record<string, unknown>;
-    if (!isValidPanePosition(entry.layout)) continue;
+    if (!isValidPanePosition(entry.layout)) {
+      continue;
+    }
     const paneEntry: PaneEntry = { layout: entry.layout as PanePosition };
     if (typeof entry.booter === 'string') {
       paneEntry.booter = entry.booter;
@@ -50,27 +57,54 @@ const parsePanes = (rawPanes: Record<string, unknown>): AgentPanes | undefined =
  * 从 raw agent 对象构建 AgentConfig 条目
  */
 const buildAgentEntry = (raw: Record<string, unknown>): AgentConfig | null => {
-  if (typeof raw.workspace !== 'string') return null;
+  if (typeof raw.workspace !== 'string') {
+    return null;
+  }
   const entry: AgentConfig = { workspace: raw.workspace };
-  if (typeof raw.activate === 'boolean') entry.activate = raw.activate;
-  if (typeof raw.waitTime === 'number') entry.waitTime = raw.waitTime;
+  if (typeof raw.activate === 'boolean') {
+    entry.activate = raw.activate;
+  }
+  if (typeof raw.waitTime === 'number') {
+    entry.waitTime = raw.waitTime;
+  }
   if (typeof raw.panes === 'object' && raw.panes !== null) {
     const panes = parsePanes(raw.panes as Record<string, unknown>);
-    if (panes) entry.panes = panes;
+    if (panes) {
+      entry.panes = panes;
+    }
   }
   return entry;
 };
 
 /**
- * 解析顶级 hooks 段：仅保留 boolean 值条目（事件名 → 启用状态）
+ * 解析 hooks 段的指定 endpoint 子段：仅保留 boolean 值条目（事件名 → 启用状态）
  */
-const parseHooks = (raw: unknown): Record<string, boolean> => {
-  if (typeof raw !== 'object' || raw === null) return {};
-  const hooks: Record<string, boolean> = {};
-  for (const [event, enabled] of Object.entries(raw as Record<string, unknown>)) {
-    if (typeof enabled === 'boolean') hooks[event] = enabled;
+const parseHookEndpoint = (raw: unknown): Record<string, boolean> => {
+  if (typeof raw !== 'object' || raw === null) {
+    return {};
   }
-  return hooks;
+  const result: Record<string, boolean> = {};
+  for (const [event, enabled] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof enabled === 'boolean') {
+      result[event] = enabled;
+    }
+  }
+  return result;
+};
+
+/**
+ * 解析顶级 hooks 段：按 endpoint 分组解析，目前仅支持 tmux
+ */
+const parseHooks = (raw: unknown): SoloConfig['hooks'] => {
+  if (typeof raw !== 'object' || raw === null) {
+    return {};
+  }
+  const obj = raw as Record<string, unknown>;
+  const tmux = parseHookEndpoint(obj.tmux);
+  if (Object.keys(tmux).length === 0) {
+    return {};
+  }
+  return { tmux };
 };
 
 /**
@@ -78,11 +112,17 @@ const parseHooks = (raw: unknown): Record<string, boolean> => {
  * 若字段存在但类型非法（非字符串），则该字段丢弃。
  */
 const parseLogging = (raw: unknown): LoggingConfig | undefined => {
-  if (typeof raw !== 'object' || raw === null) return undefined;
+  if (typeof raw !== 'object' || raw === null) {
+    return undefined;
+  }
   const obj = raw as Record<string, unknown>;
   const result: LoggingConfig = {};
-  if (typeof obj.level === 'string') result.level = obj.level as LoggingConfig['level'];
-  if (typeof obj.file === 'string') result.file = obj.file;
+  if (typeof obj.level === 'string') {
+    result.level = obj.level as LoggingConfig['level'];
+  }
+  if (typeof obj.file === 'string') {
+    result.file = obj.file;
+  }
   return result;
 };
 
@@ -104,7 +144,9 @@ export const resolveLoggingConfig = (raw: LoggingConfig | null | undefined): Req
  * - maxSize 上限为 128
  */
 const parseTaskConfig = (raw: unknown): TaskConfig | undefined => {
-  if (typeof raw !== 'object' || raw === null) return undefined;
+  if (typeof raw !== 'object' || raw === null) {
+    return undefined;
+  }
   const obj = raw as Record<string, unknown>;
   const result: TaskConfig = {};
   let hasValidField = false;
@@ -125,7 +167,9 @@ const parseTaskConfig = (raw: unknown): TaskConfig | undefined => {
     return undefined;
   }
 
-  if (!hasValidField) return undefined;
+  if (!hasValidField) {
+    return undefined;
+  }
 
   // 规范化：coreSize > maxSize 时 maxSize = coreSize
   if (result.coreSize !== undefined && result.maxSize !== undefined && result.coreSize > result.maxSize) {
@@ -144,25 +188,39 @@ const parseTaskConfig = (raw: unknown): TaskConfig | undefined => {
  * 校验并规范化 load 的结果（宽容处理字段缺失，语法错误已在 load 时抛出）
  */
 const normalize = (data: unknown): SoloConfig => {
-  if (typeof data !== 'object' || data === null) return { name: '', hooks: {} };
+  if (typeof data !== 'object' || data === null) {
+    return { name: '', hooks: {} };
+  }
   const obj = data as Record<string, unknown>;
   const name = typeof obj.name === 'string' ? obj.name : '';
   const hooks = parseHooks(obj.hooks);
   const logging = parseLogging(obj.logging);
   const task = parseTaskConfig(obj.task);
-  if (typeof obj.agents !== 'object' || obj.agents === null) return { name, hooks, logging, task };
+  if (typeof obj.agents !== 'object' || obj.agents === null) {
+    return { name, hooks, logging, task };
+  }
 
   const agents: Record<string, AgentConfig> = {};
   for (const [agentName, raw] of Object.entries(obj.agents as Record<string, unknown>)) {
-    if (typeof raw !== 'object' || raw === null) continue;
+    if (typeof raw !== 'object' || raw === null) {
+      continue;
+    }
     const entry = buildAgentEntry(raw as Record<string, unknown>);
-    if (entry) agents[agentName] = entry;
+    if (entry) {
+      agents[agentName] = entry;
+    }
   }
 
   const result: SoloConfig = { name, hooks };
-  if (Object.keys(agents).length > 0) result.agents = agents;
-  if (logging) result.logging = logging;
-  if (task) result.task = task;
+  if (Object.keys(agents).length > 0) {
+    result.agents = agents;
+  }
+  if (logging) {
+    result.logging = logging;
+  }
+  if (task) {
+    result.task = task;
+  }
   return result;
 };
 
@@ -173,11 +231,11 @@ const normalize = (data: unknown): SoloConfig => {
 export const readConfig = (configPath?: string): SoloConfig => {
   const path = configPath ?? getConfigPath();
   if (!exists(path)) {
-    return { name: '', hooks: {} };
+    return { name: '' };
   }
   const content = readFile(path);
   if (!content) {
-    return { name: '', hooks: {} };
+    return { name: '' };
   }
 
   let parsed: unknown;

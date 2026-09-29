@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { Readable } from 'stream';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, appendFileSync, statSync, readdirSync } from 'fs';
 
 vi.mock('fs', () => ({
@@ -11,11 +12,17 @@ vi.mock('fs', () => ({
   readdirSync: vi.fn()
 }));
 
-import { ensureDir, writeFile, readFile, appendFile, exists, stat, readDir } from '../../src/utils/files';
+import { ensureDir, writeFile, readFile, appendFile, exists, stat, readDir, readStdin } from '../../src/utils/files';
 
 describe('utils/files 文件操作工具', () => {
+  const originalStdin = process.stdin;
+
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'stdin', { value: originalStdin });
   });
 
   describe('ensureDir', () => {
@@ -87,6 +94,22 @@ describe('utils/files 文件操作工具', () => {
       const result = readDir('/test/dir');
       expect(result).toEqual(['file1.txt', 'file2.txt']);
       expect(readdirSync).toHaveBeenCalledWith('/test/dir');
+    });
+  });
+
+  describe('readStdin', () => {
+    it('读取 process.stdin 的全部内容并返回字符串', async () => {
+      const fakeStdin = Readable.from([Buffer.from('{"tool_name":"Bash"}')]) as unknown as NodeJS.ReadStream;
+      Object.defineProperty(process, 'stdin', { value: fakeStdin });
+      const result = await readStdin();
+      expect(result).toBe('{"tool_name":"Bash"}');
+    });
+
+    it('stdin 为空时返回空字符串', async () => {
+      const fakeStdin = Readable.from([]) as unknown as NodeJS.ReadStream;
+      Object.defineProperty(process, 'stdin', { value: fakeStdin });
+      const result = await readStdin();
+      expect(result).toBe('');
     });
   });
 });

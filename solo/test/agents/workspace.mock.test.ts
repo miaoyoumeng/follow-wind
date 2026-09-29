@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkAgentWorkspaces } from '../../src/agents/workspace';
-import type { WorkspaceCheckResult } from '../../src/agents/types';
 
 // mock fs 模块
 const mockExistsSync = vi.fn();
@@ -57,8 +56,12 @@ describe('checkAgentWorkspaces', () => {
   it('workspace 存在且 .claude/settings.json 已存在时不创建文件', () => {
     vi.mocked(getAgents).mockReturnValue([{ name: 'backend', workspace: '/abs/path/backend', activate: true }]);
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/abs/path/backend') return true;
-      if (p === '/abs/path/backend/.claude/settings.json') return true;
+      if (p === '/abs/path/backend') {
+        return true;
+      }
+      if (p === '/abs/path/backend/.claude/settings.json') {
+        return true;
+      }
       return false;
     });
 
@@ -72,7 +75,9 @@ describe('checkAgentWorkspaces', () => {
   it('workspace 存在但 .claude/settings.json 不存在时创建空 JSON', () => {
     vi.mocked(getAgents).mockReturnValue([{ name: 'api', workspace: '/abs/path/api', activate: false }]);
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/abs/path/api') return true;
+      if (p === '/abs/path/api') {
+        return true;
+      }
       return false;
     });
 
@@ -86,8 +91,12 @@ describe('checkAgentWorkspaces', () => {
   it('workspace 存在但 .claude 目录已存在时只创建 settings.json', () => {
     vi.mocked(getAgents).mockReturnValue([{ name: 'web', workspace: '/abs/path/web', activate: true }]);
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/abs/path/web') return true;
-      if (p === '/abs/path/web/.claude') return true;
+      if (p === '/abs/path/web') {
+        return true;
+      }
+      if (p === '/abs/path/web/.claude') {
+        return true;
+      }
       return false;
     });
 
@@ -105,9 +114,15 @@ describe('checkAgentWorkspaces', () => {
       { name: 'b', workspace: '/b', activate: true }
     ]);
     mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/a') return false;
-      if (p === '/b') return true;
-      if (p === '/b/.claude/settings.json') return false;
+      if (p === '/a') {
+        return false;
+      }
+      if (p === '/b') {
+        return true;
+      }
+      if (p === '/b/.claude/settings.json') {
+        return false;
+      }
       return false;
     });
 

@@ -14,8 +14,6 @@ import {
   sendKeysEnter,
   setPaneTitle,
   splitPane,
-  waitForText,
-  notifyCompletion,
   selectPane,
   listPanesWithTitle
 } from '../../src/tmux/pane';
@@ -149,92 +147,6 @@ describe('splitPane', () => {
     mockExecAsync.mockResolvedValueOnce({ stdout: '5', stderr: '' });
     const result = await splitPane('s', 'w', 0, '-h');
     expect(result).toBe(5);
-  });
-});
-
-describe('waitForText', () => {
-  beforeEach(() => {
-    mockExecAsync.mockClear();
-  });
-
-  it('首次 capturePane 内容包含 fixed 字符串，立即返回', async () => {
-    mockExecAsync.mockResolvedValue({ stdout: 'Hello World\nDone!', stderr: '' });
-    const result = await waitForText('s', 'w', 0, 'Done', 'Done', 5000, 50, 1000);
-    expect(result).toBeUndefined();
-    // 只调用一次 capturePane（-S -lines -J）
-    expect(mockExecAsync).toHaveBeenCalledTimes(1);
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t s:w.0 -p -S -1000 -J');
-  });
-
-  it('首次未匹配，后续匹配后返回', async () => {
-    mockExecAsync
-      .mockResolvedValueOnce({ stdout: 'loading...', stderr: '' })
-      .mockResolvedValueOnce({ stdout: 'loading...\nDone!', stderr: '' });
-    await waitForText('s', 'w', 0, 'Done', 'Done', 5000, 50, 1000);
-    expect(mockExecAsync).toHaveBeenCalledTimes(2);
-  });
-
-  it('超时抛出错误', async () => {
-    mockExecAsync.mockResolvedValue({ stdout: 'loading...', stderr: '' });
-    await expect(waitForText('s', 'w', 0, 'Done', 'yes', 200, 50, 1000)).rejects.toThrow('Timed out');
-  });
-
-  it('fixed 为空字符串时使用正则匹配', async () => {
-    mockExecAsync.mockResolvedValue({ stdout: 'version 3.14 released', stderr: '' });
-    await waitForText('s', 'w', 0, 'version \\d+\\.\\d+', '', 5000, 50, 1000);
-    expect(mockExecAsync).toHaveBeenCalledTimes(1);
-  });
-
-  it('fixed 为空字符串时正则不匹配则继续轮询', async () => {
-    mockExecAsync
-      .mockResolvedValueOnce({ stdout: 'no match here', stderr: '' })
-      .mockResolvedValueOnce({ stdout: 'version 2.0 ready', stderr: '' });
-    await waitForText('s', 'w', 0, 'version \\d+\\.\\d+', '', 5000, 50, 1000);
-    expect(mockExecAsync).toHaveBeenCalledTimes(2);
-  });
-
-  it('capturePane 使用指定的 lines 参数', async () => {
-    mockExecAsync.mockResolvedValue({ stdout: 'text', stderr: '' });
-    await waitForText('s', 'w', 0, 'text', 'text', 5000, 50, 500);
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux capture-pane -t s:w.0 -p -S -500 -J');
-  });
-});
-
-describe('notifyCompletion', () => {
-  beforeEach(() => {
-    mockExecAsync.mockClear();
-  });
-
-  it('先获取 pane 当前命令，再调用 agent-tracker 通知完成', async () => {
-    mockExecAsync.mockResolvedValueOnce({ stdout: 'claude', stderr: '' });
-    await notifyCompletion('sess', 'win', '0');
-    expect(mockExecAsync).toHaveBeenCalledTimes(2);
-    expect(mockExecAsync).toHaveBeenNthCalledWith(1, "tmux display-message -p -t sess:win.0 '#{pane_current_command}'");
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('agent-tracker/bin/agent tracker command')
-    );
-  });
-
-  it('通知命令包含正确的 window-id、pane 和 summary 参数', async () => {
-    mockExecAsync.mockResolvedValueOnce({ stdout: 'claude', stderr: '' });
-    await notifyCompletion('sess', 'win', '0');
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('-window-id win'));
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('-pane 0'));
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('-summary'));
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('claude finished'));
-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, expect.stringContaining('notify'));
-  });
-
-  it('display-message 失败时不抛出错误', async () => {
-    mockExecAsync.mockRejectedValueOnce(new Error('tmux error'));
-    await expect(notifyCompletion('sess', 'win', '0')).resolves.toBeUndefined();
-  });
-
-  it('agent-tracker 调用失败时不抛出错误', async () => {
-    mockExecAsync.mockResolvedValueOnce({ stdout: 'claude', stderr: '' });
-    mockExecAsync.mockRejectedValueOnce(new Error('agent not found'));
-    await expect(notifyCompletion('sess', 'win', '0')).resolves.toBeUndefined();
   });
 });
 

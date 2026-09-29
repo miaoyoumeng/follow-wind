@@ -18,9 +18,13 @@ const extractNumberedLines = (content: string): Array<{ num: number; line: strin
 
 /** 检查数字序列是否从 1 开始且连续 */
 const isContinuousFromOne = (numbers: number[]): boolean => {
-  if (numbers.length === 0 || numbers[0] !== 1) return false;
+  if (numbers.length === 0 || numbers[0] !== 1) {
+    return false;
+  }
   for (let i = 1; i < numbers.length; i++) {
-    if (numbers[i] !== numbers[i - 1] + 1) return false;
+    if (numbers[i] !== numbers[i - 1] + 1) {
+      return false;
+    }
   }
   return true;
 };
@@ -28,7 +32,9 @@ const isContinuousFromOne = (numbers: number[]): boolean => {
 /** 检查数字序列是否有跳跃（不连续） */
 const hasGap = (numbers: number[]): boolean => {
   for (let i = 1; i < numbers.length; i++) {
-    if (numbers[i] !== numbers[i - 1] + 1) return true;
+    if (numbers[i] !== numbers[i - 1] + 1) {
+      return true;
+    }
   }
   return false;
 };
@@ -46,13 +52,17 @@ const hasGap = (numbers: number[]): boolean => {
  */
 export const structuredQuestion: DecisionStrategy = (context: DecisionContext): string | null => {
   const numberedLines = extractNumberedLines(context.content);
-  if (numberedLines.length < 2) return null;
+  if (numberedLines.length < 2) {
+    return null;
+  }
 
   const numbers = numberedLines.map(nl => nl.num);
 
   // 最后一个编号项必须包含 "Chat about this"
   const lastEntry = numberedLines[numberedLines.length - 1];
-  if (!lastEntry.line.includes('Chat about this')) return null;
+  if (!lastEntry.line.includes('Chat about this')) {
+    return null;
+  }
 
   // 检查倒数第二项
   const secondLastEntry = numberedLines[numberedLines.length - 2];
@@ -73,7 +83,9 @@ export const structuredQuestion: DecisionStrategy = (context: DecisionContext): 
   }
 
   // 检查编号（排除末尾提示项）是否从 1 开始且连续
-  if (!isContinuousFromOne(numbersBeforePrompts)) return null;
+  if (!isContinuousFromOne(numbersBeforePrompts)) {
+    return null;
+  }
 
   return 'structuredQuestion';
 };

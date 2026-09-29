@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type * as CommanderType from 'commander';
-import type * as CommanderModuleType from '../../src/commander';
+import type * as CommanderModuleType from '../../src/cli';
 
 const {
   mockGetLoggingConfig,
@@ -42,7 +42,7 @@ vi.mock('commander', async importOriginal => {
 });
 
 // 各命令实现是副作用边界，mock 以隔离注册层并断言参数是否正确传递
-vi.mock('../../src/commander', async importOriginal => {
+vi.mock('../../src/cli', async importOriginal => {
   const actual = await importOriginal<typeof CommanderModuleType>();
   return {
     ...actual,
@@ -86,17 +86,16 @@ const findCommand = (name: string): RegisteredCommand | undefined => program.com
 
 /** [命令名, 描述] —— 与重构前的 --help 输出逐字对应，是本次重构的可移植契约 */
 const EXPECTED_COMMANDS: ReadonlyArray<[string, string]> = [
-  ['agent', 'agent 管理命令'],
   ['init', '检查并初始化环境'],
   ['version', '检查环境并显示版本'],
+  ['doctor', '诊断环境和配置'],
   ['status', '检查工作目录是否为合规的 solo 工作区'],
   ['start', '启动本项目的 tmux session'],
   ['stop', '终止本项目的 tmux session'],
   ['dashboard', '进入本项目的 tmux session'],
-  ['agents', '显示 .solo/config 中的 agent 列表'],
   ['usage', '统计指定 agent 的 Claude token 消耗'],
   ['chat', '向指定 agent 的 claude pane 发送消息'],
-  ['hook', 'tmux hook 回调入口（由 tmux run-shell 自动调用）'],
+  ['hook', 'hook 回调入口（由 tmux run-shell 自动调用）'],
   ['capture', '捕获指定 agent 面板内容并写入 .solo/capture/']
 ];
 
@@ -116,22 +115,14 @@ describe('initLogger', () => {
     initLogger();
     expect(mockSetup).toHaveBeenCalledWith({ level: 'warn', file: '/default/.solo/solo.log' });
   });
-
-  it('worker 进程（SOLO_WORKER=1）调用 setup 时无额外参数', () => {
-    process.env.SOLO_WORKER = '1';
-    mockGetLoggingConfig.mockReturnValue({ level: 'info', file: '/tmp/solo.log' });
-    initLogger();
-    expect(mockSetup).toHaveBeenCalledWith({ level: 'info', file: '/tmp/solo.log' });
-    delete process.env.SOLO_WORKER;
-  });
 });
 
 describe('命令注册', () => {
-  // commander 在 parse 期间惰性注入 help 子命令，且存在隐藏命令（_task-worker），此处排除以聚焦 --help 可见命令
+  // commander 在 parse 期间惰性注入 help 子命令，此处排除以聚焦 --help 可见命令
   const businessCommands = (): string[] =>
     program.commands.filter(c => c.name() !== 'help' && !c._hidden).map(c => c.name());
 
-  it('注册全部 13 个业务命令，且顺序与 --help 输出一致', () => {
+  it('注册全部 11 个业务命令，且顺序与 --help 输出一致', () => {
     expect(businessCommands()).toEqual(EXPECTED_COMMANDS.map(([name]) => name));
   });
 
@@ -161,15 +152,12 @@ describe('参数元数据', () => {
     expect(args.map(a => a.required)).toEqual([true, true]);
   });
 
-  it('hook：4 个选项全部必填，且保持 snake_case 名称', () => {
+  it('hook：endpoint 必填，其余参数可选', () => {
     const options = findCommand('hook')?.options ?? [];
-    expect(options.map(o => o.flags)).toEqual([
-      '--name <name>',
-      '--session_name <session_name>',
-      '--window_name <window_name>',
-      '--pane_index <pane_index>'
-    ]);
-    expect(options.every(o => o.required)).toBe(true);
+    expect(options.map(o => o.flags)).toEqual(['--endpoint <endpoint>', '--event <event>', '--workspace <workspace>']);
+    // endpoint 必填（mandatory），其余可选
+    // 注：commander 的 required 表示选项是否需要参数值，mandatory 才是是否必填
+    expect(options.map(o => (o as unknown as { mandatory: boolean }).mandatory)).toEqual([true, false, false]);
   });
 
   it('无参数命令不声明位置参数', () => {
@@ -201,25 +189,12 @@ describe('命令执行', () => {
     expect(mockRunUsage.mock.calls[0][1]).toBeUndefined();
   });
 
-  it('hook：snake_case 选项映射为 camelCase 回调参数', async () => {
-    await program.parseAsync([
-      'node',
-      'solo',
-      'hook',
-      '--name',
-      'alert-bell',
-      '--session_name',
-      'sess-1',
-      '--window_name',
-      'win-1',
-      '--pane_index',
-      '2'
-    ]);
+  it('hook：选项映射为回调参数', async () => {
+    await program.parseAsync(['node', 'solo', 'hook', '--endpoint', 'tmux', '--event', 'alert-bell']);
     expect(mockRunHook).toHaveBeenCalledWith({
-      name: 'alert-bell',
-      sessionName: 'sess-1',
-      windowName: 'win-1',
-      paneIndex: '2'
+      endpoint: 'tmux',
+      event: 'alert-bell',
+      workspace: undefined
     });
   });
 

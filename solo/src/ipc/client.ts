@@ -2,7 +2,7 @@ import * as net from 'net';
 
 import { readConfig, getIpcSocketPath } from '../config';
 import { IPC_METHODS, type IpcRequest, type IpcResponse, type IpcMethod, type RegisterTaskParams } from './types';
-import type { TaskStatus } from '../task';
+import { logger } from '../logging';
 
 let requestId = 0;
 
@@ -12,7 +12,9 @@ let requestId = 0;
  */
 const resolveSocketPath = (): string => {
   const { name } = readConfig();
-  return getIpcSocketPath(name);
+  const socketPath = getIpcSocketPath(name);
+  logger.debug(`[ipc-client] resolved socket path: ${socketPath}`);
+  return socketPath;
 };
 
 /**
@@ -22,10 +24,11 @@ const resolveSocketPath = (): string => {
  * @param socketPath socket 文件路径（默认从配置计算）
  * @returns 响应 data 字段
  */
-const sendRequest = (method: IpcMethod, params?: unknown, socketPath?: string): Promise<unknown> => {
+const sendIpcRequest = (method: IpcMethod, params?: unknown, socketPath?: string): Promise<unknown> => {
   const resolvedPath = socketPath ?? resolveSocketPath();
   return new Promise((resolve, reject) => {
     const id = `req-${++requestId}`;
+    logger.debug(`[ipc-client] sending ${method} (${id}) to ${resolvedPath}`);
     const req: IpcRequest = { id, method, params };
     const client = net.createConnection(resolvedPath, () => {
       client.end(JSON.stringify(req));
@@ -38,49 +41,80 @@ const sendRequest = (method: IpcMethod, params?: unknown, socketPath?: string): 
       try {
         const res = JSON.parse(data) as IpcResponse;
         if (res.success) {
+          logger.debug(`[ipc-client] ${id} success`);
           resolve(res.data);
         } else {
-          reject(new Error(res.error ?? 'Unknown IPC error'));
+          const err = res.error ?? 'Unknown IPC error';
+          logger.debug(`[ipc-client] ${id} failed: ${err}`);
+          reject(new Error(err));
         }
       } catch (err) {
+        logger.debug(`[ipc-client] ${id} parse error: ${String(err)}`);
         reject(err);
       }
     });
-    client.on('error', reject);
+    client.on('error', err => {
+      logger.debug(`[ipc-client] ${id} connection error: ${String(err)}`);
+      reject(err);
+    });
   });
 };
 
 /**
  * 注册任务（IPC 客户端）
- * @param params 任务参数：type/pid 为 daemon 注册；agentName/session/window/paneIndex 为 pane 级任务
+ * @param params 任务参数：type 为 daemon 注册；agentName/session/window/paneIndex 为 pane 级任务
  * @param socketPath socket 路径（默认从配置计算）
  * @returns 任务 ID
  */
-export const registerTask = async (params: RegisterTaskParams, socketPath?: string): Promise<string> => {
-  const data = await sendRequest(IPC_METHODS.registerTask, params, socketPath);
-  return (data as { taskId: string }).taskId;
+export const ipcRegisterTask = async (params: RegisterTaskParams, socketPath?: string): Promise<string> => {
+  const data = await sendIpcRequest(IPC_METHODS.ipcRegisterTask, params, socketPath);
+  const taskId = (data as { taskId: string }).taskId;
+  logger.info(`[ipc-client] registerTask completed, taskId=${taskId}`);
+  return taskId;
 };
 
 /**
- * 获取全部任务列表（IPC 客户端）
+ * 通过 IPC 将指令分发到 daemon 进程中已注册的 router
+ * @param session tmux session 名称
+ * @param window tmux window 名称
+ * @param paneIndex tmux pane index
+ * @param command 要执行的命令
  * @param socketPath socket 路径（默认从配置计算）
- * @returns 全部任务列表
+ * @returns true 表示指令已入队并触发 roller；false 表示未注册 router
  */
-export const listTasks = async (socketPath?: string): Promise<unknown[]> => {
-  const data = await sendRequest(IPC_METHODS.listTasks, undefined, socketPath);
-  return (data as { tasks: unknown[] }).tasks;
+export const ipcDispatch = async (
+  session: string,
+  window: string,
+  paneIndex: number,
+  command: string,
+  socketPath?: string
+): Promise<boolean> => {
+  const data = await sendIpcRequest(IPC_METHODS.ipcDispatch, { session, window, paneIndex, command }, socketPath);
+  const dispatched = (data as { dispatched: boolean }).dispatched;
+  logger.info(`[ipc-client] ipcDispatch completed, dispatched=${dispatched}`);
+  return dispatched;
 };
 
 /**
- * 通过 IPC 更新 daemon taskStorage 中的任务状态
- * worker 进程运行在独立子进程，必须通过 IPC 通知 daemon 更新状态
- * @param taskId 任务 ID
- * @param status 新状态
+ * 获取全部任务列表和终态计数（IPC 客户端）
  * @param socketPath socket 路径（默认从配置计算）
+ * @returns 活跃任务列表和终态计数
  */
-export const updateTaskState = async (taskId: string, status: TaskStatus, socketPath?: string): Promise<void> => {
-  await sendRequest(IPC_METHODS.updateTaskState, { taskId, status }, socketPath);
-  return undefined;
+export const ipcListTasks = async (
+  socketPath?: string
+): Promise<{
+  tasks: unknown[];
+  terminalCounts: { completed: number; timeout: number; failed: number; killed: number };
+}> => {
+  const data = await sendIpcRequest(IPC_METHODS.ipcListTasks, undefined, socketPath);
+  const { tasks, terminalCounts } = data as {
+    tasks: unknown[];
+    terminalCounts: { completed: number; timeout: number; failed: number; killed: number };
+  };
+  logger.info(
+    `[ipc-client] listTasks completed, active=${tasks.length}, completed=${terminalCounts.completed}, timeout=${terminalCounts.timeout}, failed=${terminalCounts.failed}`
+  );
+  return { tasks, terminalCounts };
 };
 
 /**
@@ -89,6 +123,23 @@ export const updateTaskState = async (taskId: string, status: TaskStatus, socket
  * @param socketPath socket 路径（默认从配置计算）
  */
 export const exitDaemon = async (socketPath?: string): Promise<void> => {
-  await sendRequest(IPC_METHODS.exit, undefined, socketPath);
-  return undefined;
+  logger.info('[ipc-client] exitDaemon requested');
+  await sendIpcRequest(IPC_METHODS.ipcServerExit, undefined, socketPath);
+};
+
+/**
+ * 通知 daemon 指定 pane 已稳定（由 Stop hook 调用）
+ * @param session tmux session 名称
+ * @param window tmux window 名称
+ * @param paneIndex tmux pane index
+ * @param socketPath socket 路径（默认从配置计算）
+ */
+export const ipcPaneStable = async (
+  session: string,
+  window: string,
+  paneIndex: number,
+  socketPath?: string
+): Promise<void> => {
+  await sendIpcRequest(IPC_METHODS.ipcPaneStable, { session, window, paneIndex }, socketPath);
+  logger.info(`[ipc-client] ipcPaneStable completed, pane=${session}:${window}.${paneIndex}`);
 };

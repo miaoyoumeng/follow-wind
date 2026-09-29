@@ -1,6 +1,7 @@
 /** 环境检测结果 - 统一类型 */
 export interface EnvCheckResult {
   settings?: { exists: boolean; path: string };
+  git?: { installed: boolean; version?: string };
   claude?: { installed: boolean; version?: string };
   tmux?: { installed: boolean; version?: string };
 }
@@ -13,20 +14,4 @@ export interface EnvHandler {
   setNext(handler: EnvHandler): EnvHandler;
   /** 获取下一个 handler */
   getNext(): EnvHandler | null;
-}
-
-// 向后兼容的类型别名
-export interface SettingsCheckResult {
-  exists: boolean;
-  path: string;
-}
-
-export interface CheckResult {
-  installed: boolean;
-  version?: string;
-}
-
-export interface TmuxCheckResult {
-  installed: boolean;
-  version?: string;
 }

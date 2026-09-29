@@ -4,29 +4,26 @@ import { join } from 'path';
 export const SOLO_DIR_NAME = '.solo';
 
 // 配置文件名
-export const CONFIG_FILE_NAME = 'config.yaml';
+const CONFIG_FILE_NAME = 'config.yaml';
 
 // capture 子目录名
-export const CAPTURE_DIR_NAME = 'capture';
+const CAPTURE_DIR_NAME = 'capture';
 
 // usage 统计文件名
-export const USAGE_FILE_NAME = 'usage.json';
+const USAGE_FILE_NAME = 'usage.json';
 
 // 日志文件名
-export const LOG_FILE_NAME = 'solo.log';
+const LOG_FILE_NAME = 'solo.log';
 
 // PID 文件名
 export const PID_FILE_NAME = 'pid';
-
-// IPC socket 文件名模板（[name] 替换为配置中的 name）
-export const IPC_SOCKET_NAME_TEMPLATE = 'ipc-[name].sock';
 
 // Claude 项目根目录
 export const CLAUDE_PROJECTS_DIR = join(process.env.HOME ?? '', '.claude', 'projects');
 
 // 完整路径（基于当前工作目录）
 export const SOLO_DIR = join(process.cwd(), SOLO_DIR_NAME);
-export const CONFIG_PATH = join(SOLO_DIR, CONFIG_FILE_NAME);
+const CONFIG_PATH = join(SOLO_DIR, CONFIG_FILE_NAME);
 export const CONFIG_PATH_NAME = join(SOLO_DIR_NAME, CONFIG_FILE_NAME);
 
 export const CAPTURE_DIR = join(SOLO_DIR, CAPTURE_DIR_NAME);
@@ -62,19 +59,12 @@ export const getIpcSocketPath = (name: string): string => {
   return join(SOLO_DIR, `ipc-${name}.sock`);
 };
 
-// 导出路径对象，方便整体引用
-export const paths = {
-  soloDir: SOLO_DIR,
-  config: CONFIG_PATH,
-  capture: CAPTURE_DIR,
-  usage: USAGE_PATH,
-  soloDirName: SOLO_DIR_NAME,
-  configFile: CONFIG_FILE_NAME,
-  captureDirName: CAPTURE_DIR_NAME,
-  usageFile: USAGE_FILE_NAME,
-  pid: PID_PATH,
-  pidFile: PID_FILE_NAME,
-  ipcSocketFile: IPC_SOCKET_NAME_TEMPLATE,
-  logFile: LOG_FILE,
-  claudeProjectsDir: CLAUDE_PROJECTS_DIR
-} as const;
+/**
+ * 根据 tmux 坐标计算 agent capture 文件路径
+ * @param win tmux window 名称
+ * @param paneIndex pane 索引
+ * @returns agent capture 文件绝对路径
+ */
+export const getTmuxPaneCapturePath = (win: string, paneIndex: number): string => {
+  return join(CAPTURE_DIR, `${win}-${paneIndex}.md`);
+};

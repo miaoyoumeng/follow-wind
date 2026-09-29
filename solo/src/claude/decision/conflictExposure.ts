@@ -1,27 +1,44 @@
-// import type { DecisionContext, DecisionStrategy } from '../types';
-//
-// /** 矛盾/冲突信号关键词 */
-// const CONFLICT_KEYWORDS: readonly string[] = [
-//   '矛盾',
-//   '冲突',
-//   '不一致',
-//   '两种方案',
-//   '互相矛盾',
-//   '无法同时',
-//   '二者不可兼得',
-//   '存在分歧'
-// ];
-//
-// /**
-//  * 策略 5：冲突暴露。
-//  * 检测到矛盾时暴露给人，不折中。
-//  * @param context 决策上下文
-//  * @returns 匹配时返回 'conflictExposure'，不匹配返回 null
-//  */
-// export const conflictExposure: DecisionStrategy = (context: DecisionContext): string | null => {
-//   const hit = CONFLICT_KEYWORDS.find(kw => context.content.includes(kw));
-//   if (hit) {
-//     return 'conflictExposure';
-//   }
-//   return null;
-// };
+import type { DecisionContext, DecisionStrategy } from '../types';
+
+/** 冲突/矛盾信号关键词 */
+const CONFLICT_KEYWORDS: readonly string[] = ['冲突', 'conflict', '不一致', '矛盾'];
+
+/** 确认信号关键词 */
+const CONFIRM_KEYWORDS: readonly string[] = ['确认'];
+
+/** 匹配编号行的正则：可选前导空白 + 可选 ❯/↓ 前缀 + 数字 + 点 */
+const NUMBERED_LINE_REGEX = /^\s*(?:[❯↓]\s+)?(\d+)\./m;
+
+/**
+ * 策略：冲突暴露。
+ * 检测到矛盾时暴露给人，不折中。
+ * 三条件同时满足才触发：
+ * 1. 包含冲突关键词（冲突 / conflict / 不一致 / 矛盾）
+ * 2. 包含编号选项（至少 1 行序号）
+ * 3. 包含确认关键词（确认）
+ * @param context 决策上下文
+ * @returns 匹配时返回 'conflictExposure'，不匹配返回 null
+ */
+export const conflictExposure: DecisionStrategy = (context: DecisionContext): string | null => {
+  const { content } = context;
+  if (!content) {
+    return null;
+  }
+
+  const hasConflict = CONFLICT_KEYWORDS.some(kw => content.includes(kw));
+  if (!hasConflict) {
+    return null;
+  }
+
+  const hasNumbered = NUMBERED_LINE_REGEX.test(content);
+  if (!hasNumbered) {
+    return null;
+  }
+
+  const hasConfirm = CONFIRM_KEYWORDS.some(kw => content.includes(kw));
+  if (!hasConfirm) {
+    return null;
+  }
+
+  return 'conflictExposure';
+};

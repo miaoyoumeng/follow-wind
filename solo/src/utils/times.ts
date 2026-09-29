@@ -16,13 +16,6 @@ export const formatUtcCompact = (d: Date = new Date()): string => {
 };
 
 /**
- * 本地紧凑格式：YYYYMMDD-HHmmss（例：20260909-103045）
- */
-export const formatLocalCompact = (d: Date = new Date()): string => {
-  return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
-};
-
-/**
  * 本地可读格式：YYYY-MM-DD HH:mm:ss（例：2026-09-09 10:30:45）
  */
 export const formatLocalReadable = (d: Date = new Date()): string => {
@@ -34,4 +27,13 @@ export const formatLocalReadable = (d: Date = new Date()): string => {
  */
 export const formatDateOnly = (d: Date = new Date()): string => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+
+/**
+ * 当前时间
+ * ISO 8601 格式字符串‌，‌格式‌：YYYY-MM-DDTHH:mm:ss.sssZ
+ * 示例 2026-09-24T03:00:00.000Z
+ */
+export const nowUTC = (): string => {
+  return new Date().toISOString();
 };
