@@ -1,16 +1,18 @@
 <template>
-  <component :is="LayoutComponents[layout]" />
+  <component :is="layoutComponents[layout]" />
 </template>
-<script setup lang="ts" name="Layout">
-import { type Component, computed, ComputedRef } from 'vue';
+<script setup lang="ts">
+defineOptions({ name: 'AppLayout' });
+import { type Component, computed, type ComputedRef } from 'vue';
 import LayoutClassic from '@/layouts/classic/index.vue';
 import LayoutVertical from '@/layouts/vertical/index.vue';
-import { LayoutType } from '@/typings/global';
+import { type LayoutType } from '@/typings/global';
 
-const LayoutComponents: Record<LayoutType, Component> = {
-  classic: LayoutClassic,
-  transverse: LayoutVertical,
-  vertical: LayoutVertical
+// .vue 组件在 typescript-eslint 下无法解析类型（需 Volar），此处显式断言
+const layoutComponents: Record<LayoutType, Component> = {
+  classic: LayoutClassic as Component,
+  transverse: LayoutVertical as Component,
+  vertical: LayoutVertical as Component
 };
 const layout: ComputedRef<LayoutType> = computed(() => 'classic');
 </script>

@@ -1,5 +1,6 @@
-import mockData from '@/assets/jsons/completed-order-list.json';
-import { ResultData } from '@/request/modules';
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import mockData from '@/assets/mocks/completed-order-list.json';
+import { type ResultData } from '@/request/modules';
 
 export declare namespace CompletedOrder {
   interface RefundOrderItem {
@@ -75,6 +76,17 @@ export declare namespace CompletedOrder {
     reviewer: string;
   }
 
+  interface ConfirmRecord {
+    date: string;
+    amount: number;
+  }
+
+  interface RefundRecord {
+    date: string;
+    amount: number;
+    reason: string;
+  }
+
   interface CompletedDetail {
     orderNo: string;
     userId: string;
@@ -89,17 +101,6 @@ export declare namespace CompletedOrder {
     couponDeduction: number;
     confirmRecords: ConfirmRecord[];
     refundRecords: RefundRecord[];
-  }
-
-  interface ConfirmRecord {
-    date: string;
-    amount: number;
-  }
-
-  interface RefundRecord {
-    date: string;
-    amount: number;
-    reason: string;
   }
 }
 
@@ -150,7 +151,7 @@ const rawData = mockData.data as unknown as {
 };
 
 const buildResponse = <T>(data: T): ResultData<T> => ({
-  code: '200',
+  code: 200,
   msg: '成功',
   data
 });
@@ -160,7 +161,9 @@ export const getRefundOrderListApi = (
   params: CompletedOrder.RefundListParams
 ): Promise<ResultData<{ list: CompletedOrder.RefundOrderItem[]; total: number; summary: CompletedOrder.SummaryResult }>> => {
   let filtered = rawData.refundList.map((item): CompletedOrder.RefundOrderItem => ({ ...item }));
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(
@@ -183,6 +186,27 @@ export const getRefundOrderListApi = (
 };
 
 // ===== 完成交易订单列表 =====
+/** 按查询条件过滤订单 */
+const filterCompletedOrders = (
+  list: CompletedOrder.CompletedOrderItem[],
+  params: CompletedOrder.CompletedListParams
+): CompletedOrder.CompletedOrderItem[] => {
+  let filtered = list;
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
+  if (params.payMethod) {
+    filtered = filtered.filter(item => item.payMethod === params.payMethod);
+  }
+  if (params.keyword) {
+    const kw = params.keyword.toLowerCase();
+    filtered = filtered.filter(
+      item => item.orderNo.toLowerCase().includes(kw) || item.userName.toLowerCase().includes(kw) || item.userId.includes(kw)
+    );
+  }
+  return filtered;
+};
+
 export const getCompletedOrderListApi = (
   params: CompletedOrder.CompletedListParams
 ): Promise<
@@ -194,15 +218,10 @@ export const getCompletedOrderListApi = (
     refundSummary: CompletedOrder.SummaryResult;
   }>
 > => {
-  let filtered = rawData.completedList.map((item): CompletedOrder.CompletedOrderItem => ({ ...item }));
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
-  if (params.payMethod) filtered = filtered.filter(item => item.payMethod === params.payMethod);
-  if (params.keyword) {
-    const kw = params.keyword.toLowerCase();
-    filtered = filtered.filter(
-      item => item.orderNo.toLowerCase().includes(kw) || item.userName.toLowerCase().includes(kw) || item.userId.includes(kw)
-    );
-  }
+  const filtered = filterCompletedOrders(
+    rawData.completedList.map((item): CompletedOrder.CompletedOrderItem => ({ ...item })),
+    params
+  );
   const total = filtered.length;
   const start = (params.pageNum - 1) * params.pageSize;
   const pagedList = filtered.slice(start, start + params.pageSize);
@@ -229,7 +248,9 @@ export const getCompletedOrderListApi = (
 // ===== 退单详情 =====
 export const getRefundOrderDetailApi = (id: number): Promise<ResultData<CompletedOrder.RefundDetail>> => {
   const item = rawData.refundList.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   return Promise.resolve(
     buildResponse({
       orderNo: item.orderNo,
@@ -252,7 +273,9 @@ export const getRefundOrderDetailApi = (id: number): Promise<ResultData<Complete
 // ===== 完成交易订单详情 =====
 export const getCompletedOrderDetailApi = (id: number): Promise<ResultData<CompletedOrder.CompletedDetail>> => {
   const item = rawData.completedList.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   return Promise.resolve(
     buildResponse({
       orderNo: item.orderNo,

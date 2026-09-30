@@ -8,7 +8,7 @@
     </span>
   </div>
   <div>
-    <t-menu @change="handleNavTo" :collapsed="props.menuCollapsed">
+    <t-menu :collapsed="props.menuCollapsed" @change="handleNavTo">
       <template v-for="menu in menus" :key="menu.id">
         <!-- 如果是子菜单 -->
         <t-submenu v-if="menu.children && menu.children.length > 0" :value="menu.path">
@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { MenuProps, MenuValue } from 'tdesign-vue-next';
+import { type MenuProps, type MenuValue } from 'tdesign-vue-next';
 interface Props {
   menuCollapsed: boolean;
 }
@@ -50,7 +50,7 @@ const title = import.meta.env.VITE_GLOB_APP_TITLE as string;
 const router = useRouter();
 
 import { getAppMenusApi } from '@/api/menu.ts';
-import { Menu } from '@/api/modules/auth.ts';
+import { type Menu } from '@/api/models/auth.ts';
 
 const menus = ref<Menu.MenuOptions[]>([]);
 
@@ -58,20 +58,20 @@ watch(props, () => {
   console.log('nav watch....');
 });
 
-onMounted(() => {
-  renderMenus();
-});
-
 //functions
-const renderMenus = async () => {
+const renderMenus = async (): Promise<void> => {
   const { data } = await getAppMenusApi();
   if (data && data.length > 0) {
     menus.value = data;
   }
 };
+
+onMounted(() => {
+  void renderMenus();
+});
 const handleNavTo: MenuProps['onChange'] = (item: MenuValue) => {
   const routePath = item as string;
-  router.push(routePath);
+  void router.push(routePath);
 };
 </script>
 <style scoped lang="scss">

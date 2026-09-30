@@ -1,4 +1,5 @@
-<script setup lang="ts" name="DictManager">
+<script setup lang="ts">
+defineOptions({ name: 'DictManager' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Dialog, Form, FormItem, Input, Button, Popconfirm, Textarea } from 'tdesign-vue-next';
@@ -13,7 +14,7 @@ import {
   updateKeyValueApi,
   deleteKeyValueApi
 } from '@/api/dict.ts';
-import type { DictNamespace, DictKeyValue } from '@/api/modules/dict.ts';
+import type { DictNamespace, DictKeyValue } from '@/api/models/dict.ts';
 
 /* ===== Namespace 列表 ===== */
 const namespaceList = ref<DictNamespace.NamespaceItem[]>([]);
@@ -40,7 +41,7 @@ const keyValueForm = ref({ id: 0, key: '', value: '', description: '' });
 const keyValueFormError = ref('');
 
 /* ===== 加载 Namespace ===== */
-const loadNamespace = async () => {
+const loadNamespace = async (): Promise<void> => {
   const { data } = await getNamespaceListApi({
     keyword: namespaceKeyword.value,
     pageNum: namespacePageNum.value,
@@ -53,7 +54,7 @@ const loadNamespace = async () => {
 };
 
 /* ===== 加载 Key-Value ===== */
-const loadKeyValue = async (namespace: string) => {
+const loadKeyValue = async (namespace: string): Promise<void> => {
   const { data } = await getKeyValueListApi({
     namespace,
     keyword: keyValueKeyword.value
@@ -64,19 +65,19 @@ const loadKeyValue = async (namespace: string) => {
 };
 
 /* ===== Namespace 操作 ===== */
-const handleSearchNamespace = () => {
+const handleSearchNamespace = (): void => {
   namespacePageNum.value = 1;
-  loadNamespace();
+  void loadNamespace();
 };
 
-const handleCreateNamespace = () => {
+const handleCreateNamespace = (): void => {
   namespaceDialogMode.value = 'create';
   namespaceForm.value = { id: 0, namespace: '', description: '' };
   namespaceFormError.value = '';
   namespaceDialogVisible.value = true;
 };
 
-const handleEditNamespace = (row: DictNamespace.NamespaceItem) => {
+const handleEditNamespace = (row: DictNamespace.NamespaceItem): void => {
   namespaceDialogMode.value = 'edit';
   namespaceForm.value = { id: row.id, namespace: row.namespace, description: row.description };
   namespaceFormError.value = '';
@@ -93,7 +94,7 @@ const validateNamespace = (val: string): { valid: boolean; error: string } => {
   return { valid: true, error: '' };
 };
 
-const confirmSaveNamespace = async () => {
+const confirmSaveNamespace = async (): Promise<void> => {
   const result = validateNamespace(namespaceForm.value.namespace);
   if (!result.valid) {
     namespaceFormError.value = result.error;
@@ -102,42 +103,42 @@ const confirmSaveNamespace = async () => {
   try {
     if (namespaceDialogMode.value === 'create') {
       await createNamespaceApi({ namespace: namespaceForm.value.namespace, description: namespaceForm.value.description });
-      MessagePlugin.success('Namespace 已创建');
+      void MessagePlugin.success('Namespace 已创建');
     } else {
       await updateNamespaceApi({ id: namespaceForm.value.id, description: namespaceForm.value.description });
-      MessagePlugin.success('Namespace 已更新');
+      void MessagePlugin.success('Namespace 已更新');
     }
     namespaceDialogVisible.value = false;
-    loadNamespace();
-  } catch (e: any) {
-    namespaceFormError.value = e.message;
+    void loadNamespace();
+  } catch (e: unknown) {
+    namespaceFormError.value = e instanceof Error ? e.message : String(e);
   }
 };
 
 /* ===== Namespace 分页 ===== */
-const handleNamespacePageChange = (pageInfo: PageInfo) => {
+const handleNamespacePageChange = (pageInfo: PageInfo): void => {
   namespacePageNum.value = pageInfo.current;
   namespacePageSize.value = pageInfo.pageSize;
-  loadNamespace();
+  void loadNamespace();
 };
 
 /* ===== 行选中 ===== */
-const handleRowClick = ({ row }: { row: DictNamespace.NamespaceItem }) => {
+const handleRowClick = ({ row }: { row: DictNamespace.NamespaceItem }): void => {
   selectedNamespace.value = row;
   keyValueKeyword.value = '';
-  loadKeyValue(row.namespace);
+  void loadKeyValue(row.namespace);
 };
 
 /* ===== Key-Value 操作 ===== */
-const handleSearchKey = () => {
+const handleSearchKey = (): void => {
   if (selectedNamespace.value) {
-    loadKeyValue(selectedNamespace.value.namespace);
+    void loadKeyValue(selectedNamespace.value.namespace);
   }
 };
 
-const handleCreateKeyValue = () => {
+const handleCreateKeyValue = (): void => {
   if (!selectedNamespace.value) {
-    MessagePlugin.warning('请先选择左侧 Namespace');
+    void MessagePlugin.warning('请先选择左侧 Namespace');
     return;
   }
   keyValueDialogMode.value = 'create';
@@ -146,15 +147,17 @@ const handleCreateKeyValue = () => {
   keyValueDialogVisible.value = true;
 };
 
-const handleEditKeyValue = (row: DictKeyValue.KeyValueItem) => {
+const handleEditKeyValue = (row: DictKeyValue.KeyValueItem): void => {
   keyValueDialogMode.value = 'edit';
   keyValueForm.value = { id: row.id, key: row.key, value: row.value, description: row.description };
   keyValueFormError.value = '';
   keyValueDialogVisible.value = true;
 };
 
-const confirmSaveKeyValue = async () => {
-  if (!selectedNamespace.value) return;
+const confirmSaveKeyValue = async (): Promise<void> => {
+  if (!selectedNamespace.value) {
+    return;
+  }
   if (!keyValueForm.value.key.trim()) {
     keyValueFormError.value = 'Key 不能为空';
     return;
@@ -176,7 +179,7 @@ const confirmSaveKeyValue = async () => {
         value: keyValueForm.value.value,
         description: keyValueForm.value.description
       });
-      MessagePlugin.success('Key-Value 已创建');
+      void MessagePlugin.success('Key-Value 已创建');
     } else {
       await updateKeyValueApi({
         id: keyValueForm.value.id,
@@ -185,24 +188,24 @@ const confirmSaveKeyValue = async () => {
         value: keyValueForm.value.value,
         description: keyValueForm.value.description
       });
-      MessagePlugin.success('Key-Value 已更新');
+      void MessagePlugin.success('Key-Value 已更新');
     }
     keyValueDialogVisible.value = false;
-    loadKeyValue(ns);
-  } catch (e: any) {
-    keyValueFormError.value = e.message;
+    void loadKeyValue(ns);
+  } catch (e: unknown) {
+    keyValueFormError.value = e instanceof Error ? e.message : String(e);
   }
 };
 
-const handleDeleteKeyValue = async (row: DictKeyValue.KeyValueItem) => {
+const handleDeleteKeyValue = async (row: DictKeyValue.KeyValueItem): Promise<void> => {
   try {
     await deleteKeyValueApi({ id: row.id });
-    MessagePlugin.success('Key-Value 已删除');
+    void MessagePlugin.success('Key-Value 已删除');
     if (selectedNamespace.value) {
-      loadKeyValue(selectedNamespace.value.namespace);
+      void loadKeyValue(selectedNamespace.value.namespace);
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
@@ -226,7 +229,7 @@ const keyValueColumns: PrimaryTableCol<DictKeyValue.KeyValueItem>[] = [
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadNamespace();
+  void loadNamespace();
 });
 </script>
 
@@ -259,8 +262,6 @@ onMounted(() => {
           :stripe="false"
           :bordered="false"
           :selected-row-keys="selectedNamespace ? [selectedNamespace.id] : []"
-          @row-click="handleRowClick"
-          @page-change="handleNamespacePageChange"
           :pagination="{
             current: namespacePageNum,
             pageSize: namespacePageSize,
@@ -269,6 +270,8 @@ onMounted(() => {
             showPageSize: false
           }"
           empty="暂无 Namespace 数据，请新建"
+          @row-click="handleRowClick"
+          @page-change="handleNamespacePageChange"
         >
           <template #createdAt="{ row }">
             {{ row.createdAt.slice(0, 10) }}

@@ -60,7 +60,8 @@ function wrapperEnv(envConf: Recordable): ViteEnv {
   const ret: any = {};
 
   for (const envName of Object.keys(envConf)) {
-    let realName = envConf[envName].replace(/\\n/g, '\n');
+    // 本文件不在 ESLint 检查范围内（仅检查 ./src），此处保留 any 以兼容原始的类型宽松转换
+    let realName: any = String(envConf[envName]).replace(/\\n/g, '\n');
     realName = realName === 'true' ? true : realName === 'false' ? false : realName;
     if (envName === 'VITE_PORT') realName = Number(realName);
     if (envName === 'VITE_PROXY') {

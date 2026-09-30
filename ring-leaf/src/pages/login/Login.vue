@@ -19,18 +19,19 @@
           </t-input>
         </t-form-item>
         <t-form-item :style="{ marginTop: '24px' }">
-          <t-button block theme="primary" @click="submitLogin()" size="large">登录</t-button>
+          <t-button block theme="primary" size="large" @click="submitLogin()">登录</t-button>
         </t-form-item>
       </t-form>
       <div class="login-footer">&copy; 2026 {{ systemName }}</div>
     </div>
   </div>
 </template>
-<script setup lang="ts" name="login">
+<script setup lang="ts">
+defineOptions({ name: 'LoginPage' });
 import { reactive, ref } from 'vue';
-import { FormProps, FormInstanceFunctions } from 'tdesign-vue-next';
+import { type FormProps, type FormInstanceFunctions } from 'tdesign-vue-next';
 
-import { Login, formLogin } from '@/api/login.ts';
+import { type Login, formLogin } from '@/api/login.ts';
 
 const systemName = import.meta.env.VITE_GLOB_APP_TITLE as string;
 
@@ -56,9 +57,9 @@ const formRules: FormProps['rules'] = {
 };
 
 const loginForm = ref<FormInstanceFunctions>();
-const submitLogin = async () => {
+const submitLogin = async (): Promise<void> => {
   // 执行登录接口
-  loginForm.value?.validate().then(async valid => {
+  void loginForm.value?.validate().then(async valid => {
     if (valid && Object.keys(valid).length == 0) {
       await formLogin(formData);
     }

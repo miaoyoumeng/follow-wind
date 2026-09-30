@@ -23,5 +23,7 @@
     ],
     "total": 3
   },
-  "msg": "成功"
+  "displayMsg": "操作成功",
+  "uniqCode": "SUCCESS",
+  "msg": "success"
 }

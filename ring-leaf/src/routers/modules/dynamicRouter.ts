@@ -1,8 +1,8 @@
-import { Component } from 'vue';
-import { RouteRecordRaw } from 'vue-router';
+import { type Component } from 'vue';
+import { type RouteRecordRaw } from 'vue-router';
 
 import { NotifyPlugin } from 'tdesign-vue-next';
-import router from '@/routers/index';
+import router from '@/routers';
 import { useAuthStore } from '@/stores/modules/auth.ts';
 import { logout } from '@/api/login.ts';
 import { LAYOUT_FRAMEWORK, TO_LOGIN_URL } from '@/routers/config.ts';
@@ -12,7 +12,7 @@ const modules: Record<string, Component> = import.meta.glob('@/views/**/*.vue', 
 /**
  * @description 初始化动态路由
  */
-export const initDynamicRouter = async () => {
+export const initDynamicRouter = async (): Promise<undefined> => {
   const authStore = useAuthStore();
   try {
     // 1.获取有权限的访问路由列表
@@ -29,7 +29,7 @@ export const initDynamicRouter = async () => {
     // 3.添加动态路由
     authStore.authRouterList.forEach((route: RouteRecordRaw) => {
       const componentType = typeof route.component;
-      if (route && route.path && 'string' == componentType) {
+      if (route?.path && 'string' == componentType) {
         const newRoute: RouteRecordRaw = { ...route };
         newRoute.component = modules['/src/views' + route.component + '.vue'];
         router.addRoute(LAYOUT_FRAMEWORK, newRoute);
@@ -46,7 +46,7 @@ export const initDynamicRouter = async () => {
 /**
  * @description 加载动态路由
  */
-export const loadDynamicRouters = async () => {
+export const loadDynamicRouters = async (): Promise<void> => {
   const authStore = useAuthStore();
   authStore.authRouterList.forEach((route: RouteRecordRaw) => {
     if (route && route.name && route.path) {

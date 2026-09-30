@@ -1,11 +1,12 @@
-<script setup lang="ts" name="MemberProfile">
+<script setup lang="ts">
+defineOptions({ name: 'MemberProfile' });
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { MessagePlugin } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 
-import { getMemberDetailApi, getMemberRemarkListApi, saveMemberRemarkApi, getMemberOrderListApi, getMemberLoginListApi } from '@/api/modules/user.ts';
-import type { MemberList, MemberDetail } from '@/api/modules/user.ts';
+import { getMemberDetailApi, getMemberRemarkListApi, saveMemberRemarkApi, getMemberOrderListApi, getMemberLoginListApi } from '@/api/models/user.ts';
+import type { MemberList, MemberDetail } from '@/api/models/user.ts';
 
 const route = useRoute();
 const router = useRouter();
@@ -88,20 +89,20 @@ const loginColumns: PrimaryTableCol[] = [
 ];
 
 /* ===== 数据加载 ===== */
-const loadMemberInfo = async () => {
+const loadMemberInfo = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getMemberDetailApi(memberId.value);
     if (data) {
       memberInfo.value = data;
-      currentRemark.value = (data as any).remark || '';
+      currentRemark.value = data.remark ?? '';
     }
   } finally {
     loading.value = false;
   }
 };
 
-const loadRemarkList = async () => {
+const loadRemarkList = async (): Promise<void> => {
   const { data } = await getMemberRemarkListApi({ memberId: memberId.value, pageNum: 1, pageSize: 5 });
   if (data) {
     remarkList.value = data.list;
@@ -109,7 +110,7 @@ const loadRemarkList = async () => {
   }
 };
 
-const loadAllRemarks = async () => {
+const loadAllRemarks = async (): Promise<void> => {
   const { data } = await getMemberRemarkListApi({
     memberId: memberId.value,
     pageNum: allRemarksPage.value.pageNum,
@@ -121,7 +122,7 @@ const loadAllRemarks = async () => {
   }
 };
 
-const loadOrderList = async () => {
+const loadOrderList = async (): Promise<void> => {
   orderLoading.value = true;
   try {
     const params: MemberDetail.OrderListParams = {
@@ -140,7 +141,7 @@ const loadOrderList = async () => {
   }
 };
 
-const loadLoginList = async () => {
+const loadLoginList = async (): Promise<void> => {
   loginLoading.value = true;
   try {
     const { data } = await getMemberLoginListApi({
@@ -158,89 +159,89 @@ const loadLoginList = async () => {
 };
 
 /* ===== 交互处理 ===== */
-const handleBack = () => {
-  router.push('/member/list');
+const handleBack = (): void => {
+  void router.push('/member/list');
 };
 
-const togglePhone = () => {
+const togglePhone = (): void => {
   phoneVisible.value = !phoneVisible.value;
 };
 
-const handleTabChange = (tab: string) => {
+const handleTabChange = (tab: string): void => {
   activeTab.value = tab;
   if (tab === 'order') {
-    loadOrderList();
+    void loadOrderList();
   } else {
-    loadLoginList();
+    void loadLoginList();
   }
 };
 
-const handleOrderPageChange = (pageInfo: PageInfo) => {
+const handleOrderPageChange = (pageInfo: PageInfo): void => {
   orderPage.value.pageNum = pageInfo.current;
   orderPage.value.pageSize = pageInfo.pageSize;
-  loadOrderList();
+  void loadOrderList();
 };
 
-const handleLoginPageChange = (pageInfo: PageInfo) => {
+const handleLoginPageChange = (pageInfo: PageInfo): void => {
   loginPage.value.pageNum = pageInfo.current;
   loginPage.value.pageSize = pageInfo.pageSize;
-  loadLoginList();
+  void loadLoginList();
 };
 
-const handlePayStatusChange = () => {
+const handlePayStatusChange = (): void => {
   orderPage.value.pageNum = 1;
-  loadOrderList();
+  void loadOrderList();
 };
 
 /* ===== 备注相关 ===== */
-const openRemarkModal = () => {
+const openRemarkModal = (): void => {
   remarkForm.value = currentRemark.value;
   remarkCharCount.value = remarkForm.value.length;
   remarkModalVisible.value = true;
 };
 
-const handleRemarkInputChange = (value: string) => {
+const handleRemarkInputChange = (value: string): void => {
   remarkCharCount.value = value.length;
 };
 
-const saveRemark = async () => {
+const saveRemark = async (): Promise<void> => {
   if (remarkCharCount.value > 500) {
-    MessagePlugin.warning('备注内容不能超过 500 字');
+    void MessagePlugin.warning('备注内容不能超过 500 字');
     return;
   }
   try {
     await saveMemberRemarkApi({ memberId: memberId.value, content: remarkForm.value });
-    MessagePlugin.success('备注已更新');
+    void MessagePlugin.success('备注已更新');
     remarkModalVisible.value = false;
     currentRemark.value = remarkForm.value;
-    loadRemarkList();
+    void loadRemarkList();
   } catch {
-    MessagePlugin.error('备注更新失败');
+    void MessagePlugin.error('备注更新失败');
   }
 };
 
-const openAllRemarks = () => {
+const openAllRemarks = (): void => {
   allRemarksPage.value = { pageNum: 1, pageSize: 20 };
-  loadAllRemarks();
+  void loadAllRemarks();
   allRemarksModalVisible.value = true;
 };
 
-const handleAllRemarksPageChange = (pageInfo: PageInfo) => {
+const handleAllRemarksPageChange = (pageInfo: PageInfo): void => {
   allRemarksPage.value.pageNum = pageInfo.current;
   allRemarksPage.value.pageSize = pageInfo.pageSize;
-  loadAllRemarks();
+  void loadAllRemarks();
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
   if (!memberId.value) {
-    MessagePlugin.error('缺少会员 ID 参数');
-    router.push('/member/list');
+    void MessagePlugin.error('缺少会员 ID 参数');
+    void router.push('/member/list');
     return;
   }
-  loadMemberInfo();
-  loadRemarkList();
-  loadOrderList();
+  void loadMemberInfo();
+  void loadRemarkList();
+  void loadOrderList();
 });
 </script>
 
@@ -258,7 +259,7 @@ onMounted(() => {
     </div>
 
     <!-- 会员基本信息 -->
-    <t-card :bordered="false" class="info-card" v-loading="loading">
+    <t-card v-loading="loading" :bordered="false" class="info-card">
       <template #header>
         <span class="card-title">会员基本信息</span>
       </template>
@@ -369,7 +370,7 @@ onMounted(() => {
           <div class="filter-bar">
             <div class="filter-item">
               <label class="filter-label">支付状态</label>
-              <t-select v-model="orderPayStatus" @change="handlePayStatusChange" style="width: 140px">
+              <t-select v-model="orderPayStatus" style="width: 140px" @change="handlePayStatusChange">
                 <t-option v-for="opt in payStatusOptions" :key="opt.value" :value="opt.value" :label="opt.label" />
               </t-select>
             </div>
@@ -388,7 +389,7 @@ onMounted(() => {
             :empty="orderTableData.length === 0 ? '暂无订单记录' : ''"
             @page-change="handleOrderPageChange"
           >
-            <template #orderAmount="{ row }"> ¥{{ row.orderAmount.toFixed(2) }} </template>
+            <template #orderAmount="{ row }">¥{{ row.orderAmount.toFixed(2) }}</template>
             <template #payStatus="{ row }">
               <t-tag v-if="payStatusMap[row.payStatus]" :theme="payStatusMap[row.payStatus].theme" variant="light" size="small">
                 {{ payStatusMap[row.payStatus].label }}

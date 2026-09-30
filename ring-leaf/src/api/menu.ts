@@ -1,5 +1,5 @@
-import { ResultData } from '@/request/modules.ts';
-import { Menu } from '@/api/modules/auth.ts';
+import { type ResultData } from '@/request/modules.ts';
+import { type Menu } from '@/api/models/auth.ts';
 import authMenuList from '@/assets/jsons/dynamic-routers.json';
 
 // 获取我的应用列表

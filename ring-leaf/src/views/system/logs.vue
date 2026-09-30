@@ -1,10 +1,11 @@
-<script setup lang="ts" name="LogAuditList">
+<script setup lang="ts">
+defineOptions({ name: 'LogAuditList' });
 import { ref, onMounted } from 'vue';
 import { Select, Option, Button, Tag } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 
 import { getOperationLogListApi } from '@/api/operationLog.ts';
-import type { OperationLog } from '@/api/modules/operation-log.ts';
+import type { OperationLog } from '@/api/models/operation-log.ts';
 
 /* ===== 列表数据 ===== */
 const tableData = ref<OperationLog.LogItem[]>([]);
@@ -49,17 +50,23 @@ const typeOptions = [
 ];
 
 /* ===== 操作类型颜色映射 ===== */
-const getTypeTagTheme = (type: string) => {
-  if (type === '登录' || type === '新增' || type === '启用') return 'primary';
-  if (type === '修改' || type === '停用') return 'warning';
-  if (type === '删除') return 'danger';
+const getTypeTagTheme = (type: string): 'warning' | 'danger' | 'default' | 'primary' => {
+  if (type === '登录' || type === '新增' || type === '启用') {
+    return 'primary';
+  }
+  if (type === '修改' || type === '停用') {
+    return 'warning';
+  }
+  if (type === '删除') {
+    return 'danger';
+  }
   return 'default';
 };
 
 /* ===== 加载列表 ===== */
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   let dateRange: [string, string] | undefined;
-  if (searchDateRange.value && searchDateRange.value.length === 2) {
+  if (searchDateRange.value?.length === 2) {
     dateRange = [searchDateRange.value[0], searchDateRange.value[1]];
   }
 
@@ -78,26 +85,26 @@ const loadData = async () => {
 };
 
 /* ===== 搜索 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   pageNum.value = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 重置 ===== */
-const handleReset = () => {
+const handleReset = (): void => {
   searchOperator.value = 'all';
   searchModule.value = 'all';
   searchType.value = 'all';
   searchDateRange.value = [];
   pageNum.value = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageNum.value = pageInfo.current;
   pageSize.value = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
 /* ===== 表格列 ===== */
@@ -110,7 +117,7 @@ const columns: PrimaryTableCol<OperationLog.LogItem>[] = [
 ];
 
 onMounted(() => {
-  loadData();
+  void loadData();
 });
 </script>
 
@@ -166,8 +173,8 @@ onMounted(() => {
           showJumper: true,
           showPageSize: true
         }"
-        @page-change="handlePageChange"
         empty="暂无操作日志"
+        @page-change="handlePageChange"
       >
         <template #operateType="{ row }">
           <Tag :theme="getTypeTagTheme(row.operateType)" variant="light">{{ row.operateType }}</Tag>

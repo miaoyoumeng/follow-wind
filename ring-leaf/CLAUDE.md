@@ -1,103 +1,87 @@
+# CLAUDE.md
+
+
 ## 项目概述
 
-**leaf-ring** — 统一内部系统安全管理平台。基于 Vue 3 + TypeScript + Vite 构建的后台管理系统，使用 TDesign Vue Next 组件库。
+**leaf-ring** — 统一内部系统功能管理平台（后台管理系统）。基于 Vue 3 + TypeScript + Vite 构建，使用 TDesign Vue Next 组件库。业务模块：用户管理、商品管理（SPU/SKU/产品线）、营销管理、订单管理、财务管理、支付管理、投放与渠道、消息管理、系统设置、内容管理。
 
 ## 常用命令
 
 ```bash
-pnpm dev              # 启动开发服务器 (端口 8000)
-pnpm run build            # 开发环境构建
+pnpm dev              # 启动开发服务器 (端口 8000，见 vite.config.ts)
+pnpm run build        # 类型检查 + 开发环境构建 (vue-tsc --noEmit && vite build)
 pnpm type:check       # TypeScript 类型检查
-pnpm lint:eslint      # ESLint 修复
-pnpm lint:prettier    # Prettier 格式化
-```
-
-## 脚本工具 (claude.sh)
-
-```bash
-./claude.sh pull    # 从 SOURCE_DIR 拉取最新代码到本项目
-./claude.sh push    # 将本项目代码推回 SOURCE_DIR
-./claude.sh start   # 启动 Claude Code (跳过权限确认模式)
+pnpm lint:eslint      # ESLint 自动修复
+pnpm lint:format      # Prettier 格式化 (开发完成标准之一)
 ```
 
 ## 技术栈
 
 - **Vue 3** (Composition API, `<script setup>`)
 - **TypeScript** (strict 模式)
-- **Vite 5** (构建工具)
-- **Vue Router 4** (动态路由 + hash/history 模式)
-- **Pinia** (状态管理，启用 persistedstate 持久化)
-- **TDesign Vue Next** (UI 组件库)
-- **Axios** (HTTP 请求封装)
-- **SCSS** (全局变量自动注入)
+- **Vite 5** + **Vue Router 4** (hash 路由) + **Pinia** (persistedstate 持久化)
+- **TDesign Vue Next** (唯一组件库) + **ECharts / vue-echarts**
+- **Axios** (请求封装) + **SCSS** (全局变量自动注入)
 
 ## 目录结构
 
 ```
 src/
-├── api/                  # API 接口 (login / menu / auth / modules/*)
-├── assets/               # 图片 / 全局样式
+├── api/                  # API 函数 (按模块拆分，如 product-line.ts)
+│   └── modules/          # 各业务模块的 TypeScript 类型声明 (namespace 形式)
+├── assets/
+│   ├── jsons/            # Mock 数据 JSON 文件（接口就绪前替代真实请求）
+│   └── styles/           # 全局样式
 ├── components/           # 通用组件 (ErrorMessage 400/403/404/500)
 ├── layouts/              # 布局框架 (classic / vertical)
-├── pages/                # 页面级组件 (login / main)
-├── request/              # Axios 封装 + 拦截器
-├── routers/              # 路由配置 + 动态路由
+├── pages/                # 静态路由页面 (login 等)
+├── request/              # Axios 封装 + 拦截器 + 类型
+├── routers/modules/      # staticRouter.ts + dynamicRouter.ts
 ├── stores/               # Pinia 状态 (user / auth / page / keepAlive)
-├── styles/               # 全局 SCSS 变量 (var.scss)
-├── typings/              # TypeScript 类型声明
+├── styles/               # var.scss 全局变量
 ├── utils/                # 工具函数 (errorHandler)
-├── views/                # 业务视图 (home / app / menus / error)
-├── main.ts               # 入口文件
-└── App.vue               # 根组件
+├── views/                # 动态路由页面（业务页面，如 product/lines.vue）
+└── main.ts               # 入口文件
 ```
+
+## 工作流文档目录（只读参考，非构建产物）
+
+项目采用「PRD → UI 设计稿 → API 文档 → Issue → 开发 → 验证」工作流：
+
+| 目录 | 内容 |
+|------|------|
+| `prds/admin/` | PRD 文档（`<模块>-<页面>.prd.md`） |
+| `ui/admin/` | HTML 设计稿（`<模块>-<页面>-ui.html`）+ `index.md` 索引 |
+| `apis/admin/` | REST API 文档（yaml） |
+| `domains/admin/` | 领域模型文档 |
+| `issues/admin/` | 开发任务 Issue |
+| `.claude/logs/ui-vue-validator/` | UI-Vue 视觉验证报告与截图 |
 
 ## 核心架构
 
 ### 路由机制 — 静态 + 动态混合
 
-- **静态路由** (`staticRouter.ts`): 登录页、主框架、错误页面
+- **静态路由** (`staticRouter.ts`): 登录页、主框架、错误页面。页面写在 `src/pages/` 下。
+- **动态路由** (`dynamicRouter.ts`, 只读禁止修改): 登录后从后端获取菜单，通过 `import.meta.glob` 映射 `src/views/**/*.vue` 组件。
+- **路由页面命名规则**: 路由 `/product/lines` → `src/views/product/lines.vue`。禁止 `index.vue` 子目录模式（唯一例外：路由本身以 `/index` 结尾）。页面文件必须通过 `uv run python scripts/vue-route.py --route=<路由路径>` 创建。
+- **路由注册源头**: `src/assets/jsons/dynamic-router.json`（禁止修改，同时存在于 `src/assets/jsons/dynamic-routers.json` 供 API mock 使用）。
+- **路由守卫**: 白名单放行 → 无 token 跳转登录 → 加载动态路由。路由模式由 `VITE_ROUTER_MODE` 切换 hash/history。
 
-*路由文件写在目录`src/pages`下，严禁写在其他文件下。*
+### API 分层规范
 
-*修改静态路由文件地址`src/routers/modules/staticRouter.ts`。*
+三层结构，禁止在组件中直接调用 API：
 
-*示例：`import('@/pages/login/Login.vue')`, 对应的文件应该是`src/pages/login/Login.vue`，而不是其他文件。*
-```text
-{
-  path: TO_LOGIN_URL, //首页
-  name: 'toLogin',
-  component: () => import('@/pages/login/Login.vue'),
-  meta: {
-    title: '登录'
-  }
-}
-```
-- **动态路由** (`dynamicRouter.ts`): 登录后从后端获取，通过 `import.meta.glob` 映射 `@/views/**/*.vue` 组件，`动态路由`调用 skill `/solo:vue-developer` 按流程严格实现。
+1. `src/api/modules/<模块>.ts` — 类型声明（`export declare namespace Xxx { interface ... }`）
+2. `src/api/<模块>.ts` — API 函数定义，返回 `Promise<ResultData<T>>`；开发阶段从 `src/assets/mocks/` 读取静态 JSON mock（标注 TODO 待替换为真实 HTTP 请求）
+3. `src/views/<模块>/<页面>.vue` — 页面中引用 API 函数
 
-*读取`动态路由`管理逻辑代码文件，地址`src/routers/modules/dynamicRouter.ts`(只读文件，严禁修改)。*
-
-*路由文件写在目录`src/views`下，严禁写在其他文件下。*
-
-*示例：动态路由:`/finance/settlement`，对应的文件应该是`src/views/finance/settlement.vue`，而不是`src/views/finance/settlement/index.vue`*
-
-- **路由守卫**: 白名单放行 → 无 token 跳转登录 → 加载动态路由
-- 路由模式通过环境变量 `VITE_ROUTER_MODE` 切换 `hash` / `history`
+统一返回结构：`{ code, msg, data }`（`request/modules.ts` 中的 `ResultData`）。新页面开发必须先创建 JSON mock 再写交互。
 
 ### 请求层
 
-- `request/request.ts`: `RequestHttp` 类封装 Axios
-  - 请求拦截: 自动注入 `Authorization` header (`userStore.token`)
-  - 响应拦截: 按 `code` 处理 200/401/403/500，401 自动清登录态跳登录页
-  - 提供 `get/post/put/delete/download` 方法
-- `request/index.ts`: 导出的 `http` 实例
-- `request/modules.ts`: 类型定义
-
-
-### 左侧菜单
-
-菜单路由定义：[参考地址](https://m1.apifoxmock.com/m1/8520177-8294671-default/security/app/menus)
-
-开发过程中在`主框架`中定义页面路由时需要参考上述内容。
+- `request/request.ts`: `RequestHttp` 类封装 Axios，请求拦截自动注入 `Authorization` (userStore.token)，响应拦截按 `code` 处理 200/401/403/500
+- `request/index.ts`: 导出的 `http` 实例；`request/modules.ts`: 类型定义
+- 开发环境 `/api` 代理指向 `https://m1.apifoxmock.com/m1/8520177-8294671-default`（vite.config.ts）
 
 ### 环境变量
 
@@ -108,11 +92,7 @@ src/
 | `VITE_ROUTER_MODE` | 路由模式 (hash/history) |
 | `VITE_PORT` | 开发服务器端口 |
 
-### 路径别名
+### 路径别名与样式
 
-`@` → `src/` (配置于 `tsconfig.json` 和 `vite.config.ts`)
-
-### 样式
-
-- 全局 SCSS 变量通过 vite `additionalData` 自动注入: `@import '@/styles/var.scss'`。
-- 只有全局的变量才能写在`@/styles/var.scss`中，禁止把单页页面功能的样式值写在这个文件中。
+- `@` → `src/` (配置于 `tsconfig.json` 和 `vite.config.ts`)
+- 全局 SCSS 变量通过 vite `additionalData` 自动注入 `@/styles/var.scss`；只有全局变量才能写在该文件，单页样式禁止写入

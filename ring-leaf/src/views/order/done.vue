@@ -1,11 +1,12 @@
-<script setup lang="ts" name="DoneOrderList">
+<script setup lang="ts">
+defineOptions({ name: 'DoneOrderList' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Tabs, TabPanel, Table, Select, Option, Input, Button, Tag, Dialog, DatePicker } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo, TableRowData } from 'tdesign-vue-next';
 
-import { getRefundOrderListApi, getCompletedOrderListApi, getRefundOrderDetailApi, getCompletedOrderDetailApi } from '@/api/modules/completed-order';
-import type { CompletedOrder } from '@/api/modules/completed-order';
+import { getRefundOrderListApi, getCompletedOrderListApi, getRefundOrderDetailApi, getCompletedOrderDetailApi } from '@/api/models/completed-order';
+import type { CompletedOrder } from '@/api/models/completed-order';
 
 /* ===== Tab 切换 ===== */
 const activeTab = ref('refund');
@@ -66,12 +67,12 @@ const completedColumns: PrimaryTableCol<TableRowData>[] = [
 ];
 
 /* ===== 金额格式化 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return '¥' + val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 /* ===== 数据加载 ===== */
-const loadRefundData = async () => {
+const loadRefundData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getRefundOrderListApi({
@@ -92,7 +93,7 @@ const loadRefundData = async () => {
   }
 };
 
-const loadCompletedData = async () => {
+const loadCompletedData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getCompletedOrderListApi({
@@ -116,75 +117,78 @@ const loadCompletedData = async () => {
 };
 
 /* ===== Tab 切换 ===== */
-const handleTabChange = () => {
-  if (activeTab.value === 'refund') loadRefundData();
-  else if (activeTab.value === 'completed') loadCompletedData();
+const handleTabChange = (): void => {
+  if (activeTab.value === 'refund') {
+    void loadRefundData();
+  } else if (activeTab.value === 'completed') {
+    void loadCompletedData();
+  }
 };
 
 /* ===== 搜索与重置 ===== */
-const handleRefundSearch = () => {
+const handleRefundSearch = (): void => {
   refundPage.value.pageNum = 1;
-  loadRefundData();
+  void loadRefundData();
 };
 
-const handleRefundReset = () => {
+const handleRefundReset = (): void => {
   refundFilter.value = { appId: '', orderTimeRange: '', refundTimeRange: '', keyword: '' };
   refundPage.value.pageNum = 1;
-  loadRefundData();
+  void loadRefundData();
 };
 
-const handleCompletedSearch = () => {
+const handleCompletedSearch = (): void => {
   completedPage.value.pageNum = 1;
-  loadCompletedData();
+  void loadCompletedData();
 };
 
-const handleCompletedReset = () => {
+const handleCompletedReset = (): void => {
   completedFilter.value = { appId: '', payMethod: '', completeTimeRange: '', keyword: '' };
   completedPage.value.pageNum = 1;
-  loadCompletedData();
+  void loadCompletedData();
 };
 
 /* ===== 分页 ===== */
-const handleRefundPageChange = (pageInfo: PageInfo) => {
+const handleRefundPageChange = (pageInfo: PageInfo): void => {
   refundPage.value.pageNum = pageInfo.current;
   refundPage.value.pageSize = pageInfo.pageSize;
-  loadRefundData();
+  void loadRefundData();
 };
 
-const handleCompletedPageChange = (pageInfo: PageInfo) => {
+const handleCompletedPageChange = (pageInfo: PageInfo): void => {
   completedPage.value.pageNum = pageInfo.current;
   completedPage.value.pageSize = pageInfo.pageSize;
-  loadCompletedData();
+  void loadCompletedData();
 };
 
 /* ===== 详情查看 ===== */
-const handleRefundDetail = async (row: CompletedOrder.RefundOrderItem) => {
+const handleRefundDetail = async (row: CompletedOrder.RefundOrderItem): Promise<void> => {
   try {
     const { data } = await getRefundOrderDetailApi(row.id);
     if (data) {
       refundDetailData.value = data;
       refundDetailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
-const handleCompletedDetail = async (row: CompletedOrder.CompletedOrderItem) => {
+const handleCompletedDetail = async (row: CompletedOrder.CompletedOrderItem): Promise<void> => {
   try {
     const { data } = await getCompletedOrderDetailApi(row.id);
     if (data) {
       completedDetailData.value = data;
       completedDetailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadRefundData();
+  void loadRefundData();
 });
 </script>
 

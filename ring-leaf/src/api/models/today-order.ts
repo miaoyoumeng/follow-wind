@@ -1,5 +1,6 @@
-import mockData from '@/assets/jsons/today-order-list.json';
-import { ResultData } from '@/request/modules';
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import mockData from '@/assets/mocks/today-order-list.json';
+import { type ResultData } from '@/request/modules';
 
 export declare namespace TodayOrder {
   type UnpaidStatus = 'pending' | 'expired' | 'cancelled';
@@ -196,7 +197,7 @@ const rawData = mockData.data as unknown as {
 };
 
 const buildResponse = <T>(data: T): ResultData<T> => ({
-  code: '200',
+  code: 200,
   msg: '成功',
   data
 });
@@ -208,7 +209,9 @@ export const getTodayPaidOrderListApi = (
   let filtered = rawData.paidList.map((item): TodayOrder.PaidOrderItem => ({
     ...item
   }));
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(item => item.orderNo.toLowerCase().includes(kw) || item.userName.includes(kw) || item.userId.includes(kw));
@@ -233,8 +236,12 @@ export const getTodayUnpaidOrderListApi = (
     ...item,
     unpaidStatus: item.unpaidStatus as TodayOrder.UnpaidStatus
   }));
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
-  if (params.unpaidStatus) filtered = filtered.filter(item => item.unpaidStatus === params.unpaidStatus);
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
+  if (params.unpaidStatus) {
+    filtered = filtered.filter(item => item.unpaidStatus === params.unpaidStatus);
+  }
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(item => item.orderNo.toLowerCase().includes(kw) || item.userName.includes(kw) || item.userId.includes(kw));
@@ -258,7 +265,9 @@ export const getTodayRefundOrderListApi = (
   let filtered = rawData.refundList.map((item): TodayOrder.RefundOrderItem => ({
     ...item
   }));
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(item => item.orderNo.toLowerCase().includes(kw) || item.userName.includes(kw) || item.userId.includes(kw));
@@ -278,7 +287,9 @@ export const getTodayRefundOrderListApi = (
 // ===== 支付订单详情 =====
 export const getTodayPaidOrderDetailApi = (id: number): Promise<ResultData<TodayOrder.PaidDetail>> => {
   const item = rawData.paidList.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   return Promise.resolve(
     buildResponse({
       orderNo: item.orderNo,
@@ -298,7 +309,9 @@ export const getTodayPaidOrderDetailApi = (id: number): Promise<ResultData<Today
 // ===== 未支付订单详情 =====
 export const getTodayUnpaidOrderDetailApi = (id: number): Promise<ResultData<TodayOrder.UnpaidDetail>> => {
   const item = rawData.unpaidList.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   return Promise.resolve(
     buildResponse({
       orderNo: item.orderNo,
@@ -319,7 +332,9 @@ export const getTodayUnpaidOrderDetailApi = (id: number): Promise<ResultData<Tod
 // ===== 退单详情 =====
 export const getTodayRefundOrderDetailApi = (id: number): Promise<ResultData<TodayOrder.RefundDetail>> => {
   const item = rawData.refundList.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   return Promise.resolve(
     buildResponse({
       orderNo: item.orderNo,
@@ -362,7 +377,9 @@ export const addOrderNoteApi = (params: TodayOrder.AddNoteParams): Promise<Resul
     creator: '管理员',
     createdAt: new Date().toISOString().replace('T', ' ').slice(0, 19)
   };
-  if (!mockNotes[params.orderNo]) mockNotes[params.orderNo] = [];
+  if (!mockNotes[params.orderNo]) {
+    mockNotes[params.orderNo] = [];
+  }
   mockNotes[params.orderNo].push(newNote);
   return Promise.resolve(buildResponse(newNote));
 };

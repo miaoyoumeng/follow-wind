@@ -1,11 +1,12 @@
-<script setup lang="ts" name="EmployeeList">
+<script setup lang="ts">
+defineOptions({ name: 'EmployeeList' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Dialog, Tag, Input, Select, Option, Button } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 
 import { getEmployeeListApi, getEmployeeDetailApi, updateEmployeeApi } from '@/api/employee.ts';
-import type { EmployeeList } from '@/api/modules/employee.ts';
+import type { EmployeeList } from '@/api/models/employee.ts';
 
 /* ===== 列表数据 ===== */
 const tableData = ref<EmployeeList.EmployeeItem[]>([]);
@@ -49,7 +50,7 @@ const appOptions = [
 ];
 
 /* ===== 加载列表 ===== */
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   const { data } = await getEmployeeListApi({
     name: searchName.value || undefined,
     id: searchId.value ? Number(searchId.value) : undefined,
@@ -65,29 +66,29 @@ const loadData = async () => {
 };
 
 /* ===== 搜索 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   pageNum.value = 1;
-  loadData();
+  void loadData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   searchName.value = '';
   searchId.value = '';
   searchRole.value = 'all';
   searchStatus.value = 'all';
   pageNum.value = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageNum.value = pageInfo.current;
   pageSize.value = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
 /* ===== 查看详情 ===== */
-const handleDetail = async (row: EmployeeList.EmployeeItem) => {
+const handleDetail = async (row: EmployeeList.EmployeeItem): Promise<void> => {
   const { data } = await getEmployeeDetailApi({ id: row.id });
   if (data) {
     detailData.value = data;
@@ -96,8 +97,10 @@ const handleDetail = async (row: EmployeeList.EmployeeItem) => {
 };
 
 /* ===== 编辑 ===== */
-const handleEdit = () => {
-  if (!detailData.value) return;
+const handleEdit = (): void => {
+  if (!detailData.value) {
+    return;
+  }
   editForm.value = {
     id: detailData.value.id,
     name: detailData.value.name,
@@ -112,7 +115,7 @@ const handleEdit = () => {
 };
 
 /* ===== 保存编辑 ===== */
-const confirmSaveEdit = async () => {
+const confirmSaveEdit = async (): Promise<void> => {
   if (!editForm.value.name.trim() || editForm.value.name.length < 2 || editForm.value.name.length > 20) {
     editFormError.value = '姓名长度为 2-20 字符';
     return;
@@ -132,45 +135,53 @@ const confirmSaveEdit = async () => {
 
   try {
     await updateEmployeeApi(editForm.value);
-    MessagePlugin.success('员工信息已更新');
+    void MessagePlugin.success('员工信息已更新');
     editDialogVisible.value = false;
     detailDialogVisible.value = false;
-    loadData();
-  } catch (e: any) {
-    editFormError.value = e.message;
+    void loadData();
+  } catch (e: unknown) {
+    editFormError.value = e instanceof Error ? e.message : String(e);
   }
 };
 
 /* ===== 工具方法 ===== */
-const maskPhone = (phone: string) => {
-  if (!phone || phone.length < 11) return phone;
+const maskPhone = (phone: string): string => {
+  if (!phone || phone.length < 11) {
+    return phone;
+  }
   return phone.slice(0, 3) + '****' + phone.slice(7);
 };
 
-const maskWechat = (name: string) => {
-  if (!name) return '-';
+const maskWechat = (name: string): string => {
+  if (!name) {
+    return '-';
+  }
   return name.charAt(0) + '*';
 };
 
-const formatApps = (apps: string[]) => {
-  if (!apps || apps.length === 0) return '-';
-  if (apps.includes('全部')) return '全部';
+const formatApps = (apps: string[]): string => {
+  if (!apps || apps.length === 0) {
+    return '-';
+  }
+  if (apps.includes('全部')) {
+    return '全部';
+  }
   return apps.join('、');
 };
 
-const getRoleTagTheme = (role: string) => {
+const getRoleTagTheme = (role: string): 'warning' | 'primary' => {
   return role === 'admin' ? 'primary' : 'warning';
 };
 
-const getStatusTagTheme = (status: string) => {
+const getStatusTagTheme = (status: string): 'success' | 'default' => {
   return status === 'active' ? 'success' : 'default';
 };
 
-const getStatusLabel = (status: string) => {
+const getStatusLabel = (status: string): '启用' | '停用' => {
   return status === 'active' ? '启用' : '停用';
 };
 
-const getRoleLabel = (role: string) => {
+const getRoleLabel = (role: string): '管理者' | 'App 运营人员' => {
   return role === 'admin' ? '管理者' : 'App 运营人员';
 };
 
@@ -189,7 +200,7 @@ const columns: PrimaryTableCol<EmployeeList.EmployeeItem>[] = [
 ];
 
 onMounted(() => {
-  loadData();
+  void loadData();
 });
 </script>
 
@@ -247,8 +258,8 @@ onMounted(() => {
           showJumper: true,
           showPageSize: true
         }"
-        @page-change="handlePageChange"
         empty="暂无员工"
+        @page-change="handlePageChange"
       >
         <template #phone="{ row }">
           {{ maskPhone(row.phone) }}

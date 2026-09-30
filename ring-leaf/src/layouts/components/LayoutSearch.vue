@@ -33,12 +33,12 @@
 import { ref } from 'vue';
 
 defineProps({
-  layout: String
+  layout: { type: String, default: '' }
 });
 
 const isSearchFocus = ref(false);
 const searchData = ref('');
-const changeSearchFocus = (value: boolean) => {
+const changeSearchFocus = (value: boolean): void => {
   if (!value) {
     searchData.value = '';
   }

@@ -20,9 +20,13 @@
             <template #dropdown>
               <t-dropdown-menu>
                 <t-dropdown-item class="operations-dropdown-container-item" @click="handleNav('/user/index')">
-                  <t-icon name="user-circle" />个人中心
+                  <t-icon name="user-circle" />
+                  个人中心
                 </t-dropdown-item>
-                <t-dropdown-item class="operations-dropdown-container-item" @click="handleLogout"> <t-icon name="poweroff" />退出 </t-dropdown-item>
+                <t-dropdown-item class="operations-dropdown-container-item" @click="handleLogout">
+                  <t-icon name="poweroff" />
+                  退出
+                </t-dropdown-item>
               </t-dropdown-menu>
             </template>
             <t-button class="header-user-btn" theme="default" variant="text">
@@ -46,8 +50,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PropType, computed, watch } from 'vue';
-import { MenuRoute } from 'tdesign-vue-next';
+import { type PropType, computed, watch } from 'vue';
+import { type MenuRoute } from 'tdesign-vue-next';
 
 import LayoutNotice from './LayoutNotice.vue';
 import { logout } from '@/api/login.ts';
@@ -88,8 +92,13 @@ watch(props, () => {
 /* 属性监听 */
 const emit = defineEmits(['handleCollapsed']);
 
-const toggleSettingPanel = () => {
+const toggleSettingPanel = (): void => {
   console.log('toggleSettingPanel');
+};
+
+const getActive = (maxLevel = 3): string => {
+  console.log('getActive: maxLevel = ' + maxLevel);
+  return '';
 };
 
 const prefix = import.meta.env.VITE_GLOB_APP_PREFIX as string;
@@ -109,21 +118,16 @@ const menuCls = computed(() => {
   ];
 });
 
-const changeCollapsed = () => {
+const changeCollapsed = (): void => {
   emit('handleCollapsed');
 };
 
-const handleNav = (url: string) => {
+const handleNav = (url: string): void => {
   console.log(url);
 };
 
-const handleLogout = () => {
-  logout();
-};
-
-const getActive = (maxLevel = 3) => {
-  console.log('getActive: maxLevel = ' + maxLevel);
-  return '';
+const handleLogout = (): void => {
+  void logout();
 };
 </script>
 <style scoped lang="scss">

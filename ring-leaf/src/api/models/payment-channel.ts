@@ -1,4 +1,6 @@
-import http from '@/request/index';
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import http from '@/request';
+import { type ResultData } from '@/request/modules';
 
 /* ===== 支付渠道 ===== */
 export declare namespace PaymentChannel {
@@ -51,14 +53,16 @@ export declare namespace PaymentChannel {
   }
 }
 
-export const getPaymentChannelListApi = (params: PaymentChannel.ListParams) => {
+export const getPaymentChannelListApi = (
+  params: PaymentChannel.ListParams
+): Promise<ResultData<{ list: PaymentChannel.ChannelItem[]; total: number }>> => {
   return http.get<{ list: PaymentChannel.ChannelItem[]; total: number }>('/api/admin/payment-channels', params);
 };
 
-export const createPaymentChannelApi = (data: PaymentChannel.CreateParams) => {
+export const createPaymentChannelApi = (data: PaymentChannel.CreateParams): Promise<ResultData<unknown>> => {
   return http.post('/api/admin/payment-channels', data);
 };
 
-export const updatePaymentChannelApi = (data: PaymentChannel.UpdateParams) => {
+export const updatePaymentChannelApi = (data: PaymentChannel.UpdateParams): Promise<ResultData<unknown>> => {
   return http.put(`/api/admin/payment-channels/${data.id}`, data);
 };

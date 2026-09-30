@@ -133,12 +133,13 @@
   </div>
 </template>
 
-<script setup lang="ts" name="TransactionFlow">
+<script setup lang="ts">
+defineOptions({ name: 'TransactionFlow' });
 import { ref, onMounted } from 'vue';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import type { TransactionFlow } from '@/api/modules/transaction-flow';
-import { getTransactionFlowListApi, getTransactionFlowSummaryApi, getTransactionFlowDetailApi } from '@/api/modules/transaction-flow';
+import type { TransactionFlow } from '@/api/models/transaction-flow';
+import { getTransactionFlowListApi, getTransactionFlowSummaryApi, getTransactionFlowDetailApi } from '@/api/models/transaction-flow';
 
 /* ===== 摘要数据 ===== */
 const summary = ref({
@@ -147,7 +148,7 @@ const summary = ref({
   todayRefundAmount: 0
 });
 
-const loadSummary = async () => {
+const loadSummary = async (): Promise<void> => {
   try {
     const { data } = await getTransactionFlowSummaryApi();
     summary.value = data;
@@ -163,21 +164,6 @@ const filterChannel = ref<TransactionFlow.Channel | ''>('');
 const filterDate = ref<string>('');
 const filterKeyword = ref<string>('');
 
-const handleSearch = () => {
-  pageNum.value = 1;
-  loadTableData();
-};
-
-const handleReset = () => {
-  filterApp.value = '';
-  filterTxType.value = '';
-  filterChannel.value = '';
-  filterDate.value = '';
-  filterKeyword.value = '';
-  pageNum.value = 1;
-  loadTableData();
-};
-
 /* ===== 列表数据 ===== */
 const loading = ref(false);
 const tableData = ref<TransactionFlow.FlowItem[]>([]);
@@ -185,7 +171,7 @@ const pageNum = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 
-const loadTableData = async () => {
+const loadTableData = async (): Promise<void> => {
   loading.value = true;
   try {
     const params: TransactionFlow.ListParams = {
@@ -208,10 +194,25 @@ const loadTableData = async () => {
   }
 };
 
-const handlePageChange = (pageInfo: PageInfo) => {
+const handleSearch = (): void => {
+  pageNum.value = 1;
+  void loadTableData();
+};
+
+const handleReset = (): void => {
+  filterApp.value = '';
+  filterTxType.value = '';
+  filterChannel.value = '';
+  filterDate.value = '';
+  filterKeyword.value = '';
+  pageNum.value = 1;
+  void loadTableData();
+};
+
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageNum.value = pageInfo.current ?? 1;
   pageSize.value = pageInfo.pageSize ?? 20;
-  loadTableData();
+  void loadTableData();
 };
 
 /* ===== 列定义 ===== */
@@ -231,25 +232,25 @@ const columns: PrimaryTableCol<TransactionFlow.FlowItem>[] = [
 const detailVisible = ref(false);
 const detailData = ref<TransactionFlow.FlowDetail | null>(null);
 
-const handleDetail = async (row: TransactionFlow.FlowItem) => {
+const handleDetail = async (row: TransactionFlow.FlowItem): Promise<void> => {
   try {
     const { data } = await getTransactionFlowDetailApi(row.id);
     detailData.value = data;
     detailVisible.value = true;
   } catch {
-    MessagePlugin.error('获取流水详情失败');
+    void MessagePlugin.error('获取流水详情失败');
   }
 };
 
 /* ===== 工具方法 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadSummary();
-  loadTableData();
+  void loadSummary();
+  void loadTableData();
 });
 </script>
 

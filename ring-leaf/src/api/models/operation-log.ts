@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
 /* ===== 操作日志 ===== */
 export declare namespace OperationLog {
   interface LogItem {

@@ -1,11 +1,12 @@
-<script setup lang="ts" name="PaymentChannelList">
+<script setup lang="ts">
+defineOptions({ name: 'PaymentChannelList' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Dialog, Form, FormItem, Input, Button, Textarea, Radio, RadioGroup, Upload } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo, UploadFile } from 'tdesign-vue-next';
 
-import { getPaymentChannelListApi, createPaymentChannelApi, updatePaymentChannelApi } from '@/api/modules/payment-channel.ts';
-import type { PaymentChannel } from '@/api/modules/payment-channel.ts';
+import { getPaymentChannelListApi, createPaymentChannelApi, updatePaymentChannelApi } from '@/api/models/payment-channel.ts';
+import type { PaymentChannel } from '@/api/models/payment-channel.ts';
 
 /* ===== 列表数据 ===== */
 const channelList = ref<PaymentChannel.ChannelItem[]>([]);
@@ -36,7 +37,7 @@ const channelTypeOptions = [
 ];
 
 /* ===== 加载列表 ===== */
-const loadList = async () => {
+const loadList = async (): Promise<void> => {
   const { data } = await getPaymentChannelListApi({
     type: filterType.value || undefined,
     pageNum: pageNum.value,
@@ -49,13 +50,13 @@ const loadList = async () => {
 };
 
 /* ===== 筛选 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   pageNum.value = 1;
-  loadList();
+  void loadList();
 };
 
 /* ===== 新建 ===== */
-const handleCreate = () => {
+const handleCreate = (): void => {
   dialogMode.value = 'create';
   channelForm.value = {
     id: 0,
@@ -72,7 +73,7 @@ const handleCreate = () => {
 };
 
 /* ===== 编辑 ===== */
-const handleEdit = (row: PaymentChannel.ChannelItem) => {
+const handleEdit = (row: PaymentChannel.ChannelItem): void => {
   dialogMode.value = 'edit';
   channelForm.value = {
     id: row.id,
@@ -118,7 +119,7 @@ const validateForm = (): { valid: boolean; error: string } => {
 };
 
 /* ===== 保存 ===== */
-const confirmSave = async () => {
+const confirmSave = async (): Promise<void> => {
   const result = validateForm();
   if (!result.valid) {
     formError.value = result.error;
@@ -134,7 +135,7 @@ const confirmSave = async () => {
         companyName: channelForm.value.companyName.trim(),
         remark: channelForm.value.remark.trim()
       });
-      MessagePlugin.success('支付渠道已创建');
+      void MessagePlugin.success('支付渠道已创建');
     } else {
       await updatePaymentChannelApi({
         id: channelForm.value.id,
@@ -144,32 +145,34 @@ const confirmSave = async () => {
         companyName: channelForm.value.companyName.trim(),
         remark: channelForm.value.remark.trim()
       });
-      MessagePlugin.success('支付渠道已更新');
+      void MessagePlugin.success('支付渠道已更新');
     }
     dialogVisible.value = false;
-    loadList();
-  } catch (e: any) {
-    formError.value = e.message;
+    void loadList();
+  } catch (e: unknown) {
+    formError.value = e instanceof Error ? e.message : String(e);
   }
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageNum.value = pageInfo.current;
   pageSize.value = pageInfo.pageSize;
-  loadList();
+  void loadList();
 };
 
 /* ===== 证书上传 ===== */
-const handleCertificateChange = (files: UploadFile[]) => {
+const handleCertificateChange = (files: UploadFile[]): void => {
   if (files.length > 0) {
     channelForm.value.certificateFile = files[files.length - 1];
   }
 };
 
 /* ===== 脱敏 ===== */
-const maskMerchantId = (id: string) => {
-  if (id.length <= 4) return '***' + id.slice(-1);
+const maskMerchantId = (id: string): string => {
+  if (id.length <= 4) {
+    return '***' + id.slice(-1);
+  }
   return id.slice(0, 3) + '****' + id.slice(-4);
 };
 
@@ -186,7 +189,7 @@ const columns: PrimaryTableCol<PaymentChannel.ChannelItem>[] = [
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadList();
+  void loadList();
 });
 </script>
 
@@ -222,8 +225,8 @@ onMounted(() => {
           showJumper: true,
           showPageSize: true
         }"
-        @page-change="handlePageChange"
         empty="暂无支付渠道"
+        @page-change="handlePageChange"
       >
         <template #type="{ row }">
           <t-tag v-if="row.type === 'wechat'" theme="success" variant="light" size="small">微信支付</t-tag>

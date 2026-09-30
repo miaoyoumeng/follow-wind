@@ -1,8 +1,8 @@
-import { ResultData, ResPage } from '@/request/modules.ts';
-import { DictNamespace, DictKeyValue } from '@/api/modules/dict.ts';
+import { type ResultData, type ResPage } from '@/request/modules.ts';
+import { type DictNamespace, type DictKeyValue } from '@/api/models/dict.ts';
 
-import namespaceMock from '@/assets/jsons/dict-namespaces.json';
-import keyvalueMock from '@/assets/jsons/dict-keyvalues.json';
+import namespaceMock from '@/assets/mocks/dict-namespaces.json';
+import keyvalueMock from '@/assets/mocks/dict-keyvalues.json';
 
 type KeyValueMockData = Record<string, DictKeyValue.KeyValueItem[]>;
 const kvData = keyvalueMock.data as KeyValueMockData;
@@ -20,7 +20,7 @@ export const getNamespaceListApi = (params: DictNamespace.ListParams): Promise<R
   const end = start + pageSize;
   const pageList = list.slice(start, end);
   return Promise.resolve({
-    code: '200',
+    code: 200,
     msg: '成功',
     displayMsg: '',
     uniqCode: '',
@@ -36,7 +36,7 @@ export const createNamespaceApi = (params: DictNamespace.CreateParams): Promise<
   const newItem: DictNamespace.NamespaceItem = {
     id: Math.max(...namespaceMock.data.list.map(i => i.id)) + 1,
     namespace: params.namespace,
-    description: params.description || '',
+    description: params.description ?? '',
     createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
     createdBy: '管理员',
     updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -44,7 +44,7 @@ export const createNamespaceApi = (params: DictNamespace.CreateParams): Promise<
   };
   namespaceMock.data.list.unshift(newItem);
   namespaceMock.data.total = namespaceMock.data.list.length;
-  return Promise.resolve({ code: '200', msg: 'Namespace 已创建', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: 'Namespace 已创建', displayMsg: '', uniqCode: '', data: null });
 };
 
 export const updateNamespaceApi = (params: DictNamespace.UpdateParams): Promise<ResultData<null>> => {
@@ -55,7 +55,7 @@ export const updateNamespaceApi = (params: DictNamespace.UpdateParams): Promise<
   item.description = params.description;
   item.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   item.updatedBy = '管理员';
-  return Promise.resolve({ code: '200', msg: 'Namespace 已更新', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: 'Namespace 已更新', displayMsg: '', uniqCode: '', data: null });
 };
 
 /* ===== Key-Value ===== */
@@ -66,7 +66,7 @@ export const getKeyValueListApi = (params: DictKeyValue.ListParams): Promise<Res
   if (keyword) {
     list = list.filter(item => item.key.includes(keyword) || item.description?.includes(keyword));
   }
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: list });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: list });
 };
 
 export const createKeyValueApi = (params: DictKeyValue.CreateParams): Promise<ResultData<null>> => {
@@ -85,7 +85,7 @@ export const createKeyValueApi = (params: DictKeyValue.CreateParams): Promise<Re
       ) + 1,
     key: params.key,
     value: params.value,
-    description: params.description || '',
+    description: params.description ?? '',
     updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
     updatedBy: '管理员',
     isReferenced: false
@@ -94,7 +94,7 @@ export const createKeyValueApi = (params: DictKeyValue.CreateParams): Promise<Re
     kvData[params.namespace] = [];
   }
   kvData[params.namespace].push(newItem);
-  return Promise.resolve({ code: '200', msg: 'Key-Value 已创建', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: 'Key-Value 已创建', displayMsg: '', uniqCode: '', data: null });
 };
 
 export const updateKeyValueApi = (params: DictKeyValue.UpdateParams): Promise<ResultData<null>> => {
@@ -112,10 +112,10 @@ export const updateKeyValueApi = (params: DictKeyValue.UpdateParams): Promise<Re
   }
   item.key = params.key;
   item.value = params.value;
-  item.description = params.description || '';
+  item.description = params.description ?? '';
   item.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   item.updatedBy = '管理员';
-  return Promise.resolve({ code: '200', msg: 'Key-Value 已更新', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: 'Key-Value 已更新', displayMsg: '', uniqCode: '', data: null });
 };
 
 export const deleteKeyValueApi = (params: DictKeyValue.DeleteParams): Promise<ResultData<null>> => {
@@ -127,7 +127,7 @@ export const deleteKeyValueApi = (params: DictKeyValue.DeleteParams): Promise<Re
         return Promise.reject(new Error('该 Key-Value 已被业务引用，无法删除'));
       }
       kvData[ns].splice(idx, 1);
-      return Promise.resolve({ code: '200', msg: 'Key-Value 已删除', displayMsg: '', uniqCode: '', data: null });
+      return Promise.resolve({ code: 200, msg: 'Key-Value 已删除', displayMsg: '', uniqCode: '', data: null });
     }
   }
   return Promise.reject(new Error('Key-Value 不存在'));

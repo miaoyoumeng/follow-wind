@@ -1,11 +1,12 @@
-<script setup lang="ts" name="PersonalCenter">
+<script setup lang="ts">
+defineOptions({ name: 'PersonalCenter' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Card, Dialog, Button, Tag, Table, Input, Form, FormItem, Loading } from 'tdesign-vue-next';
 import type { PrimaryTableCol } from 'tdesign-vue-next';
 
 import { getProfileInfoApi, getRecentLogsApi, getAllLogsApi, changeWechatApi, bindPhoneApi, getSmsCodeApi, setPasswordApi } from '@/api/user.ts';
-import type { Profile } from '@/api/modules/user.ts';
+import type { Profile } from '@/api/models/user.ts';
 
 /* ===== 个人信息 ===== */
 const profileInfo = ref<Profile.ProfileInfo | null>(null);
@@ -53,14 +54,14 @@ const validatePassword = (pwd: string): { valid: boolean; error: string } => {
 };
 
 /* ===== 数据加载 ===== */
-const loadProfile = async () => {
+const loadProfile = async (): Promise<void> => {
   const { data } = await getProfileInfoApi();
   if (data) {
     profileInfo.value = data;
   }
 };
 
-const loadRecentLogs = async () => {
+const loadRecentLogs = async (): Promise<void> => {
   const { data } = await getRecentLogsApi();
   if (data) {
     recentLogs.value = data.list;
@@ -68,22 +69,22 @@ const loadRecentLogs = async () => {
 };
 
 /* ===== 交互处理 ===== */
-const handleReplaceWechat = () => {
+const handleReplaceWechat = (): void => {
   wechatDialogVisible.value = true;
   wechatScanStatus.value = 'waiting';
   wechatErrorMsg.value = '';
 };
 
-const confirmReplaceWechat = async () => {
+const confirmReplaceWechat = async (): Promise<void> => {
   // 模拟扫码成功后的确认
   wechatScanStatus.value = 'scanned';
   try {
     await changeWechatApi();
     wechatScanStatus.value = 'success';
-    MessagePlugin.success('微信账号已更换');
+    void MessagePlugin.success('微信账号已更换');
     setTimeout(() => {
       wechatDialogVisible.value = false;
-      loadProfile();
+      void loadProfile();
     }, 1000);
   } catch {
     wechatScanStatus.value = 'failed';
@@ -91,22 +92,24 @@ const confirmReplaceWechat = async () => {
   }
 };
 
-const handleBindPhone = () => {
+const handleBindPhone = (): void => {
   phoneDialogVisible.value = true;
   newPhone.value = '';
   smsCode.value = '';
   smsCountdown.value = 0;
 };
 
-const handleGetSmsCode = async () => {
+const handleGetSmsCode = async (): Promise<void> => {
   if (!/^1[3-9]\d{9}$/.test(newPhone.value)) {
-    MessagePlugin.warning('请输入正确的11位手机号');
+    void MessagePlugin.warning('请输入正确的11位手机号');
     return;
   }
-  if (smsCountdown.value > 0) return;
+  if (smsCountdown.value > 0) {
+    return;
+  }
   try {
     await getSmsCodeApi(newPhone.value);
-    MessagePlugin.success('验证码已发送');
+    void MessagePlugin.success('验证码已发送');
     smsCountdown.value = 60;
     smsTimer = setInterval(() => {
       smsCountdown.value--;
@@ -116,42 +119,42 @@ const handleGetSmsCode = async () => {
       }
     }, 1000);
   } catch {
-    MessagePlugin.error('验证码发送失败');
+    void MessagePlugin.error('验证码发送失败');
   }
 };
 
-const confirmBindPhone = async () => {
+const confirmBindPhone = async (): Promise<void> => {
   if (!/^1[3-9]\d{9}$/.test(newPhone.value)) {
-    MessagePlugin.warning('请输入正确的11位手机号');
+    void MessagePlugin.warning('请输入正确的11位手机号');
     return;
   }
   if (!/^\d{4,6}$/.test(smsCode.value)) {
-    MessagePlugin.warning('请输入正确的验证码');
+    void MessagePlugin.warning('请输入正确的验证码');
     return;
   }
   try {
     await bindPhoneApi({ phone: newPhone.value, code: smsCode.value });
-    MessagePlugin.success('手机号已更新');
+    void MessagePlugin.success('手机号已更新');
     phoneDialogVisible.value = false;
-    loadProfile();
+    void loadProfile();
   } catch {
-    MessagePlugin.error('绑定失败，该手机号可能已被其他员工使用');
+    void MessagePlugin.error('绑定失败，该手机号可能已被其他员工使用');
   }
 };
 
-const handleSetPassword = () => {
+const handleSetPassword = (): void => {
   passwordDialogVisible.value = true;
   newPassword.value = '';
   confirmPassword.value = '';
   passwordError.value = '';
 };
 
-const handlePasswordInput = () => {
+const handlePasswordInput = (): void => {
   const result = validatePassword(newPassword.value);
   passwordError.value = result.valid ? '' : result.error;
 };
 
-const confirmSetPassword = async () => {
+const confirmSetPassword = async (): Promise<void> => {
   const result = validatePassword(newPassword.value);
   if (!result.valid) {
     passwordError.value = result.error;
@@ -163,15 +166,15 @@ const confirmSetPassword = async () => {
   }
   try {
     await setPasswordApi({ password: newPassword.value });
-    MessagePlugin.success('密码已设置');
+    void MessagePlugin.success('密码已设置');
     passwordDialogVisible.value = false;
-    loadProfile();
+    void loadProfile();
   } catch {
-    MessagePlugin.error('密码设置失败');
+    void MessagePlugin.error('密码设置失败');
   }
 };
 
-const handleViewAllLogs = async () => {
+const handleViewAllLogs = async (): Promise<void> => {
   allLogsDialogVisible.value = true;
   allLogsLoading.value = true;
   try {
@@ -193,8 +196,8 @@ const logColumns: PrimaryTableCol[] = [
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadProfile();
-  loadRecentLogs();
+  void loadProfile();
+  void loadRecentLogs();
 });
 </script>
 
@@ -293,7 +296,8 @@ onMounted(() => {
     <Dialog v-model:visible="wechatDialogVisible" header="更换微信账号" width="480px" attach="body">
       <div class="wechat-dialog">
         <div class="current-wechat">
-          当前绑定微信：<strong>{{ profileInfo?.wechatId }}</strong>
+          当前绑定微信：
+          <strong>{{ profileInfo?.wechatId }}</strong>
         </div>
         <div class="qr-section">
           <div v-if="wechatScanStatus === 'waiting'" class="qr-placeholder">
@@ -399,7 +403,8 @@ onMounted(() => {
     <Dialog v-model:visible="phoneDialogVisible" header="绑定手机号" width="480px" attach="body">
       <div class="phone-dialog">
         <div class="current-phone">
-          当前绑定手机号：<strong>{{ profileInfo?.phone }}</strong>
+          当前绑定手机号：
+          <strong>{{ profileInfo?.phone }}</strong>
         </div>
         <Form layout="vertical" class="phone-form">
           <FormItem label="新手机号">
@@ -425,7 +430,8 @@ onMounted(() => {
     <Dialog v-model:visible="passwordDialogVisible" :header="profileInfo?.passwordSet ? '修改密码' : '设置密码'" width="480px" attach="body">
       <div class="password-dialog">
         <div class="current-status">
-          当前状态：<strong>{{ profileInfo?.passwordSet ? '已设置' : '未设置' }}</strong>
+          当前状态：
+          <strong>{{ profileInfo?.passwordSet ? '已设置' : '未设置' }}</strong>
         </div>
         <Form layout="vertical" class="password-form">
           <FormItem label="新密码">

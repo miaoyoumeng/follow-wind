@@ -1,5 +1,6 @@
-import mockData from '@/assets/jsons/transaction-flow-list.json';
-import { ResultData } from '@/request/modules';
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import mockData from '@/assets/mocks/transaction-flow-list.json';
+import { type ResultData } from '@/request/modules';
 
 export declare namespace TransactionFlow {
   type TxType = 'pay' | 'refund';
@@ -82,7 +83,7 @@ const toFlowItem = (item: MockFlowItem): TransactionFlow.FlowItem => ({
 });
 
 const buildResponse = <T>(data: T): ResultData<T> => ({
-  code: '200',
+  code: 200,
   msg: '成功',
   data
 });
@@ -90,9 +91,15 @@ const buildResponse = <T>(data: T): ResultData<T> => ({
 // TODO: 后端接口就绪后替换为 http.get
 export const getTransactionFlowListApi = (params: TransactionFlow.ListParams): Promise<ResultData<TransactionFlow.ListResult>> => {
   let filtered = rawData.list.map(toFlowItem);
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
-  if (params.txType) filtered = filtered.filter(item => item.txType === params.txType);
-  if (params.channel) filtered = filtered.filter(item => item.channel === params.channel);
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
+  if (params.txType) {
+    filtered = filtered.filter(item => item.txType === params.txType);
+  }
+  if (params.channel) {
+    filtered = filtered.filter(item => item.channel === params.channel);
+  }
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(
@@ -113,7 +120,9 @@ export const getTransactionFlowSummaryApi = (): Promise<ResultData<TransactionFl
 // TODO: 后端接口就绪后替换为 http.get
 export const getTransactionFlowDetailApi = (id: number): Promise<ResultData<TransactionFlow.FlowDetail>> => {
   const item = rawData.list.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   return Promise.resolve(
     buildResponse({
       flowNo: item.flowNo,

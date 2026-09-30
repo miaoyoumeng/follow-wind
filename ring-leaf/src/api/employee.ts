@@ -1,6 +1,6 @@
-import { ResultData, ResPage } from '@/request/modules.ts';
-import type { EmployeeList } from '@/api/modules/employee.ts';
-import employeeMock from '@/assets/jsons/employee-list.json';
+import { type ResultData, type ResPage } from '@/request/modules.ts';
+import type { EmployeeList } from '@/api/models/employee.ts';
+import employeeMock from '@/assets/mocks/employee-list.json';
 
 /* ===== 员工列表 ===== */
 
@@ -27,7 +27,7 @@ export const getEmployeeListApi = (params: EmployeeList.ListParams): Promise<Res
   const pageList = list.slice(start, end);
 
   return Promise.resolve({
-    code: '200',
+    code: 200,
     msg: '成功',
     displayMsg: '',
     uniqCode: '',
@@ -41,7 +41,7 @@ export const getEmployeeDetailApi = (params: EmployeeList.DetailParams): Promise
   if (!item) {
     return Promise.reject(new Error('员工不存在'));
   }
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: item });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: item });
 };
 
 export const updateEmployeeApi = (params: EmployeeList.UpdateParams): Promise<ResultData<null>> => {
@@ -69,5 +69,5 @@ export const updateEmployeeApi = (params: EmployeeList.UpdateParams): Promise<Re
   item.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   item.updatedBy = '管理员';
 
-  return Promise.resolve({ code: '200', msg: '员工信息已更新', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: '员工信息已更新', displayMsg: '', uniqCode: '', data: null });
 };

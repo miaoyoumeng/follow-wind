@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import { formatNow } from '@/utils/date';
+
 /* 今日用户相关类型 */
 export declare namespace TodayUser {
   /* 核心指标 */
@@ -172,10 +175,10 @@ export declare namespace MemberList {
 }
 
 /* ===== API 函数 ===== */
-import { ResultData } from '@/request/modules';
-import todayUserList from '@/assets/jsons/today-user-list.json';
+import { type ResultData } from '@/request/modules';
+import todayUserList from '@/assets/mocks/today-user-list.json';
 
-const mockResponse = <T>(data: T): Promise<ResultData<T>> => Promise.resolve({ code: '200', msg: '成功', data } as ResultData<T>);
+const mockResponse = <T>(data: T): Promise<ResultData<T>> => Promise.resolve({ code: 200, msg: '成功', data } as ResultData<T>);
 
 export const getTodayMetricsApi = (): Promise<ResultData<TodayUser.TodayMetrics>> => {
   const { metrics } = todayUserList.data as { metrics: TodayUser.TodayMetrics };
@@ -243,7 +246,7 @@ export const getTodayUserDetailApi = (userId: number): Promise<ResultData<TodayU
       phone: '138****5678',
       channel1: user.channel1,
       channel2: user.channel2,
-      registerTime: user.registerTime || ''
+      registerTime: user.registerTime ?? ''
     });
   }
   return mockResponse<TodayUser.UserDetail>({
@@ -298,23 +301,25 @@ export declare namespace Profile {
 }
 
 /* ===== 会员列表 API ===== */
-import memberListData from '@/assets/jsons/member-list.json';
+import memberListData from '@/assets/mocks/member-list.json';
 
 export const getMemberListApi = (params: MemberList.ListParams): Promise<ResultData<{ list: MemberList.MemberItem[]; total: number }>> => {
   const raw = memberListData.data as { list: MemberList.MemberItem[]; total: number };
   let list = [...raw.list];
+  // 解构为局部常量：TS 对属性访问的窄化不会进入回调，解构后无需非空断言
+  const { channel1, userId, userName, phone } = params;
 
-  if (params.channel1) {
-    list = list.filter(item => item.channel1 === params.channel1);
+  if (channel1) {
+    list = list.filter(item => item.channel1 === channel1);
   }
-  if (params.userId) {
-    list = list.filter(item => String(item.memberId).includes(params.userId!));
+  if (userId) {
+    list = list.filter(item => String(item.memberId).includes(userId));
   }
-  if (params.userName) {
-    list = list.filter(item => item.userName.toLowerCase().includes(params.userName!.toLowerCase()));
+  if (userName) {
+    list = list.filter(item => item.userName.toLowerCase().includes(userName.toLowerCase()));
   }
-  if (params.phone) {
-    list = list.filter(item => item.phone.includes(params.phone!));
+  if (phone) {
+    list = list.filter(item => item.phone.includes(phone));
   }
 
   const total = list.length;
@@ -324,7 +329,14 @@ export const getMemberListApi = (params: MemberList.ListParams): Promise<ResultD
   return mockResponse({ list: list.slice(start, end), total });
 };
 
-export const updateMemberRemarkApi = (_params: MemberList.RemarkParams): Promise<ResultData<boolean>> => {
+export const updateMemberRemarkApi = (params: MemberList.RemarkParams): Promise<ResultData<boolean>> => {
+  // 备注写入 mock 会员列表（内存中可变，刷新页面即还原）
+  const raw = memberListData.data as { list: MemberList.MemberItem[] };
+  const member = raw.list.find(item => item.memberId === params.memberId);
+  if (!member) {
+    return mockResponse(false);
+  }
+  member.remark = params.remark;
   return mockResponse(true);
 };
 
@@ -405,9 +417,9 @@ export declare namespace MemberDetail {
   }
 }
 
-import memberRemarkListData from '@/assets/jsons/member-remark-list.json';
-import memberOrderListData from '@/assets/jsons/member-order-list.json';
-import memberLoginListData from '@/assets/jsons/member-login-list.json';
+import memberRemarkListData from '@/assets/mocks/member-remark-list.json';
+import memberOrderListData from '@/assets/mocks/member-order-list.json';
+import memberLoginListData from '@/assets/mocks/member-login-list.json';
 
 export const getMemberRemarkListApi = (
   params: MemberDetail.RemarkListParams
@@ -420,7 +432,22 @@ export const getMemberRemarkListApi = (
   return mockResponse({ list: list.slice(start, end), total });
 };
 
-export const saveMemberRemarkApi = (_params: MemberDetail.RemarkSaveParams): Promise<ResultData<boolean>> => {
+export const saveMemberRemarkApi = (params: MemberDetail.RemarkSaveParams): Promise<ResultData<boolean>> => {
+  // 会员不存在则不允许写备注
+  const members = (memberListData.data as { list: MemberList.MemberItem[] }).list;
+  if (!members.some(item => item.memberId === params.memberId)) {
+    return mockResponse(false);
+  }
+  const raw = memberRemarkListData.data as { list: MemberDetail.RemarkItem[]; total: number };
+  const nextId = raw.list.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+  raw.list.unshift({
+    id: nextId,
+    operatorName: '当前用户',
+    content: params.content,
+    // mock 中的 operateTime 精确到分钟
+    operateTime: formatNow().slice(0, 16)
+  });
+  raw.total = raw.list.length;
   return mockResponse(true);
 };
 
@@ -439,8 +466,13 @@ export const getMemberOrderListApi = (
 };
 
 export const getMemberLoginListApi = (
-  _params: MemberDetail.LoginListParams
+  params: MemberDetail.LoginListParams
 ): Promise<ResultData<{ list: MemberDetail.LoginItem[]; total: number }>> => {
+  // mock 的登录记录未按会员拆分：会员不存在返回空列表，存在则按分页返回
+  const members = (memberListData.data as { list: MemberList.MemberItem[] }).list;
+  const exists = members.some(item => item.memberId === params.memberId);
   const raw = memberLoginListData.data as { list: MemberDetail.LoginItem[]; total: number };
-  return mockResponse({ list: raw.list, total: raw.total });
+  const start = (params.pageNum - 1) * params.pageSize;
+  const list = exists ? raw.list.slice(start, start + params.pageSize) : [];
+  return mockResponse({ list, total: exists ? raw.total : 0 });
 };

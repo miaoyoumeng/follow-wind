@@ -1,4 +1,5 @@
-<script setup lang="ts" name="TodayUser">
+<script setup lang="ts">
+defineOptions({ name: 'TodayUser' });
 import { ref, computed, onMounted } from 'vue';
 import { Card, Row, Col, Select, Option, Tabs, TabPanel, Table, Dialog, Button, Tag, Tooltip, Loading } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
@@ -20,7 +21,7 @@ import {
   getChannelOptionsApi,
   getTrendDataApi
 } from '@/api/user.ts';
-import type { TodayUser } from '@/api/modules/user.ts';
+import type { TodayUser } from '@/api/models/user.ts';
 
 /* ===== 页面状态 ===== */
 const todayDate = computed(() => {
@@ -72,8 +73,10 @@ const trendLoading = ref(false);
 const trendDataRef = ref<TodayUser.TrendData>({ today: [], yesterday: [], lastWeek: [] });
 
 /* ===== 二级渠道截断辅助 ===== */
-const truncateChannel = (text: string, maxLen = 10) => {
-  if (!text) return '';
+const truncateChannel = (text: string, maxLen = 10): string => {
+  if (!text) {
+    return '';
+  }
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
 };
 
@@ -109,21 +112,21 @@ const payColumns: PrimaryTableCol[] = [
 ];
 
 /* ===== 数据加载 ===== */
-const loadMetrics = async () => {
+const loadMetrics = async (): Promise<void> => {
   const { data } = await getTodayMetricsApi();
   if (data) {
     metrics.value = data;
   }
 };
 
-const loadChannelOptions = async () => {
+const loadChannelOptions = async (): Promise<void> => {
   const { data } = await getChannelOptionsApi();
   if (data) {
     channelOptionsList.value = data;
   }
 };
 
-const loadRegisterList = async () => {
+const loadRegisterList = async (): Promise<void> => {
   registerLoading.value = true;
   try {
     const { data } = await getTodayRegisteredListApi({
@@ -140,7 +143,7 @@ const loadRegisterList = async () => {
   }
 };
 
-const loadActiveList = async () => {
+const loadActiveList = async (): Promise<void> => {
   activeLoading.value = true;
   try {
     const { data } = await getTodayActiveListApi({
@@ -157,7 +160,7 @@ const loadActiveList = async () => {
   }
 };
 
-const loadPayList = async () => {
+const loadPayList = async (): Promise<void> => {
   payLoading.value = true;
   try {
     const { data } = await getTodayPayListApi({
@@ -175,18 +178,25 @@ const loadPayList = async () => {
 };
 
 /* ===== 交互处理 ===== */
-const handleTabChange = (tabValue: string | number) => {
+const handleTabChange = (tabValue: string | number): void => {
   activeTab.value = tabValue as string;
 };
 
-const handleChannelChange = () => {
+const loadAllData = (): void => {
+  void loadMetrics();
+  void loadRegisterList();
+  void loadActiveList();
+  void loadPayList();
+};
+
+const handleChannelChange = (): void => {
   registerPage.value.pageNum = 1;
   activePage.value.pageNum = 1;
   payPage.value.pageNum = 1;
   loadAllData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   selectedChannel.value = 'all';
   registerPage.value.pageNum = 1;
   activePage.value.pageNum = 1;
@@ -194,20 +204,13 @@ const handleReset = () => {
   loadAllData();
 };
 
-const loadAllData = () => {
-  loadMetrics();
-  loadRegisterList();
-  loadActiveList();
-  loadPayList();
-};
-
-const handleDetail = async (userId: number) => {
+const handleDetail = async (userId: number): Promise<void> => {
   const { data } = await getTodayUserDetailApi(userId);
   userDetail.value = data || null;
   detailVisible.value = true;
 };
 
-const handleMetricClick = async (type: string) => {
+const handleMetricClick = async (type: string): Promise<void> => {
   const titles: Record<string, string> = {
     register: '今日注册用户趋势',
     active: '今日活跃用户趋势',
@@ -226,23 +229,64 @@ const handleMetricClick = async (type: string) => {
   }
 };
 
-const handlePageChange = (tab: string, pageInfo: PageInfo) => {
+const handlePageChange = (tab: string, pageInfo: PageInfo): void => {
   if (tab === 'register') {
     registerPage.value.pageNum = pageInfo.current;
     registerPage.value.pageSize = pageInfo.pageSize;
-    loadRegisterList();
+    void loadRegisterList();
   } else if (tab === 'active') {
     activePage.value.pageNum = pageInfo.current;
     activePage.value.pageSize = pageInfo.pageSize;
-    loadActiveList();
+    void loadActiveList();
   } else if (tab === 'pay') {
     payPage.value.pageNum = pageInfo.current;
     payPage.value.pageSize = pageInfo.pageSize;
-    loadPayList();
+    void loadPayList();
   }
 };
 
 /* ===== 趋势图 ECharts 配置 ===== */
+/** 三条趋势曲线 */
+const buildTrendSeries = (
+  today: TodayUser.TrendData['today'],
+  yesterday: TodayUser.TrendData['yesterday'],
+  lastWeek: TodayUser.TrendData['lastWeek']
+): EChartsOption['series'] => [
+  {
+    name: '今日',
+    type: 'line',
+    data: today,
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 5,
+    lineStyle: { width: 2 },
+    itemStyle: { color: '#0052d9' },
+    areaStyle: { color: 'rgba(0,82,217,0.05)' }
+  },
+  {
+    name: '昨日',
+    type: 'line',
+    data: yesterday,
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 5,
+    lineStyle: { width: 2 },
+    itemStyle: { color: '#00b42a' },
+    areaStyle: { color: 'rgba(0,180,42,0.05)' }
+  },
+  {
+    name: '上周同日',
+    type: 'line',
+    data: lastWeek,
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 5,
+    lineStyle: { width: 2 },
+    itemStyle: { color: '#e3a008' },
+    areaStyle: { color: 'rgba(227,160,8,0.05)' }
+  }
+];
+
 const trendChartOption = computed<EChartsOption>(() => {
   const { today, yesterday, lastWeek } = trendDataRef.value;
   const xData = Array.from({ length: 24 }, (_, i) => `${i}时`);
@@ -273,49 +317,15 @@ const trendChartOption = computed<EChartsOption>(() => {
       splitLine: { lineStyle: { color: '#f0f0f0' } },
       axisLabel: { color: '#8f929e', fontSize: 11 }
     },
-    series: [
-      {
-        name: '今日',
-        type: 'line',
-        data: today,
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 5,
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#0052d9' },
-        areaStyle: { color: 'rgba(0,82,217,0.05)' }
-      },
-      {
-        name: '昨日',
-        type: 'line',
-        data: yesterday,
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 5,
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#00b42a' },
-        areaStyle: { color: 'rgba(0,180,42,0.05)' }
-      },
-      {
-        name: '上周同日',
-        type: 'line',
-        data: lastWeek,
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 5,
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#e3a008' },
-        areaStyle: { color: 'rgba(227,160,8,0.05)' }
-      }
-    ]
+    series: buildTrendSeries(today, yesterday, lastWeek)
   };
 });
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadChannelOptions();
-  loadMetrics();
-  loadRegisterList();
+  void loadChannelOptions();
+  void loadMetrics();
+  void loadRegisterList();
 });
 </script>
 
@@ -391,9 +401,11 @@ onMounted(() => {
       <Tabs v-model="activeTab" @change="handleTabChange">
         <TabPanel value="register" :label="`今日注册用户 (${metrics.registerCount})`">
           <div class="table-toolbar">
-            <span class="table-info"
-              >共 <strong>{{ registerTotal }}</strong> 条记录，按注册时间倒序排列</span
-            >
+            <span class="table-info">
+              共
+              <strong>{{ registerTotal }}</strong>
+              条记录，按注册时间倒序排列
+            </span>
           </div>
           <Table
             :data="registerList"
@@ -424,9 +436,11 @@ onMounted(() => {
         </TabPanel>
         <TabPanel value="active" :label="`今日活跃用户 (${metrics.activeCount})`">
           <div class="table-toolbar">
-            <span class="table-info"
-              >共 <strong>{{ activeTotal }}</strong> 条记录，按首次活跃时间倒序排列</span
-            >
+            <span class="table-info">
+              共
+              <strong>{{ activeTotal }}</strong>
+              条记录，按首次活跃时间倒序排列
+            </span>
           </div>
           <Table
             :data="activeList"
@@ -457,9 +471,11 @@ onMounted(() => {
         </TabPanel>
         <TabPanel value="pay" :label="`今日支付用户 (${metrics.payCount})`">
           <div class="table-toolbar">
-            <span class="table-info"
-              >共 <strong>{{ payTotal }}</strong> 条记录，按首次支付时间倒序排列</span
-            >
+            <span class="table-info">
+              共
+              <strong>{{ payTotal }}</strong>
+              条记录，按首次支付时间倒序排列
+            </span>
           </div>
           <Table
             :data="payList"

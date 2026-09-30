@@ -61,8 +61,8 @@
         :page-size-options="[20, 50, 100]"
         @page-change="handlePageChange"
       >
-        <template #col-systemAmount="{ row }"> &yen;{{ formatAmount(row.systemAmount) }} </template>
-        <template #col-channelAmount="{ row }"> &yen;{{ formatAmount(row.channelAmount) }} </template>
+        <template #col-systemAmount="{ row }">&yen;{{ formatAmount(row.systemAmount) }}</template>
+        <template #col-channelAmount="{ row }">&yen;{{ formatAmount(row.channelAmount) }}</template>
         <template #col-diffAmount="{ row }">
           <span :class="row.diffAmount !== 0 ? 'diff-text' : ''">
             {{ row.diffAmount < 0 ? '-' : '' }}&yen;{{ formatAmount(Math.abs(row.diffAmount)) }}
@@ -159,25 +159,26 @@
         :pagination="{ current: diffPageNum, pageSize: diffPageSize, total: diffTotal }"
         @page-change="handleDiffPageChange"
       >
-        <template #col-platformAmount="{ row }"> &yen;{{ formatAmount(row.platformAmount) }} </template>
-        <template #col-systemAmount="{ row }"> &yen;{{ formatAmount(row.systemAmount) }} </template>
+        <template #col-platformAmount="{ row }">&yen;{{ formatAmount(row.platformAmount) }}</template>
+        <template #col-systemAmount="{ row }">&yen;{{ formatAmount(row.systemAmount) }}</template>
       </t-table>
     </t-dialog>
   </div>
 </template>
 
-<script setup lang="ts" name="ReconciliationManager">
+<script setup lang="ts">
+defineOptions({ name: 'ReconciliationManager' });
 import { ref, computed, onMounted } from 'vue';
 import type { PrimaryTableCol, PageInfo, UploadFile } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import type { Reconciliation } from '@/api/modules/reconciliation';
+import type { Reconciliation } from '@/api/models/reconciliation';
 import {
   getReconciliationListApi,
   getReconciliationSummaryApi,
   getReconciliationDetailApi,
   getReconciliationDiffApi,
   uploadReconciliationFileApi
-} from '@/api/modules/reconciliation';
+} from '@/api/models/reconciliation';
 
 /* ===== 摘要数据 ===== */
 const summary = ref({
@@ -186,7 +187,7 @@ const summary = ref({
   mismatchCount: 0
 });
 
-const loadSummary = async () => {
+const loadSummary = async (): Promise<void> => {
   try {
     const { data } = await getReconciliationSummaryApi();
     summary.value = data;
@@ -200,19 +201,6 @@ const filterDate = ref<string>('');
 const filterChannel = ref<Reconciliation.Channel | ''>('');
 const filterStatus = ref<Reconciliation.Status | ''>('');
 
-const handleSearch = () => {
-  pageNum.value = 1;
-  loadTableData();
-};
-
-const handleReset = () => {
-  filterDate.value = '';
-  filterChannel.value = '';
-  filterStatus.value = '';
-  pageNum.value = 1;
-  loadTableData();
-};
-
 /* ===== 列表数据 ===== */
 const loading = ref(false);
 const tableData = ref<Reconciliation.ReconciliationItem[]>([]);
@@ -220,7 +208,7 @@ const pageNum = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 
-const loadTableData = async () => {
+const loadTableData = async (): Promise<void> => {
   loading.value = true;
   try {
     const params: Reconciliation.ListParams = {
@@ -241,10 +229,23 @@ const loadTableData = async () => {
   }
 };
 
-const handlePageChange = (pageInfo: PageInfo) => {
+const handleSearch = (): void => {
+  pageNum.value = 1;
+  void loadTableData();
+};
+
+const handleReset = (): void => {
+  filterDate.value = '';
+  filterChannel.value = '';
+  filterStatus.value = '';
+  pageNum.value = 1;
+  void loadTableData();
+};
+
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageNum.value = pageInfo.current ?? 1;
   pageSize.value = pageInfo.pageSize ?? 20;
-  loadTableData();
+  void loadTableData();
 };
 
 /* ===== 列定义 ===== */
@@ -268,18 +269,18 @@ const uploadForm = ref({
   files: [] as UploadFile[]
 });
 
-const handleUpload = async () => {
+const handleUpload = async (): Promise<void> => {
   if (!uploadForm.value.date) {
-    MessagePlugin.warning('请选择对账日期');
+    void MessagePlugin.warning('请选择对账日期');
     return;
   }
   if (!uploadForm.value.files || uploadForm.value.files.length === 0) {
-    MessagePlugin.warning('请上传对账文件');
+    void MessagePlugin.warning('请上传对账文件');
     return;
   }
   const file = uploadForm.value.files[0]?.raw as File;
   if (!file) {
-    MessagePlugin.warning('请选择有效的文件');
+    void MessagePlugin.warning('请选择有效的文件');
     return;
   }
   try {
@@ -288,18 +289,18 @@ const handleUpload = async () => {
       reconciliationDate: uploadForm.value.date,
       file
     });
-    MessagePlugin.success('对账完成');
+    void MessagePlugin.success('对账完成');
     uploadVisible.value = false;
     uploadForm.value = { channel: 'wechat', date: '', files: [] };
-    loadSummary();
-    loadTableData();
+    void loadSummary();
+    void loadTableData();
   } catch {
-    MessagePlugin.error('对账失败，请重试');
+    void MessagePlugin.error('对账失败，请重试');
   }
 };
 
-const handleUploadFail = () => {
-  MessagePlugin.error('文件上传失败，仅支持 .csv/.xlsx 格式');
+const handleUploadFail = (): void => {
+  void MessagePlugin.error('文件上传失败，仅支持 .csv/.xlsx 格式');
 };
 
 /* ===== 对账详情 ===== */
@@ -307,23 +308,11 @@ const detailVisible = ref(false);
 const detailData = ref<Reconciliation.ReconciliationDetail | null>(null);
 
 const detailTitle = computed(() => {
-  if (!detailData.value) return '对账详情';
+  if (!detailData.value) {
+    return '对账详情';
+  }
   return `对账详情 - ${detailData.value.reconciliationDate} ${detailData.value.channelName}`;
 });
-
-const handleDetail = async (row: Reconciliation.ReconciliationItem) => {
-  if (row.status === 'mismatched') {
-    openDiffDialog(row.id);
-    return;
-  }
-  try {
-    const { data } = await getReconciliationDetailApi(row.id);
-    detailData.value = data;
-    detailVisible.value = true;
-  } catch {
-    MessagePlugin.error('获取对账详情失败');
-  }
-};
 
 /* ===== 差异明细 ===== */
 const diffVisible = ref(false);
@@ -345,14 +334,7 @@ const diffColumns: PrimaryTableCol<Reconciliation.DiffItem>[] = [
   { colKey: 'diffReasonName', title: '差异原因', width: 160 }
 ];
 
-const openDiffDialog = async (id: number) => {
-  currentDiffId.value = id;
-  diffPageNum.value = 1;
-  await loadDiffData();
-  diffVisible.value = true;
-};
-
-const loadDiffData = async () => {
+const loadDiffData = async (): Promise<void> => {
   diffLoading.value = true;
   try {
     const { data } = await getReconciliationDiffApi(currentDiffId.value, {
@@ -369,26 +351,47 @@ const loadDiffData = async () => {
   }
 };
 
-const handleDiffPageChange = (pageInfo: PageInfo) => {
+const openDiffDialog = async (id: number): Promise<void> => {
+  currentDiffId.value = id;
+  diffPageNum.value = 1;
+  await loadDiffData();
+  diffVisible.value = true;
+};
+
+const handleDetail = async (row: Reconciliation.ReconciliationItem): Promise<void> => {
+  if (row.status === 'mismatched') {
+    void openDiffDialog(row.id);
+    return;
+  }
+  try {
+    const { data } = await getReconciliationDetailApi(row.id);
+    detailData.value = data;
+    detailVisible.value = true;
+  } catch {
+    void MessagePlugin.error('获取对账详情失败');
+  }
+};
+
+const handleDiffPageChange = (pageInfo: PageInfo): void => {
   diffPageNum.value = pageInfo.current ?? 1;
   diffPageSize.value = pageInfo.pageSize ?? 10;
-  loadDiffData();
+  void loadDiffData();
 };
 
 /* ===== 平账 ===== */
-const handleSettle = async () => {
-  MessagePlugin.info('平账功能开发中');
+const handleSettle = async (): Promise<void> => {
+  void MessagePlugin.info('平账功能开发中');
 };
 
 /* ===== 工具方法 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadSummary();
-  loadTableData();
+  void loadSummary();
+  void loadTableData();
 });
 </script>
 

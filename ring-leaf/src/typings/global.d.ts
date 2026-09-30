@@ -1,5 +1,5 @@
 /* Vite */
-declare type Recordable<T = any> = Record<string, T>;
+declare type Recordable<T = unknown> = Record<string, T>;
 
 declare type RouteMode = 'hash' | 'history';
 
@@ -25,16 +25,6 @@ interface ImportMetaEnv extends ViteEnv {
   __: unknown;
 }
 
-/* __APP_INFO__ */
-declare const __APP_INFO__: {
-  pkg: {
-    name: string;
-    version: string;
-    dependencies: Recordable<string>;
-    devDependencies: Recordable<string>;
-  };
-  lastBuildTime: string;
-};
 /* 布局方式 */
 declare type LayoutType = 'classic' | 'vertical' | 'transverse';
 

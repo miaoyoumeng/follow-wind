@@ -1,8 +1,18 @@
 import { defineStore } from 'pinia';
-import { RouteRecordRaw } from 'vue-router';
-import { AuthState } from '@/stores/interface';
+import { type RouteRecordRaw } from 'vue-router';
+import { type AuthState } from '@/stores/interface';
 import { getAppRouters } from '@/api/auth';
 import piniaPersistConfig from '@/stores/config/persist.ts';
+
+/** 将子路由的内容处理扁平化数组 */
+function getFlatMenuList(routeList: RouteRecordRaw[]): RouteRecordRaw[] {
+  const newMenuList: RouteRecordRaw[] = [...routeList];
+  return newMenuList.flatMap(item => {
+    const children: RouteRecordRaw[] = item.children ?? [];
+    item.children = [];
+    return [item, ...(children ? getFlatMenuList(children) : [])];
+  });
+}
 
 export const useAuthStore = defineStore('leaf-vein-auth', {
   state: (): AuthState => ({
@@ -31,13 +41,3 @@ export const useAuthStore = defineStore('leaf-vein-auth', {
   },
   persist: piniaPersistConfig('auth_router_info')
 });
-
-/** 将子路由的内容处理扁平化数组 */
-function getFlatMenuList(routeList: RouteRecordRaw[]): RouteRecordRaw[] {
-  let newMenuList: RouteRecordRaw[] = [...routeList];
-  return newMenuList.flatMap(item => {
-    const children: RouteRecordRaw[] = item.children ? item.children : [];
-    item.children = [];
-    return [item, ...(children ? getFlatMenuList(children) : [])];
-  });
-}

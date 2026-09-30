@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
 import http from '@/request';
-import { ResultData } from '@/request/modules.ts';
+import { type ResultData } from '@/request/modules.ts';
 import { useUserStore } from '@/stores/modules/user.ts';
-import router from '@/routers/index';
+import router from '@/routers';
 import { MAIN_URL, TO_LOGIN_URL } from '@/routers/config.ts';
 import md5 from 'md5';
 import { useAuthStore } from '@/stores/modules/auth.ts';
@@ -25,7 +26,7 @@ export namespace Login {
 }
 
 // 用户退出登录
-const logoutApi = () => {
+const logoutApi = (): Promise<ResultData<unknown>> => {
   return http.get('/sso/logout');
 };
 
@@ -48,7 +49,7 @@ const tokenUserInfoApi = (): Promise<ResultData<Login.RespUserInfo>> => {
 /**
  * 退出登录
  */
-export const logout = async () => {
+export const logout = async (): Promise<void> => {
   await logoutApi();
   const userStore = useUserStore();
   const authStore = useAuthStore();
@@ -58,13 +59,13 @@ export const logout = async () => {
 };
 
 /* 登录表单提交 */
-export const formLogin = async (formData: Login.ReqLoginForm) => {
+export const formLogin = async (formData: Login.ReqLoginForm): Promise<void> => {
   const { data } = await loginApi({ ...formData, password: md5(formData.password) });
   const userStore = useUserStore();
-  if (data && data.token) {
+  if (data?.token) {
     userStore.setToken(data.token, data.timestamp);
-    tokenUserInfoApi().then(resp => {
-      if (resp && resp.data) {
+    void tokenUserInfoApi().then(resp => {
+      if (resp?.data) {
         const info = {
           name: resp.data.name, //账号名称
           displayName: resp.data.displayName ? resp.data.displayName : '游客', //显示名称
@@ -73,7 +74,7 @@ export const formLogin = async (formData: Login.ReqLoginForm) => {
         };
         userStore.setUserInfo(info);
         // 主页
-        router.push(MAIN_URL);
+        void router.push(MAIN_URL);
       }
     });
   }

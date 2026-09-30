@@ -1,11 +1,12 @@
-<script setup lang="ts" name="ExecutionOrderList">
+<script setup lang="ts">
+defineOptions({ name: 'ExecutionOrderList' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Table, Select, Option, Input, Button, Tag, Dialog, DatePicker, Progress } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo, TableRowData } from 'tdesign-vue-next';
 
-import { getFulfillingOrderListApi, getFulfillingOrderDetailApi } from '@/api/modules/fulfilling-order';
-import type { FulfillingOrder } from '@/api/modules/fulfilling-order';
+import { getFulfillingOrderListApi, getFulfillingOrderDetailApi } from '@/api/models/fulfilling-order';
+import type { FulfillingOrder } from '@/api/models/fulfilling-order';
 
 /* ===== 筛选条件 ===== */
 const filter = ref({ appId: '', confirmStatus: '', orderTimeRange: '', keyword: '' });
@@ -37,17 +38,17 @@ const columns: PrimaryTableCol<TableRowData>[] = [
 ];
 
 /* ===== 金额格式化 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return '¥' + val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 /* ===== 状态标签主题 ===== */
-const getStatusTheme = (status: FulfillingOrder.ConfirmStatus) => {
+const getStatusTheme = (status: FulfillingOrder.ConfirmStatus): 'success' | 'warning' => {
   return status === 'confirming' ? 'success' : 'warning';
 };
 
 /* ===== 数据加载 ===== */
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getFulfillingOrderListApi({
@@ -69,40 +70,40 @@ const loadData = async () => {
 };
 
 /* ===== 搜索与重置 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   page.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   filter.value = { appId: '', confirmStatus: '', orderTimeRange: '', keyword: '' };
   page.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   page.value.pageNum = pageInfo.current;
   page.value.pageSize = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
 /* ===== 详情查看 ===== */
-const handleDetail = async (row: FulfillingOrder.FulfillingOrderItem) => {
+const handleDetail = async (row: FulfillingOrder.FulfillingOrderItem): Promise<void> => {
   try {
     const { data } = await getFulfillingOrderDetailApi(row.id);
     if (data) {
       detailData.value = data;
       detailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadData();
+  void loadData();
 });
 </script>
 

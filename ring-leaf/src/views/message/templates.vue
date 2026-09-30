@@ -1,9 +1,10 @@
-<script setup lang="ts" name="MessageTemplateManager">
+<script setup lang="ts">
+defineOptions({ name: 'MessageTemplateManager' });
 import { ref, onMounted } from 'vue';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 
 import { getTemplateListApi, getTemplateDetailApi, getTemplateChannelOptionsApi } from '@/api/message.ts';
-import type { MessageTemplate } from '@/api/modules/message.ts';
+import type { MessageTemplate } from '@/api/models/message.ts';
 
 /* ===== 列表数据 ===== */
 const templateList = ref<MessageTemplate.TemplateItem[]>([]);
@@ -44,7 +45,7 @@ const getArrivalRate = (row: MessageTemplate.TemplateItem): string => {
 };
 
 /* ===== 数据加载 ===== */
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   templateLoading.value = true;
   try {
     const { data } = await getTemplateListApi({
@@ -63,7 +64,7 @@ const loadData = async () => {
   }
 };
 
-const loadOptions = async () => {
+const loadOptions = async (): Promise<void> => {
   const { data } = await getTemplateChannelOptionsApi();
   if (data) {
     channelOptions.value = data;
@@ -71,28 +72,28 @@ const loadOptions = async () => {
 };
 
 /* ===== 筛选操作 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   pageParams.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   filterName.value = '';
   filterChannel.value = '';
   filterContent.value = '';
   pageParams.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageParams.value.pageNum = pageInfo.current;
   pageParams.value.pageSize = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
 /* ===== 查看详情 ===== */
-const handleDetail = async (row: MessageTemplate.TemplateItem) => {
+const handleDetail = async (row: MessageTemplate.TemplateItem): Promise<void> => {
   detailLoading.value = true;
   try {
     const { data } = await getTemplateDetailApi({ id: row.id });
@@ -105,8 +106,8 @@ const handleDetail = async (row: MessageTemplate.TemplateItem) => {
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadOptions();
-  loadData();
+  void loadOptions();
+  void loadData();
 });
 </script>
 

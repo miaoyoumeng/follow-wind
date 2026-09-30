@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { UserInfo } from '@/stores/interface';
+import { type UserInfo } from '@/stores/interface';
 import piniaPersistConfig from '@/stores/config/persist';
 
 export const useUserStore = defineStore('user_info_store', {
@@ -20,7 +20,7 @@ export const useUserStore = defineStore('user_info_store', {
     // Set Token
     setToken(token: string, timestamp?: number) {
       this.token = token;
-      this.timestamp = timestamp ? timestamp : Date.now();
+      this.timestamp = timestamp ?? Date.now();
     },
     // Set setInfo
     setUserInfo(info: UserInfo['info']) {

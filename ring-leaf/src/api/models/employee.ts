@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
 /* ===== 员工列表 ===== */
 export declare namespace EmployeeList {
   interface EmployeeItem {

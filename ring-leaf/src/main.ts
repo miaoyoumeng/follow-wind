@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import { createApp, type Component } from 'vue';
 import TDesign from 'tdesign-vue-next';
 import * as Icons from 'tdesign-icons-vue-next';
 
@@ -17,7 +17,8 @@ import '@/assets/styles/globals.css';
 import '@/assets/styles/common.scss';
 import '@/assets/styles/font.scss';
 
-const app = createApp(App);
+// .vue 组件在 typescript-eslint 下无法解析类型（需 Volar），此处显式断言
+const app = createApp(App as Component);
 
 app.config.errorHandler = errorHandler;
 

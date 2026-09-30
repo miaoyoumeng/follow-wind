@@ -1,11 +1,12 @@
-<script setup lang="ts" name="MessageList">
+<script setup lang="ts">
+defineOptions({ name: 'MessageList' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Button, Table, Select, Option, Tag, Dialog, Input } from 'tdesign-vue-next';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 
 import { getMessageListApi, getMessageDetailApi, getMessageChannelOptionsApi } from '@/api/message.ts';
-import type { MessageRecord } from '@/api/modules/message.ts';
+import type { MessageRecord } from '@/api/models/message.ts';
 
 /* ===== 列表数据 ===== */
 const messageList = ref<MessageRecord.MessageItem[]>([]);
@@ -39,7 +40,7 @@ const columns: PrimaryTableCol[] = [
 ];
 
 /* ===== 数据加载 ===== */
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   messageLoading.value = true;
   try {
     const { data } = await getMessageListApi({
@@ -58,7 +59,7 @@ const loadData = async () => {
   }
 };
 
-const loadChannelOptions = async () => {
+const loadChannelOptions = async (): Promise<void> => {
   const { data } = await getMessageChannelOptionsApi();
   if (data) {
     channelOptions.value = data;
@@ -66,41 +67,41 @@ const loadChannelOptions = async () => {
 };
 
 /* ===== 筛选操作 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   pageParams.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   filterUserId.value = '';
   filterChannel.value = '';
   filterContent.value = '';
   pageParams.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageParams.value.pageNum = pageInfo.current;
   pageParams.value.pageSize = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
 /* ===== 查看详情 ===== */
-const handleDetail = async (row: MessageRecord.MessageItem) => {
+const handleDetail = async (row: MessageRecord.MessageItem): Promise<void> => {
   try {
     const { data } = await getMessageDetailApi({ id: row.id });
     if (data) {
       detailData.value = data;
       detailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
 /* ===== 状态标签主题 ===== */
-const getStatusTheme = (status: MessageRecord.Status) => {
+const getStatusTheme = (status: MessageRecord.Status): 'success' | 'warning' | 'danger' => {
   const themeMap: Record<MessageRecord.Status, 'success' | 'warning' | 'danger'> = {
     delivered: 'success',
     sending: 'warning',
@@ -111,8 +112,8 @@ const getStatusTheme = (status: MessageRecord.Status) => {
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadChannelOptions();
-  loadData();
+  void loadChannelOptions();
+  void loadData();
 });
 </script>
 

@@ -18,6 +18,7 @@
   </t-layout>
 </template>
 <script setup lang="ts">
+defineOptions({ name: 'LayoutClassic' });
 import Header from '@/layouts/components/LayoutHeader.vue';
 import SideNav from '@/layouts/components/LayoutSideNav.vue';
 import Main from '@/layouts/components/LayoutMain.vue';
@@ -34,15 +35,7 @@ const data: DataProps = reactive<DataProps>({
   menuCollapsed: false // 左侧菜单是否收缩
 });
 
-onMounted(() => {
-  calCollapsed();
-});
-const handleCollapsed = () => {
-  // 左侧菜单
-  data.menuCollapsed = !data.menuCollapsed;
-  calCollapsed();
-};
-const calCollapsed = () => {
+const calCollapsed = (): void => {
   if (!data.menuCollapsed) {
     data.asideWidth = '232px';
     data.contentWidth = 'width: calc(100% - 232px)'; /* 宽度为容器的100%，减去两边共40px */
@@ -50,5 +43,14 @@ const calCollapsed = () => {
     data.asideWidth = '64px';
     data.contentWidth = 'width: calc(100% - 64px)';
   }
+};
+
+onMounted(() => {
+  calCollapsed();
+});
+const handleCollapsed = (): void => {
+  // 左侧菜单
+  data.menuCollapsed = !data.menuCollapsed;
+  calCollapsed();
 };
 </script>

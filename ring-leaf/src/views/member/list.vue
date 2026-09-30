@@ -1,12 +1,13 @@
-<script setup lang="ts" name="MemberList">
+<script setup lang="ts">
+defineOptions({ name: 'MemberList' });
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { UserFilledIcon } from 'tdesign-icons-vue-next';
 import type { PrimaryTableCol, PageInfo } from 'tdesign-vue-next';
 
-import { getMemberListApi, updateMemberRemarkApi, getChannelOptionsApi } from '@/api/modules/user.ts';
-import type { MemberList } from '@/api/modules/user.ts';
+import { getMemberListApi, updateMemberRemarkApi, getChannelOptionsApi } from '@/api/models/user.ts';
+import type { MemberList } from '@/api/models/user.ts';
 
 const router = useRouter();
 
@@ -58,14 +59,14 @@ const columns: PrimaryTableCol[] = [
 ];
 
 /* ===== 数据加载 ===== */
-const loadChannelOptions = async () => {
+const loadChannelOptions = async (): Promise<void> => {
   const { data } = await getChannelOptionsApi();
   if (data) {
     channelOptionsList.value = data;
   }
 };
 
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true;
   try {
     const params: MemberList.ListParams = {
@@ -87,57 +88,57 @@ const loadData = async () => {
 };
 
 /* ===== 交互处理 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   page.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   filterForm.value = { channel1: '', userId: '', userName: '', phone: '' };
   page.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   page.value.pageNum = pageInfo.current;
   page.value.pageSize = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
-const handleDetail = (memberId: number) => {
-  router.push({ path: '/member/profile', query: { memberId: String(memberId) } });
+const handleDetail = (memberId: number): void => {
+  void router.push({ path: '/member/profile', query: { memberId: String(memberId) } });
 };
 
-const handleRemark = (row: MemberList.MemberItem) => {
+const handleRemark = (row: MemberList.MemberItem): void => {
   remarkForm.value = { memberId: row.memberId, remark: row.remark || '' };
   remarkMemberName.value = row.nickname;
   charCount.value = (row.remark || '').length;
   remarkVisible.value = true;
 };
 
-const handleRemarkInput = (value: string) => {
+const handleRemarkInput = (value: string): void => {
   charCount.value = value.length;
 };
 
-const handleSaveRemark = async () => {
+const handleSaveRemark = async (): Promise<void> => {
   if (charCount.value > 500) {
-    MessagePlugin.warning('备注内容不能超过 500 字');
+    void MessagePlugin.warning('备注内容不能超过 500 字');
     return;
   }
   try {
     await updateMemberRemarkApi(remarkForm.value);
-    MessagePlugin.success('备注已更新');
+    void MessagePlugin.success('备注已更新');
     remarkVisible.value = false;
-    loadData();
+    void loadData();
   } catch {
-    MessagePlugin.error('备注更新失败');
+    void MessagePlugin.error('备注更新失败');
   }
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadChannelOptions();
-  loadData();
+  void loadChannelOptions();
+  void loadData();
 });
 </script>
 
@@ -211,12 +212,12 @@ onMounted(() => {
           <span v-else>{{ row.memberStatus }}</span>
         </template>
 
-        <template #totalConsume="{ row }"> &yen;{{ row.totalConsume.toFixed(2) }} </template>
+        <template #totalConsume="{ row }">&yen;{{ row.totalConsume.toFixed(2) }}</template>
 
         <template #op="{ row }">
           <div class="action-group">
-            <t-button variant="text" theme="primary" size="small" @click="handleDetail(row.memberId)"> 详情 </t-button>
-            <t-button variant="text" theme="warning" size="small" @click="handleRemark(row)"> 备注 </t-button>
+            <t-button variant="text" theme="primary" size="small" @click="handleDetail(row.memberId)">详情</t-button>
+            <t-button variant="text" theme="warning" size="small" @click="handleRemark(row)">备注</t-button>
           </div>
         </template>
       </t-table>

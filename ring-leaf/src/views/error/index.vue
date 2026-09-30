@@ -4,13 +4,14 @@
     <t-layout style="height: 100%">
       <t-layout>
         <t-content>
-          <component :is="LayoutErrorComponents[layout]" />
+          <component :is="layoutErrorComponents[layout]" />
         </t-content>
       </t-layout>
     </t-layout>
   </div>
 </template>
-<script setup lang="ts" name="404">
+<script setup lang="ts">
+defineOptions({ name: 'ErrorPage' });
 import { computed, type Component } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -20,11 +21,12 @@ import Layout404 from '@/components/ErrorMessage/404.vue';
 import Layout500 from '@/components/ErrorMessage/500.vue';
 
 type LayoutType = '/400' | '/403' | '/404' | '/500';
-const LayoutErrorComponents: Record<LayoutType, Component> = {
-  '/400': Layout400,
-  '/403': Layout403,
-  '/404': Layout404,
-  '/500': Layout500
+// .vue 组件在 typescript-eslint 下无法解析类型（需 Volar），此处显式断言
+const layoutErrorComponents: Record<LayoutType, Component> = {
+  '/400': Layout400 as Component,
+  '/403': Layout403 as Component,
+  '/404': Layout404 as Component,
+  '/500': Layout500 as Component
 };
 
 function getLayoutType(value: string): LayoutType {

@@ -1,5 +1,6 @@
-import mockData from '@/assets/jsons/fulfilling-order-list.json';
-import { ResultData } from '@/request/modules';
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import mockData from '@/assets/mocks/fulfilling-order-list.json';
+import { type ResultData } from '@/request/modules';
 
 export declare namespace FulfillingOrder {
   type ConfirmStatus = 'confirming' | 'expiring';
@@ -87,7 +88,7 @@ const rawData = mockData.data as unknown as {
 };
 
 const buildResponse = <T>(data: T): ResultData<T> => ({
-  code: '200',
+  code: 200,
   msg: '成功',
   data
 });
@@ -100,8 +101,12 @@ export const getFulfillingOrderListApi = (
     ...item,
     confirmStatus: item.confirmStatus as FulfillingOrder.ConfirmStatus
   }));
-  if (params.appId) filtered = filtered.filter(item => item.appName === params.appId);
-  if (params.confirmStatus) filtered = filtered.filter(item => item.confirmStatus === params.confirmStatus);
+  if (params.appId) {
+    filtered = filtered.filter(item => item.appName === params.appId);
+  }
+  if (params.confirmStatus) {
+    filtered = filtered.filter(item => item.confirmStatus === params.confirmStatus);
+  }
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(
@@ -127,7 +132,9 @@ export const getFulfillingOrderListApi = (
 // ===== 在履约订单详情 =====
 export const getFulfillingOrderDetailApi = (id: number): Promise<ResultData<FulfillingOrder.Detail>> => {
   const item = rawData.list.find(i => i.id === id);
-  if (!item) return Promise.reject(new Error('Not found'));
+  if (!item) {
+    return Promise.reject(new Error('Not found'));
+  }
   const confirmProgress = item.payAmount > 0 ? (item.confirmedAmount / item.payAmount) * 100 : 0;
   return Promise.resolve(
     buildResponse({

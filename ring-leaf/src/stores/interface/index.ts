@@ -1,5 +1,5 @@
-import { RouteRecordRaw } from 'vue-router';
-import { AssemblySizeType, LanguageType, LayoutType } from '@/typings/global.d';
+import { type RouteRecordRaw } from 'vue-router';
+import { type AssemblySizeType, type LanguageType, type LayoutType } from '@/typings/global.d';
 
 /* UserInfo 用户信息 */
 export interface UserInfo {

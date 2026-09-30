@@ -21,7 +21,11 @@
         "status": "enabled"
       }
     ],
-    "total": 2
+    "pageNo": 1,
+    "total": 2,
+    "pageSize": 100
   },
-  "msg": "成功"
+  "displayMsg": "操作成功",
+  "uniqCode": "SUCCESS",
+  "msg": "success"
 }

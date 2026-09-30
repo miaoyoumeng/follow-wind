@@ -1,13 +1,13 @@
-import { createRouter, createWebHashHistory, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '@/stores/modules/user';
 import { useAuthStore } from '@/stores/modules/auth';
 import { initDynamicRouter, loadDynamicRouters } from '@/routers/modules/dynamicRouter';
 import { staticRouter, errorRouter } from '@/routers/modules/staticRouter';
 
-import { RouteMode } from '@/typings/global';
+import { type RouteMode } from '@/typings/global';
 import { HOME_URL, ROUTER_WHITE_LIST, TO_LOGIN_URL } from '@/routers/config.ts';
 
-const mode: RouteMode = import.meta.env.VITE_ROUTER_MODE;
+const mode: RouteMode = import.meta.env.VITE_ROUTER_MODE as RouteMode;
 
 const routerMode = {
   hash: () => createWebHashHistory(),
@@ -43,24 +43,46 @@ const router = createRouter({
 /**
  * @description 路由拦截 beforeEach
  **/
+
+/**
+ * @description 重置路由
+ * */
+const clearDynamicRouter = (): void => {
+  const authStore = useAuthStore();
+  if (!authStore.authRouterList.length) {
+    authStore.authRouterList.forEach((route: RouteRecordRaw) => {
+      const { name } = route;
+      if (name && router.hasRoute(name)) {
+        router.removeRoute(name);
+      }
+    });
+  }
+};
+
 router.beforeEach(async (to, from, next) => {
   console.log('from: ' + from.fullPath + ', to:' + to.fullPath);
 
   // 1. 判断是否在路由白名单地址(静态路由)中，如果存在直接放行
-  if (ROUTER_WHITE_LIST.includes(to.path)) return next();
+  if (ROUTER_WHITE_LIST.includes(to.path)) {
+    return next();
+  }
 
   const userStore = useUserStore();
   const authStore = useAuthStore();
   // 2. 跳转到登录页，如果原来有token 就直接登录
   if (to.path.toLocaleLowerCase() === TO_LOGIN_URL) {
     //如果有token, 则跳转到原来页面
-    if (userStore.token) return next(from.fullPath);
+    if (userStore.token) {
+      return next(from.fullPath);
+    }
     clearDynamicRouter();
     return next();
   }
 
   // 5.判断是否有 Token，没有重定向到 login 页面
-  if (!userStore.token) return next({ path: TO_LOGIN_URL, replace: true });
+  if (!userStore.token) {
+    return next({ path: TO_LOGIN_URL, replace: true });
+  }
   // 6. 加载动态路由
   if (!authStore.authRouterList.length) {
     await initDynamicRouter();
@@ -78,20 +100,7 @@ router.beforeEach(async (to, from, next) => {
  * @description 路由跳转错误
  * */
 router.onError(error => {
-  console.warn('路由错误', error.message);
+  console.warn('路由错误', error instanceof Error ? error.message : error);
 });
-
-/**
- * @description 重置路由
- * */
-const clearDynamicRouter = () => {
-  const authStore = useAuthStore();
-  if (!authStore.authRouterList.length) {
-    authStore.authRouterList.forEach((route: RouteRecordRaw) => {
-      const { name } = route;
-      if (name && router.hasRoute(name)) router.removeRoute(name);
-    });
-  }
-};
 
 export default router;

@@ -1,5 +1,5 @@
-import { RouteRecordRaw } from 'vue-router';
-import { error_400, error_403, error_404, error_500, LAYOUT_FRAMEWORK, MAIN_URL, TO_LOGIN_URL } from '@/routers/config';
+import { type RouteRecordRaw } from 'vue-router';
+import { ERROR_400, ERROR_403, ERROR_404, ERROR_500, LAYOUT_FRAMEWORK, MAIN_URL, TO_LOGIN_URL } from '@/routers/config';
 
 /**
  * staticRouter (静态路由)
@@ -38,7 +38,7 @@ export const staticRouter: RouteRecordRaw[] = [
  */
 export const errorRouter = [
   {
-    path: error_400,
+    path: ERROR_400,
     name: '400',
     component: () => import('@/views/error/index.vue'),
     meta: {
@@ -46,7 +46,7 @@ export const errorRouter = [
     }
   },
   {
-    path: error_403,
+    path: ERROR_403,
     name: '403',
     component: () => import('@/views/error/index.vue'),
     meta: {
@@ -54,7 +54,7 @@ export const errorRouter = [
     }
   },
   {
-    path: error_404,
+    path: ERROR_404,
     name: '404',
     component: () => import('@/views/error/index.vue'),
     meta: {
@@ -62,7 +62,7 @@ export const errorRouter = [
     }
   },
   {
-    path: error_500,
+    path: ERROR_500,
     name: '500',
     component: () => import('@/views/error/index.vue'),
     meta: {

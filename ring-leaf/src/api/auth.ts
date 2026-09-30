@@ -1,7 +1,8 @@
-import { ResultData } from '@/request/modules.ts';
+import { type ResultData } from '@/request/modules.ts';
 import authMenuList from '@/assets/jsons/dynamic-routers.json';
+import type { RouteRecordRaw } from 'vue-router';
 // 获取菜单列表
-export const getAppRouters = (appId: number): Promise<ResultData> => {
+export const getAppRouters = (appId: number): Promise<ResultData<RouteRecordRaw[]>> => {
   console.log('appId:', appId);
-  return Promise.resolve(authMenuList as unknown as ResultData);
+  return Promise.resolve(authMenuList as unknown as ResultData<RouteRecordRaw[]>);
 };

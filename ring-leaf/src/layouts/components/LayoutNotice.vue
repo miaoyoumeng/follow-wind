@@ -14,7 +14,7 @@
             </div>
             <p class="msg-time">{{ item.date }}</p>
             <template #action>
-              <t-button size="small" variant="outline" @click="setRead('radio', item)"> 设为已读 </t-button>
+              <t-button size="small" variant="outline" @click="setRead('radio', item)">设为已读</t-button>
             </template>
           </t-list-item>
         </t-list>
@@ -50,17 +50,17 @@ interface NotificationItem {
 }
 
 const router = useRouter();
-const msgData = ref();
+const msgData = ref<NotificationItem[]>([]);
 const unreadMsg = ref();
 
-const setRead = (type: string, item?: NotificationItem) => {
+const setRead = (type: string, item?: NotificationItem): void => {
   const changeMsg = msgData.value;
   if (type === 'all') {
-    changeMsg.forEach((e: any) => {
+    changeMsg.forEach(e => {
       e.status = false;
     });
   } else {
-    changeMsg.forEach((e: any) => {
+    changeMsg.forEach(e => {
       if (e.id === item?.id) {
         e.status = false;
       }
@@ -69,8 +69,8 @@ const setRead = (type: string, item?: NotificationItem) => {
   // store.msgData = changeMsg;
 };
 
-const goDetail = () => {
-  router.push('/detail/secondary');
+const goDetail = (): void => {
+  void router.push('/detail/secondary');
 };
 </script>
 <style scoped lang="scss">

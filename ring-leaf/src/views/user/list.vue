@@ -1,4 +1,5 @@
-<script setup lang="ts" name="UserList">
+<script setup lang="ts">
+defineOptions({ name: 'UserList' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { UserFilledIcon } from 'tdesign-icons-vue-next';
@@ -12,7 +13,7 @@ import {
   blacklistUserApi,
   getChannelOptionsApi
 } from '@/api/user.ts';
-import type { UserList } from '@/api/modules/user.ts';
+import type { UserList } from '@/api/models/user.ts';
 
 /* ===== Tab 切换 ===== */
 const activeTab = ref<'active' | 'cancelled'>('active');
@@ -59,7 +60,9 @@ const confirmUserName = ref('');
 
 /* ===== 二级渠道截断 ===== */
 const truncateChannel = (text: string, maxLen = 10): string => {
-  if (!text || text === '—') return text || '';
+  if (!text || text === '—') {
+    return text || '';
+  }
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
 };
 
@@ -112,14 +115,14 @@ const cancelledColumns: PrimaryTableCol[] = [
 ];
 
 /* ===== 数据加载 ===== */
-const loadChannelOptions = async () => {
+const loadChannelOptions = async (): Promise<void> => {
   const { data } = await getChannelOptionsApi();
   if (data) {
     channelOptionsList.value = data;
   }
 };
 
-const loadActiveData = async () => {
+const loadActiveData = async (): Promise<void> => {
   loading.value = true;
   try {
     const params: UserList.ActiveListParams = {
@@ -142,7 +145,7 @@ const loadActiveData = async () => {
   }
 };
 
-const loadCancelledData = async () => {
+const loadCancelledData = async (): Promise<void> => {
   loading.value = true;
   try {
     const params: UserList.CancelledListParams = {
@@ -164,22 +167,22 @@ const loadCancelledData = async () => {
   }
 };
 
-const loadData = () => {
+const loadData = (): void => {
   if (activeTab.value === 'active') {
-    loadActiveData();
+    void loadActiveData();
   } else {
-    loadCancelledData();
+    void loadCancelledData();
   }
 };
 
 /* ===== Tab 切换 ===== */
-const handleTabChange = (tab: 'active' | 'cancelled') => {
+const handleTabChange = (tab: 'active' | 'cancelled'): void => {
   activeTab.value = tab;
   loadData();
 };
 
 /* ===== 搜索 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   if (activeTab.value === 'active') {
     activePage.value.pageNum = 1;
   } else {
@@ -189,7 +192,7 @@ const handleSearch = () => {
 };
 
 /* ===== 重置 ===== */
-const handleReset = () => {
+const handleReset = (): void => {
   if (activeTab.value === 'active') {
     activeFilter.value = { channel1: 'all', userId: '', userName: '', phone: '', dateRange: [] };
     activePage.value.pageNum = 1;
@@ -201,7 +204,7 @@ const handleReset = () => {
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   if (activeTab.value === 'active') {
     activePage.value.pageNum = pageInfo.current;
     activePage.value.pageSize = pageInfo.pageSize;
@@ -213,7 +216,7 @@ const handlePageChange = (pageInfo: PageInfo) => {
 };
 
 /* ===== 用户详情 ===== */
-const handleDetail = async (userId: number) => {
+const handleDetail = async (userId: number): Promise<void> => {
   phoneRevealed.value = false;
   const { data } = await getUserDetailApi(userId);
   userDetail.value = data || null;
@@ -221,23 +224,25 @@ const handleDetail = async (userId: number) => {
 };
 
 /* ===== 切换手机号显示 ===== */
-const togglePhone = () => {
-  if (!userDetail.value) return;
+const togglePhone = (): void => {
+  if (!userDetail.value) {
+    return;
+  }
   phoneRevealed.value = !phoneRevealed.value;
   if (phoneRevealed.value) {
-    MessagePlugin.info('已显示真实手机号');
+    void MessagePlugin.info('已显示真实手机号');
   }
 };
 
 /* ===== 注销/拉黑 ===== */
-const handleCancel = (userId: number, userName: string) => {
+const handleCancel = (userId: number, userName: string): void => {
   confirmType.value = 'cancel';
   confirmUserId.value = userId;
   confirmUserName.value = userName;
   confirmVisible.value = true;
 };
 
-const handleBlacklist = (userId: number, userName: string) => {
+const handleBlacklist = (userId: number, userName: string): void => {
   confirmType.value = 'blacklist';
   confirmUserId.value = userId;
   confirmUserName.value = userName;
@@ -245,30 +250,32 @@ const handleBlacklist = (userId: number, userName: string) => {
 };
 
 const isDisabled = (status: string, type: 'cancel' | 'blacklist'): boolean => {
-  if (type === 'cancel') return status === 'cancelled' || status === 'blacklisted';
+  if (type === 'cancel') {
+    return status === 'cancelled' || status === 'blacklisted';
+  }
   return status === 'blacklisted' || status === 'cancelled';
 };
 
-const handleConfirm = async () => {
+const handleConfirm = async (): Promise<void> => {
   try {
     if (confirmType.value === 'cancel') {
       await cancelUserApi({ userId: confirmUserId.value });
-      MessagePlugin.success('注销成功');
+      void MessagePlugin.success('注销成功');
     } else {
       await blacklistUserApi({ userId: confirmUserId.value });
-      MessagePlugin.success('拉黑成功');
+      void MessagePlugin.success('拉黑成功');
     }
     confirmVisible.value = false;
     loadData();
   } catch {
-    MessagePlugin.error('操作失败');
+    void MessagePlugin.error('操作失败');
   }
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadChannelOptions();
-  loadActiveData();
+  void loadChannelOptions();
+  void loadActiveData();
 });
 </script>
 
@@ -552,12 +559,14 @@ onMounted(() => {
     <t-dialog v-model:visible="confirmVisible" :header="confirmType === 'cancel' ? '确认注销' : '确认拉黑'" width="400px">
       <div class="confirm-body">
         <p v-if="confirmType === 'cancel'">
-          注销后该用户将无法再登录，是否确认注销用户 <strong>{{ confirmUserName }}</strong
-          >（ID: {{ confirmUserId }}）？
+          注销后该用户将无法再登录，是否确认注销用户
+          <strong>{{ confirmUserName }}</strong>
+          （ID: {{ confirmUserId }}）？
         </p>
         <p v-else>
-          拉黑后该用户将无法再使用产品，是否确认拉黑用户 <strong>{{ confirmUserName }}</strong
-          >（ID: {{ confirmUserId }}）？
+          拉黑后该用户将无法再使用产品，是否确认拉黑用户
+          <strong>{{ confirmUserName }}</strong>
+          （ID: {{ confirmUserId }}）？
         </p>
       </div>
       <template #footer>

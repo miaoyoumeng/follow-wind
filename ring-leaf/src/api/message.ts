@@ -1,6 +1,6 @@
-import { ResultData, ResPage } from '@/request/modules.ts';
-import { MessageChannel } from '@/api/modules/message.ts';
-import channelMock from '@/assets/jsons/message-channels.json';
+import { type ResultData, type ResPage } from '@/request/modules.ts';
+import { type MessageChannel } from '@/api/models/message.ts';
+import channelMock from '@/assets/mocks/message-channels.json';
 
 const CHANNEL_TYPE_MAP: Record<MessageChannel.ChannelType, string> = {
   inapp: '站内信',
@@ -29,7 +29,7 @@ export const getChannelListApi = (params: MessageChannel.ListParams): Promise<Re
   const end = start + pageSize;
   const pageList = list.slice(start, end);
   return Promise.resolve({
-    code: '200',
+    code: 200,
     msg: '成功',
     displayMsg: '',
     uniqCode: '',
@@ -46,7 +46,7 @@ export const getChannelTypeOptionsApi = (): Promise<ResultData<MessageChannel.Ch
     { label: 'App Push', value: 'push' },
     { label: '微信消息', value: 'wechat' }
   ];
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: options });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: options });
 };
 
 // 获取平台选项
@@ -55,7 +55,7 @@ export const getPlatformOptionsApi = (): Promise<ResultData<MessageChannel.Platf
     { label: '神笔马良', value: 'shenbi' },
     { label: 'AppB', value: 'appb' }
   ];
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: options });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: options });
 };
 
 // 新建渠道
@@ -73,7 +73,7 @@ export const createChannelApi = (params: MessageChannel.CreateParams): Promise<R
     name: params.name,
     type: params.type,
     typeName: CHANNEL_TYPE_MAP[params.type],
-    appKey: params.appKey || '-',
+    appKey: params.appKey ?? '-',
     platformName: params.platformName,
     status: 'active',
     templateCount: 0,
@@ -81,11 +81,11 @@ export const createChannelApi = (params: MessageChannel.CreateParams): Promise<R
     createdBy: '管理员',
     updatedAt: now,
     updatedBy: '管理员',
-    remark: params.remark || ''
+    remark: params.remark ?? ''
   };
   mockData.list.unshift(newItem);
   mockData.total = mockData.list.length;
-  return Promise.resolve({ code: '200', msg: '消息渠道已创建', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: '消息渠道已创建', displayMsg: '', uniqCode: '', data: null });
 };
 
 // 编辑渠道
@@ -102,14 +102,14 @@ export const updateChannelApi = (params: MessageChannel.UpdateParams): Promise<R
   }
   item.name = params.name;
   item.platformName = params.platformName;
-  item.appKey = params.appKey || item.appKey;
+  item.appKey = params.appKey ?? item.appKey;
   if (params.appSecret) {
     // AppSecret 更新逻辑（实际应加密存储）
   }
-  item.remark = params.remark || '';
+  item.remark = params.remark ?? '';
   item.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   item.updatedBy = '管理员';
-  return Promise.resolve({ code: '200', msg: '消息渠道已更新', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: '消息渠道已更新', displayMsg: '', uniqCode: '', data: null });
 };
 
 // 启用/停用渠道
@@ -122,7 +122,7 @@ export const toggleChannelStatusApi = (params: MessageChannel.ToggleStatusParams
   item.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
   item.updatedBy = '管理员';
   const msg = params.status === 'active' ? '消息渠道已启用' : '消息渠道已停用';
-  return Promise.resolve({ code: '200', msg, displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg, displayMsg: '', uniqCode: '', data: null });
 };
 
 // 删除渠道
@@ -137,12 +137,12 @@ export const deleteChannelApi = (params: MessageChannel.DeleteParams): Promise<R
   }
   mockData.list.splice(idx, 1);
   mockData.total = mockData.list.length;
-  return Promise.resolve({ code: '200', msg: '消息渠道已删除', displayMsg: '', uniqCode: '', data: null });
+  return Promise.resolve({ code: 200, msg: '消息渠道已删除', displayMsg: '', uniqCode: '', data: null });
 };
 
 /* ===== 消息模板管理 ===== */
-import { MessageTemplate } from '@/api/modules/message.ts';
-import templateMock from '@/assets/jsons/message-templates.json';
+import { type MessageTemplate } from '@/api/models/message.ts';
+import templateMock from '@/assets/mocks/message-templates.json';
 
 const mockTemplateData = templateMock.data;
 
@@ -164,7 +164,7 @@ export const getTemplateListApi = (params: MessageTemplate.ListParams): Promise<
   const end = start + pageSize;
   const pageList = list.slice(start, end);
   return Promise.resolve({
-    code: '200',
+    code: 200,
     msg: '成功',
     displayMsg: '',
     uniqCode: '',
@@ -178,7 +178,7 @@ export const getTemplateDetailApi = (params: MessageTemplate.DetailParams): Prom
   if (!item) {
     return Promise.reject(new Error('模板不存在'));
   }
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: { ...item } as MessageTemplate.TemplateItem });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: { ...item } as MessageTemplate.TemplateItem });
 };
 
 // 获取渠道选项
@@ -190,12 +190,12 @@ export const getTemplateChannelOptionsApi = (): Promise<ResultData<MessageTempla
     { label: '邮件', value: 'email' },
     { label: 'App Push', value: 'push' }
   ];
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: options });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: options });
 };
 
 /* ===== 消息列表 ===== */
-import { MessageRecord } from '@/api/modules/message.ts';
-import messageRecordsMock from '@/assets/jsons/message-records.json';
+import { type MessageRecord } from '@/api/models/message.ts';
+import messageRecordsMock from '@/assets/mocks/message-records.json';
 
 const mockRecords = messageRecordsMock.data;
 
@@ -217,7 +217,7 @@ export const getMessageListApi = (params: MessageRecord.ListParams): Promise<Res
   const end = start + pageSize;
   const pageList = list.slice(start, end);
   return Promise.resolve({
-    code: '200',
+    code: 200,
     msg: '成功',
     displayMsg: '',
     uniqCode: '',
@@ -231,7 +231,7 @@ export const getMessageDetailApi = (params: MessageRecord.DetailParams): Promise
   if (!item) {
     return Promise.reject(new Error('消息不存在'));
   }
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: { ...item } as MessageRecord.MessageItem });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: { ...item } as MessageRecord.MessageItem });
 };
 
 // 获取消息渠道选项
@@ -243,5 +243,5 @@ export const getMessageChannelOptionsApi = (): Promise<ResultData<MessageRecord.
     { label: '邮件', value: 'email' },
     { label: 'App Push', value: 'push' }
   ];
-  return Promise.resolve({ code: '200', msg: '成功', displayMsg: '', uniqCode: '', data: options });
+  return Promise.resolve({ code: 200, msg: '成功', displayMsg: '', uniqCode: '', data: options });
 };

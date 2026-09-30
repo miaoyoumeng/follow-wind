@@ -1,4 +1,6 @@
-import http from '@/request/index';
+/* eslint-disable @typescript-eslint/no-namespace -- 项目架构规范要求类型声明使用 declare namespace，见 CLAUDE.md */
+import http from '@/request';
+import { type ResultData } from '@/request/modules';
 
 export declare namespace SettlementFlow {
   type ConfirmMethod = 'daily' | 'once';
@@ -103,38 +105,44 @@ export declare namespace SettlementFlow {
 
 /* ===== 确收策略 API ===== */
 
-export const getStrategyListApi = (params: { appId?: string; pageNum: number; pageSize: number }) => {
+export const getStrategyListApi = (params: {
+  appId?: string;
+  pageNum: number;
+  pageSize: number;
+}): Promise<ResultData<{ list: SettlementFlow.StrategyItem[]; total: number }>> => {
   return http.get<{ list: SettlementFlow.StrategyItem[]; total: number }>('/api/admin/settlement-strategies', params);
 };
 
-export const createStrategyApi = (data: SettlementFlow.StrategyForm) => {
+export const createStrategyApi = (data: SettlementFlow.StrategyForm): Promise<ResultData<unknown>> => {
   return http.post('/api/admin/settlement-strategies', data);
 };
 
-export const updateStrategyApi = (id: number, data: SettlementFlow.StrategyForm) => {
+export const updateStrategyApi = (id: number, data: SettlementFlow.StrategyForm): Promise<ResultData<unknown>> => {
   return http.put(`/api/admin/settlement-strategies/${id}`, data);
 };
 
-export const toggleStrategyApi = (id: number) => {
+export const toggleStrategyApi = (id: number): Promise<ResultData<unknown>> => {
   return http.put(`/api/admin/settlement-strategies/${id}/toggle`);
 };
 
 /* ===== 确收流水 API ===== */
 
-export const getSettlementFlowListApi = (params: SettlementFlow.ListParams) => {
+export const getSettlementFlowListApi = (
+  params: SettlementFlow.ListParams
+): Promise<ResultData<{ list: SettlementFlow.FlowItem[]; total: number }>> => {
   return http.get<{ list: SettlementFlow.FlowItem[]; total: number }>('/api/admin/settlement-flows', params);
 };
 
-export const getSettlementFlowSummaryApi = () => {
+export const getSettlementFlowSummaryApi = (): Promise<ResultData<SettlementFlow.SummaryResult>> => {
   return http.get<SettlementFlow.SummaryResult>('/api/admin/settlement-flows/summary');
 };
 
-export const getSettlementFlowDetailApi = (id: number) => {
+export const getSettlementFlowDetailApi = (id: number): Promise<ResultData<SettlementFlow.FlowDetail>> => {
   return http.get<SettlementFlow.FlowDetail>(`/api/admin/settlement-flows/${id}`);
 };
 
 /* ===== 确收任务执行记录 API ===== */
 
-export const getTaskListApi = (params: { pageNum: number; pageSize: number }) => {
+export const getTaskListApi = (params: { pageNum: number; pageSize: number }): Promise<ResultData<SettlementFlow.TaskListResult>> => {
   return http.get<SettlementFlow.TaskListResult>('/api/admin/settlement-tasks', params);
 };

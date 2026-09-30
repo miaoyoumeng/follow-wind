@@ -1,14 +1,15 @@
-<script setup lang="ts" name="FinanceOverview">
+<script setup lang="ts">
+defineOptions({ name: 'FinanceOverview' });
 import { ref, computed, onMounted } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart } from 'echarts/charts';
 import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
 import type { EChartsOption } from 'echarts';
-import { getFinanceOverviewApi } from '@/api/modules/finance-overview';
-import type { FinanceOverview } from '@/api/modules/finance-overview';
+import { getFinanceOverviewApi } from '@/api/models/finance-overview';
+import type { FinanceOverview } from '@/api/models/finance-overview';
 import type { PrimaryTableCol } from 'tdesign-vue-next';
-import mockData from '@/assets/jsons/finance-overview.json';
+import mockData from '@/assets/mocks/finance-overview.json';
 
 use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
 
@@ -25,7 +26,7 @@ const overviewData = ref<FinanceOverview.OverviewData>({
   appRevenueList: []
 });
 
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getFinanceOverviewApi({
@@ -40,12 +41,20 @@ const loadData = async () => {
   }
 };
 
-const handleFilterChange = () => {
-  loadData();
+const handleFilterChange = (): void => {
+  void loadData();
 };
 
+/* ===== 折线图 tooltip 参数（ECharts 未对外导出该类型，按实际用到的字段声明） ===== */
+interface TooltipParam {
+  axisValue?: string;
+  marker?: string;
+  seriesName?: string;
+  value?: number | string;
+}
+
 /* ===== 金额格式化 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
@@ -58,15 +67,60 @@ const appColumns: PrimaryTableCol<FinanceOverview.AppRevenueItem>[] = [
 ];
 
 /* ===== 折线图配置 ===== */
+/** 三条金额曲线 */
+const buildSeries = (trend: FinanceOverview.TrendItem[]): EChartsOption['series'] => [
+  {
+    name: '营收金额',
+    type: 'line',
+    data: trend.map(t => t.revenue),
+    smooth: true,
+    symbol: 'none',
+    lineStyle: { width: 2 },
+    itemStyle: { color: '#0052d9' },
+    areaStyle: {
+      color: {
+        type: 'linear',
+        x: 0,
+        y: 0,
+        x2: 0,
+        y2: 1,
+        colorStops: [
+          { offset: 0, color: 'rgba(0,82,217,0.15)' },
+          { offset: 1, color: 'rgba(0,82,217,0.02)' }
+        ]
+      }
+    }
+  },
+  {
+    name: '确收金额',
+    type: 'line',
+    data: trend.map(t => t.confirmed),
+    smooth: true,
+    symbol: 'none',
+    lineStyle: { width: 2 },
+    itemStyle: { color: '#00b42a' }
+  },
+  {
+    name: '退款金额',
+    type: 'line',
+    data: trend.map(t => t.refund),
+    smooth: true,
+    symbol: 'none',
+    lineStyle: { width: 2 },
+    itemStyle: { color: '#f53f3f' }
+  }
+];
+
 const chartOption = computed<EChartsOption>(() => {
   const trend = overviewData.value.trendData;
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
-        let result = params[0].axisValue + '<br/>';
-        params.forEach((p: any) => {
-          result += `${p.marker} ${p.seriesName}: ¥${formatAmount(p.value)}<br/>`;
+      formatter: (params: unknown) => {
+        const list = (Array.isArray(params) ? params : [params]) as TooltipParam[];
+        let result = `${list[0]?.axisValue ?? ''}<br/>`;
+        list.forEach(p => {
+          result += `${p.marker ?? ''} ${p.seriesName ?? ''}: ¥${formatAmount(Number(p.value ?? 0))}<br/>`;
         });
         return result;
       }
@@ -96,53 +150,12 @@ const chartOption = computed<EChartsOption>(() => {
         formatter: (v: number) => `¥${v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`
       }
     },
-    series: [
-      {
-        name: '营收金额',
-        type: 'line',
-        data: trend.map(t => t.revenue),
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#0052d9' },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(0,82,217,0.15)' },
-              { offset: 1, color: 'rgba(0,82,217,0.02)' }
-            ]
-          }
-        }
-      },
-      {
-        name: '确收金额',
-        type: 'line',
-        data: trend.map(t => t.confirmed),
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#00b42a' }
-      },
-      {
-        name: '退款金额',
-        type: 'line',
-        data: trend.map(t => t.refund),
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#f53f3f' }
-      }
-    ]
+    series: buildSeries(trend)
   };
 });
 
 onMounted(() => {
-  loadData();
+  void loadData();
 });
 </script>
 
@@ -154,7 +167,7 @@ onMounted(() => {
     <div class="filter-bar">
       <div class="filter-item">
         <span class="filter-label">App 筛选</span>
-        <t-select v-model="filterApp" @change="handleFilterChange" style="width: 160px">
+        <t-select v-model="filterApp" style="width: 160px" @change="handleFilterChange">
           <t-option value="all" label="全部" />
           <t-option value="shenbi" label="神笔马良" />
           <t-option value="app-b" label="App B" />
@@ -162,7 +175,7 @@ onMounted(() => {
       </div>
       <div class="filter-item">
         <span class="filter-label">时间范围</span>
-        <t-select v-model="timeRange" @change="handleFilterChange" style="width: 160px">
+        <t-select v-model="timeRange" style="width: 160px" @change="handleFilterChange">
           <t-option value="today" label="今日" />
           <t-option value="week" label="近7日" />
           <t-option value="month" label="本月" />
@@ -201,10 +214,10 @@ onMounted(() => {
     <div class="table-card">
       <h2 class="chart-title">各 App 营收占比</h2>
       <t-table :data="overviewData.appRevenueList" row-key="appName" :hover="true" :stripe="false" :bordered="false" :columns="appColumns">
-        <template #col-revenue="{ row }"> ¥{{ formatAmount(row.revenue) }} </template>
-        <template #col-percentage="{ row }"> {{ row.percentage }}% </template>
-        <template #col-confirmed="{ row }"> ¥{{ formatAmount(row.confirmed) }} </template>
-        <template #col-refund="{ row }"> ¥{{ formatAmount(row.refund) }} </template>
+        <template #col-revenue="{ row }">¥{{ formatAmount(row.revenue) }}</template>
+        <template #col-percentage="{ row }">{{ row.percentage }}%</template>
+        <template #col-confirmed="{ row }">¥{{ formatAmount(row.confirmed) }}</template>
+        <template #col-refund="{ row }">¥{{ formatAmount(row.refund) }}</template>
       </t-table>
     </div>
   </div>

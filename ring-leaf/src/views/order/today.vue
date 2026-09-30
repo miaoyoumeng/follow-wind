@@ -1,4 +1,5 @@
-<script setup lang="ts" name="TodayOrder">
+<script setup lang="ts">
+defineOptions({ name: 'TodayOrder' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Tabs, TabPanel, Table, Select, Option, Input, Button, Tag, Dialog, DatePicker, Textarea } from 'tdesign-vue-next';
@@ -13,8 +14,8 @@ import {
   getTodayRefundOrderDetailApi,
   getOrderNotesApi,
   addOrderNoteApi
-} from '@/api/modules/today-order';
-import type { TodayOrder } from '@/api/modules/today-order';
+} from '@/api/models/today-order';
+import type { TodayOrder } from '@/api/models/today-order';
 
 /* ===== Tab 切换 ===== */
 const activeTab = ref('paid');
@@ -100,12 +101,12 @@ const refundColumns: PrimaryTableCol<TableRowData>[] = [
 ];
 
 /* ===== 金额格式化 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return '¥' + val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 /* ===== 数据加载 ===== */
-const loadPaidData = async () => {
+const loadPaidData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getTodayPaidOrderListApi({
@@ -125,7 +126,7 @@ const loadPaidData = async () => {
   }
 };
 
-const loadUnpaidData = async () => {
+const loadUnpaidData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getTodayUnpaidOrderListApi({
@@ -145,7 +146,7 @@ const loadUnpaidData = async () => {
   }
 };
 
-const loadRefundData = async () => {
+const loadRefundData = async (): Promise<void> => {
   loading.value = true;
   try {
     const { data } = await getTodayRefundOrderListApi({
@@ -166,104 +167,108 @@ const loadRefundData = async () => {
 };
 
 /* ===== Tab 切换 ===== */
-const handleTabChange = () => {
-  if (activeTab.value === 'paid') loadPaidData();
-  else if (activeTab.value === 'unpaid') loadUnpaidData();
-  else if (activeTab.value === 'refund') loadRefundData();
+const handleTabChange = (): void => {
+  if (activeTab.value === 'paid') {
+    void loadPaidData();
+  } else if (activeTab.value === 'unpaid') {
+    void loadUnpaidData();
+  } else if (activeTab.value === 'refund') {
+    void loadRefundData();
+  }
 };
 
 /* ===== 搜索与重置 ===== */
-const handlePaidSearch = () => {
+const handlePaidSearch = (): void => {
   paidPage.value.pageNum = 1;
-  loadPaidData();
+  void loadPaidData();
 };
 
-const handlePaidReset = () => {
+const handlePaidReset = (): void => {
   paidFilter.value = { appId: '', dateRange: '', keyword: '' };
   paidPage.value.pageNum = 1;
-  loadPaidData();
+  void loadPaidData();
 };
 
-const handleUnpaidSearch = () => {
+const handleUnpaidSearch = (): void => {
   unpaidPage.value.pageNum = 1;
-  loadUnpaidData();
+  void loadUnpaidData();
 };
 
-const handleUnpaidReset = () => {
+const handleUnpaidReset = (): void => {
   unpaidFilter.value = { appId: '', unpaidStatus: '', keyword: '' };
   unpaidPage.value.pageNum = 1;
-  loadUnpaidData();
+  void loadUnpaidData();
 };
 
-const handleRefundSearch = () => {
+const handleRefundSearch = (): void => {
   refundPage.value.pageNum = 1;
-  loadRefundData();
+  void loadRefundData();
 };
 
-const handleRefundReset = () => {
+const handleRefundReset = (): void => {
   refundFilter.value = { appId: '', dateRange: '', keyword: '' };
   refundPage.value.pageNum = 1;
-  loadRefundData();
+  void loadRefundData();
 };
 
 /* ===== 分页 ===== */
-const handlePaidPageChange = (pageInfo: PageInfo) => {
+const handlePaidPageChange = (pageInfo: PageInfo): void => {
   paidPage.value.pageNum = pageInfo.current;
   paidPage.value.pageSize = pageInfo.pageSize;
-  loadPaidData();
+  void loadPaidData();
 };
 
-const handleUnpaidPageChange = (pageInfo: PageInfo) => {
+const handleUnpaidPageChange = (pageInfo: PageInfo): void => {
   unpaidPage.value.pageNum = pageInfo.current;
   unpaidPage.value.pageSize = pageInfo.pageSize;
-  loadUnpaidData();
+  void loadUnpaidData();
 };
 
-const handleRefundPageChange = (pageInfo: PageInfo) => {
+const handleRefundPageChange = (pageInfo: PageInfo): void => {
   refundPage.value.pageNum = pageInfo.current;
   refundPage.value.pageSize = pageInfo.pageSize;
-  loadRefundData();
+  void loadRefundData();
 };
 
 /* ===== 详情查看 ===== */
-const handlePaidDetail = async (row: TodayOrder.PaidOrderItem) => {
+const handlePaidDetail = async (row: TodayOrder.PaidOrderItem): Promise<void> => {
   try {
     const { data } = await getTodayPaidOrderDetailApi(row.id);
     if (data) {
       paidDetailData.value = data;
       paidDetailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
-const handleUnpaidDetail = async (row: TodayOrder.UnpaidOrderItem) => {
+const handleUnpaidDetail = async (row: TodayOrder.UnpaidOrderItem): Promise<void> => {
   try {
     const { data } = await getTodayUnpaidOrderDetailApi(row.id);
     if (data) {
       unpaidDetailData.value = data;
       unpaidDetailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
-const handleRefundDetail = async (row: TodayOrder.RefundOrderItem) => {
+const handleRefundDetail = async (row: TodayOrder.RefundOrderItem): Promise<void> => {
   try {
     const { data } = await getTodayRefundOrderDetailApi(row.id);
     if (data) {
       refundDetailData.value = data;
       refundDetailVisible.value = true;
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
 /* ===== 备注 ===== */
-const handleNote = async (row: TodayOrder.PaidOrderItem | TodayOrder.UnpaidOrderItem | TodayOrder.RefundOrderItem) => {
+const handleNote = async (row: TodayOrder.PaidOrderItem | TodayOrder.UnpaidOrderItem | TodayOrder.RefundOrderItem): Promise<void> => {
   noteOrderNo.value = row.orderNo;
   noteInput.value = '';
   noteCharCount.value = 0;
@@ -278,14 +283,14 @@ const handleNote = async (row: TodayOrder.PaidOrderItem | TodayOrder.UnpaidOrder
   noteVisible.value = true;
 };
 
-const handleAddNote = async () => {
+const handleAddNote = async (): Promise<void> => {
   const content = noteInput.value.trim();
   if (!content) {
-    MessagePlugin.warning('请输入备注内容');
+    void MessagePlugin.warning('请输入备注内容');
     return;
   }
   if (content.length > 500) {
-    MessagePlugin.warning('备注内容不能超过500字');
+    void MessagePlugin.warning('备注内容不能超过500字');
     return;
   }
   try {
@@ -294,19 +299,19 @@ const handleAddNote = async () => {
       noteList.value.unshift(data);
       noteInput.value = '';
       noteCharCount.value = 0;
-      MessagePlugin.success('备注已添加');
+      void MessagePlugin.success('备注已添加');
     }
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
-const handleNoteInput = (val: string | number) => {
+const handleNoteInput = (val: string | number): void => {
   noteCharCount.value = String(val).length;
 };
 
 /* ===== 未支付状态标签主题 ===== */
-const getUnpaidStatusTheme = (status: TodayOrder.UnpaidStatus) => {
+const getUnpaidStatusTheme = (status: TodayOrder.UnpaidStatus): 'warning' | 'danger' | 'default' => {
   const themeMap: Record<TodayOrder.UnpaidStatus, 'warning' | 'danger' | 'default'> = {
     pending: 'warning',
     expired: 'danger',
@@ -317,7 +322,7 @@ const getUnpaidStatusTheme = (status: TodayOrder.UnpaidStatus) => {
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadPaidData();
+  void loadPaidData();
 });
 </script>
 

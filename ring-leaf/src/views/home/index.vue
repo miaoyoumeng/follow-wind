@@ -4,7 +4,9 @@
   </div>
 </template>
 
-<script setup lang="ts" name="home"></script>
+<script setup lang="ts">
+defineOptions({ name: 'HomePage' });
+</script>
 
 <style scoped lang="scss">
 @import './index.scss';

@@ -1,4 +1,6 @@
 <template>
   <div></div>
 </template>
-<script setup lang="ts" name="LayoutVertical"></script>
+<script setup lang="ts">
+defineOptions({ name: 'LayoutVertical' });
+</script>

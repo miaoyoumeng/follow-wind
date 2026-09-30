@@ -4,12 +4,13 @@
     <div class="not-detail">
       <h2>400</h2>
       <h4>抱歉，您访问的页面参数不正确~🤷‍♂️🤷‍♀️</h4>
-      <t-button type="primary" @click="router.back"> 返回上一页 </t-button>
+      <t-button type="primary" @click="router.back">返回上一页</t-button>
     </div>
   </div>
 </template>
 
-<script setup lang="ts" name="404">
+<script setup lang="ts">
+defineOptions({ name: 'ErrorPage400' });
 import { useRouter } from 'vue-router';
 const router = useRouter();
 </script>

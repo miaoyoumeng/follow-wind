@@ -255,11 +255,12 @@
   </div>
 </template>
 
-<script setup lang="ts" name="SettlementFlow">
+<script setup lang="ts">
+defineOptions({ name: 'SettlementFlow' });
 import { ref, onMounted } from 'vue';
 import type { PrimaryTableCol, PageInfo, FormInstanceFunctions, FormRule } from 'tdesign-vue-next';
 import { MessagePlugin } from 'tdesign-vue-next';
-import type { SettlementFlow as SF } from '@/api/modules/settlement-flow';
+import type { SettlementFlow as SF } from '@/api/models/settlement-flow';
 import {
   getStrategyListApi,
   createStrategyApi,
@@ -269,7 +270,7 @@ import {
   getSettlementFlowSummaryApi,
   getSettlementFlowDetailApi,
   getTaskListApi
-} from '@/api/modules/settlement-flow';
+} from '@/api/models/settlement-flow';
 
 /* ===== 摘要数据 ===== */
 const summary = ref({
@@ -278,7 +279,7 @@ const summary = ref({
   cumulativeConfirmAmount: 0
 });
 
-const loadSummary = async () => {
+const loadSummary = async (): Promise<void> => {
   try {
     const { data } = await getSettlementFlowSummaryApi();
     summary.value = data;
@@ -298,7 +299,7 @@ const strategyPageNum = ref(1);
 const strategyPageSize = ref(20);
 const strategyTotal = ref(0);
 
-const loadStrategyData = async () => {
+const loadStrategyData = async (): Promise<void> => {
   strategyLoading.value = true;
   try {
     const { data } = await getStrategyListApi({
@@ -316,21 +317,21 @@ const loadStrategyData = async () => {
   }
 };
 
-const handleStrategySearch = () => {
+const handleStrategySearch = (): void => {
   strategyPageNum.value = 1;
-  loadStrategyData();
+  void loadStrategyData();
 };
 
-const handleStrategyReset = () => {
+const handleStrategyReset = (): void => {
   strategyFilterApp.value = '';
   strategyPageNum.value = 1;
-  loadStrategyData();
+  void loadStrategyData();
 };
 
-const handleStrategyPageChange = (pageInfo: PageInfo) => {
+const handleStrategyPageChange = (pageInfo: PageInfo): void => {
   strategyPageNum.value = pageInfo.current ?? 1;
   strategyPageSize.value = pageInfo.pageSize ?? 20;
-  loadStrategyData();
+  void loadStrategyData();
 };
 
 const strategyColumns: PrimaryTableCol<SF.StrategyItem>[] = [
@@ -364,7 +365,7 @@ const strategyRules: Record<string, FormRule[]> = {
   effectiveDate: [{ required: true, message: '请选择生效时间', type: 'error' }]
 };
 
-const openStrategyDialog = (row?: SF.StrategyItem) => {
+const openStrategyDialog = (row?: SF.StrategyItem): void => {
   if (row) {
     strategyForm.value = {
       id: row.id,
@@ -380,33 +381,35 @@ const openStrategyDialog = (row?: SF.StrategyItem) => {
   strategyDialogVisible.value = true;
 };
 
-const handleSaveStrategy = async () => {
+const handleSaveStrategy = async (): Promise<void> => {
   const valid = await strategyFormRef.value?.validate();
-  if (valid) return;
+  if (valid) {
+    return;
+  }
 
   try {
     const { id, ...formData } = strategyForm.value;
     if (id) {
       await updateStrategyApi(id, formData);
-      MessagePlugin.success('确收策略已更新');
+      void MessagePlugin.success('确收策略已更新');
     } else {
       await createStrategyApi(formData);
-      MessagePlugin.success('确收策略已创建');
+      void MessagePlugin.success('确收策略已创建');
     }
     strategyDialogVisible.value = false;
-    loadStrategyData();
+    void loadStrategyData();
   } catch {
-    MessagePlugin.error('保存失败，请重试');
+    void MessagePlugin.error('保存失败，请重试');
   }
 };
 
-const handleToggleStrategy = async (row: SF.StrategyItem) => {
+const handleToggleStrategy = async (row: SF.StrategyItem): Promise<void> => {
   try {
     await toggleStrategyApi(row.id);
-    MessagePlugin.success(`策略已${row.status === 'active' ? '失效' : '生效'}`);
-    loadStrategyData();
+    void MessagePlugin.success(`策略已${row.status === 'active' ? '失效' : '生效'}`);
+    void loadStrategyData();
   } catch {
-    MessagePlugin.error('操作失败，请重试');
+    void MessagePlugin.error('操作失败，请重试');
   }
 };
 
@@ -421,7 +424,7 @@ const flowPageNum = ref(1);
 const flowPageSize = ref(20);
 const flowTotal = ref(0);
 
-const loadFlowData = async () => {
+const loadFlowData = async (): Promise<void> => {
   flowLoading.value = true;
   try {
     const params: SF.ListParams = {
@@ -443,24 +446,24 @@ const loadFlowData = async () => {
   }
 };
 
-const handleFlowSearch = () => {
+const handleFlowSearch = (): void => {
   flowPageNum.value = 1;
-  loadFlowData();
+  void loadFlowData();
 };
 
-const handleFlowReset = () => {
+const handleFlowReset = (): void => {
   flowFilterApp.value = '';
   flowFilterSku.value = '';
   flowFilterDate.value = [];
   flowFilterOrderNo.value = '';
   flowPageNum.value = 1;
-  loadFlowData();
+  void loadFlowData();
 };
 
-const handleFlowPageChange = (pageInfo: PageInfo) => {
+const handleFlowPageChange = (pageInfo: PageInfo): void => {
   flowPageNum.value = pageInfo.current ?? 1;
   flowPageSize.value = pageInfo.pageSize ?? 20;
-  loadFlowData();
+  void loadFlowData();
 };
 
 const flowColumns: PrimaryTableCol<SF.FlowItem>[] = [
@@ -477,13 +480,13 @@ const flowColumns: PrimaryTableCol<SF.FlowItem>[] = [
 const flowDetailVisible = ref(false);
 const flowDetailData = ref<SF.FlowDetail | null>(null);
 
-const handleFlowDetail = async (row: SF.FlowItem) => {
+const handleFlowDetail = async (row: SF.FlowItem): Promise<void> => {
   try {
     const { data } = await getSettlementFlowDetailApi(row.id);
     flowDetailData.value = data;
     flowDetailVisible.value = true;
   } catch {
-    MessagePlugin.error('获取确收流水详情失败');
+    void MessagePlugin.error('获取确收流水详情失败');
   }
 };
 
@@ -494,7 +497,7 @@ const taskPageNum = ref(1);
 const taskPageSize = ref(20);
 const taskTotal = ref(0);
 
-const loadTaskData = async () => {
+const loadTaskData = async (): Promise<void> => {
   taskLoading.value = true;
   try {
     const { data } = await getTaskListApi({
@@ -511,10 +514,10 @@ const loadTaskData = async () => {
   }
 };
 
-const handleTaskPageChange = (pageInfo: PageInfo) => {
+const handleTaskPageChange = (pageInfo: PageInfo): void => {
   taskPageNum.value = pageInfo.current ?? 1;
   taskPageSize.value = pageInfo.pageSize ?? 20;
-  loadTaskData();
+  void loadTaskData();
 };
 
 const taskColumns: PrimaryTableCol<SF.TaskItem>[] = [
@@ -526,14 +529,14 @@ const taskColumns: PrimaryTableCol<SF.TaskItem>[] = [
 ];
 
 /* ===== 工具方法 ===== */
-const formatAmount = (val: number) => {
+const formatAmount = (val: number): string => {
   return val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadSummary();
-  loadFlowData();
+  void loadSummary();
+  void loadFlowData();
 });
 </script>
 

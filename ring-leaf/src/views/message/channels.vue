@@ -1,4 +1,5 @@
-<script setup lang="ts" name="MessageChannelManager">
+<script setup lang="ts">
+defineOptions({ name: 'MessageChannelManager' });
 import { ref, onMounted } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { Button, Table, Select, Option, Dialog, Form, FormItem, Input, Textarea, Popconfirm, Tag } from 'tdesign-vue-next';
@@ -13,7 +14,7 @@ import {
   toggleChannelStatusApi,
   deleteChannelApi
 } from '@/api/message.ts';
-import type { MessageChannel } from '@/api/modules/message.ts';
+import type { MessageChannel } from '@/api/models/message.ts';
 
 /* ===== 列表数据 ===== */
 const channelList = ref<MessageChannel.ChannelItem[]>([]);
@@ -58,7 +59,7 @@ const columns: PrimaryTableCol[] = [
 ];
 
 /* ===== 数据加载 ===== */
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   channelLoading.value = true;
   try {
     const { data } = await getChannelListApi({
@@ -76,7 +77,7 @@ const loadData = async () => {
   }
 };
 
-const loadOptions = async () => {
+const loadOptions = async (): Promise<void> => {
   const { data: typeData } = await getChannelTypeOptionsApi();
   if (typeData) {
     channelTypeOptions.value = typeData;
@@ -88,27 +89,27 @@ const loadOptions = async () => {
 };
 
 /* ===== 筛选操作 ===== */
-const handleSearch = () => {
+const handleSearch = (): void => {
   pageParams.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   filterType.value = '';
   filterStatus.value = '';
   pageParams.value.pageNum = 1;
-  loadData();
+  void loadData();
 };
 
 /* ===== 分页 ===== */
-const handlePageChange = (pageInfo: PageInfo) => {
+const handlePageChange = (pageInfo: PageInfo): void => {
   pageParams.value.pageNum = pageInfo.current;
   pageParams.value.pageSize = pageInfo.pageSize;
-  loadData();
+  void loadData();
 };
 
 /* ===== 新建 ===== */
-const handleCreate = () => {
+const handleCreate = (): void => {
   dialogMode.value = 'create';
   dialogTitle.value = '新建消息渠道';
   formData.value = {
@@ -124,7 +125,7 @@ const handleCreate = () => {
 };
 
 /* ===== 编辑 ===== */
-const handleEdit = (row: MessageChannel.ChannelItem) => {
+const handleEdit = (row: MessageChannel.ChannelItem): void => {
   dialogMode.value = 'edit';
   dialogTitle.value = '编辑消息渠道';
   formData.value = {
@@ -168,12 +169,14 @@ const validateForm = (): { valid: boolean; error: string } => {
 };
 
 /* ===== 保存 ===== */
-const handleSave = async () => {
+const handleSave = async (): Promise<void> => {
   const result = validateForm();
   if (!result.valid) {
     formError.value = result.error;
     return;
   }
+  // 编辑模式下 id 必然存在，提取为局部常量以便类型收窄（避免非空断言）
+  const currentId = formData.value.id;
   try {
     if (dialogMode.value === 'create') {
       await createChannelApi({
@@ -184,10 +187,10 @@ const handleSave = async () => {
         appSecret: formData.value.appSecret,
         remark: formData.value.remark
       });
-      MessagePlugin.success('消息渠道已创建');
-    } else {
+      void MessagePlugin.success('消息渠道已创建');
+    } else if (currentId !== undefined) {
       await updateChannelApi({
-        id: formData.value.id!,
+        id: currentId,
         name: formData.value.name.trim(),
         type: formData.value.type,
         platformName: formData.value.platformName,
@@ -195,46 +198,46 @@ const handleSave = async () => {
         appSecret: formData.value.appSecret,
         remark: formData.value.remark
       });
-      MessagePlugin.success('消息渠道已更新');
+      void MessagePlugin.success('消息渠道已更新');
     }
     dialogVisible.value = false;
-    loadData();
-  } catch (e: any) {
-    formError.value = e.message;
+    void loadData();
+  } catch (e: unknown) {
+    formError.value = e instanceof Error ? e.message : String(e);
   }
 };
 
 /* ===== 启用/停用 ===== */
-const handleToggleStatus = async (row: MessageChannel.ChannelItem) => {
+const handleToggleStatus = async (row: MessageChannel.ChannelItem): Promise<void> => {
   const newStatus = row.status === 'active' ? 'inactive' : 'active';
   const actionText = newStatus === 'active' ? '启用' : '停用';
   try {
     await toggleChannelStatusApi({ id: row.id, status: newStatus });
-    MessagePlugin.success(`消息渠道已${actionText}`);
-    loadData();
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+    void MessagePlugin.success(`消息渠道已${actionText}`);
+    void loadData();
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
 /* ===== 删除 ===== */
-const handleDelete = async (row: MessageChannel.ChannelItem) => {
+const handleDelete = async (row: MessageChannel.ChannelItem): Promise<void> => {
   try {
     await deleteChannelApi({ id: row.id });
-    MessagePlugin.success('消息渠道已删除');
-    loadData();
-  } catch (e: any) {
-    MessagePlugin.error(e.message);
+    void MessagePlugin.success('消息渠道已删除');
+    void loadData();
+  } catch (e: unknown) {
+    void MessagePlugin.error(e instanceof Error ? e.message : String(e));
   }
 };
 
 /* ===== 渠道类型是否需要 App Key ===== */
-const needsAppKey = (type: MessageChannel.ChannelType) => type === 'push' || type === 'wechat';
+const needsAppKey = (type: MessageChannel.ChannelType): boolean => type === 'push' || type === 'wechat';
 
 /* ===== 初始化 ===== */
 onMounted(() => {
-  loadOptions();
-  loadData();
+  void loadOptions();
+  void loadData();
 });
 </script>
 
@@ -324,7 +327,7 @@ onMounted(() => {
         <FormItem label="渠道类型">
           <div class="radio-group">
             <label v-for="opt in channelTypeOptions" :key="opt.value" class="radio-item">
-              <input type="radio" :value="opt.value" v-model="formData.type" :disabled="dialogMode === 'edit'" />
+              <input v-model="formData.type" type="radio" :value="opt.value" :disabled="dialogMode === 'edit'" />
               {{ opt.label }}
             </label>
           </div>
