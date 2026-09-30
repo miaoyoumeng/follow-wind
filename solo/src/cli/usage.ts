@@ -29,18 +29,28 @@ const formatModelsBlock = (models: Record<string, UsageTotals>): string =>
     .join('\n');
 
 /**
+ * 累加单个模型的消耗到目标表（目标表中不存在时先以零值建项）
+ * @param target 目标累加表
+ * @param model 模型名
+ * @param totals 待累加的消耗
+ */
+const addModelTotals = (target: Record<string, UsageTotals>, model: string, totals: UsageTotals): void => {
+  if (!target[model]) {
+    target[model] = emptyTotals();
+  }
+  target[model].input_cached += totals.input_cached;
+  target[model].input_missed += totals.input_missed;
+  target[model].output += totals.output;
+};
+
+/**
  * 合并所有日期的消耗，按 model 分组累加
  */
 const sumAllDates = (data: UsageData): Record<string, UsageTotals> => {
   const result: Record<string, UsageTotals> = {};
   for (const models of Object.values(data)) {
     for (const [model, t] of Object.entries(models)) {
-      if (!result[model]) {
-        result[model] = emptyTotals();
-      }
-      result[model].input_cached += t.input_cached;
-      result[model].input_missed += t.input_missed;
-      result[model].output += t.output;
+      addModelTotals(result, model, t);
     }
   }
   return result;
@@ -55,12 +65,7 @@ const mergeModels = (
 ): Record<string, UsageTotals> => {
   const merged = { ...existing };
   for (const [model, t] of Object.entries(scanned)) {
-    if (!merged[model]) {
-      merged[model] = emptyTotals();
-    }
-    merged[model].input_cached += t.input_cached;
-    merged[model].input_missed += t.input_missed;
-    merged[model].output += t.output;
+    addModelTotals(merged, model, t);
   }
   return merged;
 };

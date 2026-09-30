@@ -1,6 +1,5 @@
 /**
  * Claude Hook 事件类型
- * export type RightThreePane = (typeof RIGHT_THREE_PANE_VALUE)[number];
  */
 const CLAUDE_HOOK_EVENTS = [
   'SessionStart',
@@ -48,6 +47,5 @@ export interface EventProcessor {
  * @returns 是否为合法的 ClaudeHookEvent
  */
 export function isClaudeHookEvent(event: string): event is ClaudeHookEvent {
-  const validEvents: ClaudeHookEvent[] = [...CLAUDE_HOOK_EVENTS];
-  return validEvents.includes(event as ClaudeHookEvent);
+  return (CLAUDE_HOOK_EVENTS as readonly string[]).includes(event);
 }

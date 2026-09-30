@@ -22,7 +22,8 @@ vi.mock('../../src/logging', () => ({
   }
 }));
 
-import { dispatch, registerRouter, clearAll, notifyStable } from '../../src/pipe/dispatcher';
+import { dispatch, triggerPaneRolling } from '../../src/pipe/dispatcher';
+import { registerRouter, clearAll } from '../../src/task/chatTaskStorage';
 
 const mockRouter = (): TmuxRouter => {
   const queue = new InstructQueue();
@@ -30,11 +31,9 @@ const mockRouter = (): TmuxRouter => {
     session: 's',
     window: 'w',
     paneIndex: 0,
-    isStable: true,
     queue,
     enqueue: (instruct: Parameters<TmuxRouter['enqueue']>[0]) => queue.enqueue(instruct),
-    paneRolling: vi.fn().mockResolvedValue(undefined),
-    markStable: vi.fn()
+    paneRolling: vi.fn().mockResolvedValue(undefined)
   } as unknown as TmuxRouter;
 };
 
@@ -48,29 +47,38 @@ describe('dispatcher', () => {
   describe('dispatch', () => {
     it('将指令加入 router 的 queue，返回 true', async () => {
       const router = registerRouter('s', 'w', 0);
-      const result = await dispatch('s', 'w', 0, { command: 'ls' });
+      const result = await dispatch('s', 'w', 0, { prompt: 'ls' });
       expect(result).toBe(true);
       expect(router.queue.size()).toBe(1);
-      expect(router.queue.peek()?.command).toBe('ls');
+      expect(router.queue.peek()?.prompt).toBe('ls');
+    });
+
+    it('自动注入 createdAt（UTC 时间戳）', async () => {
+      const router = registerRouter('s', 'w', 0);
+      await dispatch('s', 'w', 0, { prompt: 'ls' });
+      const instruct = router.queue.peek();
+      expect(instruct?.createdAt).toBeDefined();
+      expect(typeof instruct?.createdAt).toBe('string');
+      expect(instruct?.createdAt.length).toBeGreaterThan(0);
     });
 
     it('触发 router 的 roller', async () => {
       const router = registerRouter('s', 'w', 0);
-      await dispatch('s', 'w', 0, { command: 'ls' });
+      await dispatch('s', 'w', 0, { prompt: 'ls' });
       expect(router.paneRolling).toHaveBeenCalled();
     });
 
     it('未注册 router 时返回 false', async () => {
-      const result = await dispatch('s', 'w', 0, { command: 'ls' });
+      const result = await dispatch('s', 'w', 0, { prompt: 'ls' });
       expect(result).toBe(false);
       expect(mockPaneRolling).not.toHaveBeenCalled();
     });
   });
 
   describe('registerRouter', () => {
-    it('调用 paneRolling 创建并存储 router', () => {
+    it('以 pane 坐标构造并存储 router', () => {
       const router = registerRouter('s', 'w', 0);
-      expect(mockPaneRolling).toHaveBeenCalledWith();
+      expect(mockPaneRolling).toHaveBeenCalledWith('s', 'w', 0);
       expect(router).toBeDefined();
     });
 
@@ -97,21 +105,15 @@ describe('dispatcher', () => {
     });
   });
 
-  describe('notifyStable', () => {
-    it('调用 router 的 markStable 方法', () => {
-      const router = registerRouter('s', 'w', 0);
-      notifyStable('s', 'w', 0);
-      expect(router.markStable).toHaveBeenCalled();
-    });
-
+  describe('triggerPaneRolling', () => {
     it('调用 router 的 paneRolling 方法', () => {
       const router = registerRouter('s', 'w', 0);
-      notifyStable('s', 'w', 0);
+      void triggerPaneRolling('s', 'w', 0);
       expect(router.paneRolling).toHaveBeenCalled();
     });
 
     it('未注册 router 时不报错', () => {
-      expect(() => notifyStable('s', 'w', 0)).not.toThrow();
+      expect(() => void triggerPaneRolling('s', 'w', 0)).not.toThrow();
     });
   });
 });

@@ -1,9 +1,2 @@
-export {
-  registerTask,
-  getTask,
-  listTasks,
-  updateTaskState,
-  getTerminalCounts,
-  resetTaskStore
-} from './chatTaskStorage';
-export type { Task, TmuxTask, TaskStatus, TaskType, TaskStat } from './types';
+export { registerRouter, getRouter, listRouters, clearAll } from './chatTaskStorage';
+export type { Task, TaskStatus, TaskType } from './types';

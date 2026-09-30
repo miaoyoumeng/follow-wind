@@ -18,6 +18,9 @@ const LOG_FILE_NAME = 'solo.log';
 // PID 文件名
 export const PID_FILE_NAME = 'pid';
 
+// 工作区 name 校验规则：英文字符开头，可包含数字、'-'、'_'
+export const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+
 // Claude 项目根目录
 export const CLAUDE_PROJECTS_DIR = join(process.env.HOME ?? '', '.claude', 'projects');
 

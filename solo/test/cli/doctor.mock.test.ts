@@ -16,7 +16,8 @@ vi.mock('../../src/envs', () => ({
 }));
 
 vi.mock('../../src/config', () => ({
-  readConfig: (...args: unknown[]): unknown => mockReadConfig(...(args as []))
+  readConfig: (...args: unknown[]): unknown => mockReadConfig(...(args as [])),
+  NAME_REGEX: /^[a-zA-Z][a-zA-Z0-9_-]*$/
 }));
 
 import { runDoctor } from '../../src/cli/doctor';

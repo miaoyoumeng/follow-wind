@@ -4,7 +4,7 @@ import { validateWorkspace } from './status';
 import { getAgent } from '../agents';
 import { listPanesWithTitle } from '../tmux';
 import { readPidFile, isProcessAlive } from '../bootstrap';
-import { ipcRegisterTask, ipcDispatch } from '../ipc';
+import { ipcDispatch } from '../ipc';
 import { logger } from '../logging';
 /**
  * 检查 daemon 进程是否存活
@@ -63,20 +63,14 @@ export const runChat = async (agentName: string, content: string): Promise<void>
   logger.debug(`[chat] dispatch to ${agentName} pane ${claudePane.index}: ${content}`);
 
   try {
-    await ipcRegisterTask({
-      type: 'claude',
-      agentName,
-      session: sessionName,
-      window: agentName,
-      paneIndex: claudePane.index
-    });
     const dispatched = await ipcDispatch(sessionName, agentName, claudePane.index, content);
     if (dispatched) {
       console.log(chalk.green('✅ chat 任务提交成功。'));
     } else {
       console.log(chalk.yellow(`📋 agent "${agentName}" 尚未注册 router，指令未分发`));
     }
-  } catch {
-    console.log(chalk.yellow('📋 IPC 任务提交失败，daemon 连接异常'));
+  } catch (err) {
+    logger.error(`[chat] IPC dispatch failed: ${String(err)}`);
+    console.log(chalk.yellow('📋 IPC 任务提交失败，请查看日志'));
   }
 };

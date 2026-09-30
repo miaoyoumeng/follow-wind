@@ -5,22 +5,8 @@ import * as os from 'os';
 import * as path from 'path';
 import type { IpcRequest } from '../../src/ipc/types';
 
-const { mockRegisterTask, mockListTasks, mockUpdateTaskState, mockGetTerminalCounts, mockGetTask, mockDispatch } =
-  vi.hoisted(() => ({
-    mockRegisterTask: vi.fn().mockReturnValue('task-001'),
-    mockListTasks: vi.fn().mockReturnValue([]),
-    mockUpdateTaskState: vi.fn(),
-    mockGetTerminalCounts: vi.fn().mockReturnValue({ completed: 0, timeout: 0, failed: 0, killed: 0 }),
-    mockGetTask: vi.fn().mockReturnValue({ id: 'task-001', type: 'tmux', status: 'running', createdAt: '' }),
-    mockDispatch: vi.fn().mockResolvedValue(true)
-  }));
-
-vi.mock('../../src/task/chatTaskStorage', () => ({
-  registerTask: mockRegisterTask,
-  listTasks: mockListTasks,
-  updateTaskState: mockUpdateTaskState,
-  getTerminalCounts: mockGetTerminalCounts,
-  getTask: mockGetTask
+const { mockDispatch } = vi.hoisted(() => ({
+  mockDispatch: vi.fn().mockResolvedValue(true)
 }));
 
 vi.mock('../../src/pipe/dispatcher', () => ({
@@ -39,11 +25,7 @@ vi.mock('../../src/logging', () => ({
   setup: vi.fn()
 }));
 
-vi.mock('../../src/task/loop', () => ({
-  pollingWithTimeout: vi.fn()
-}));
-
-import { ipcRegisterTask, ipcListTasks, exitDaemon, ipcDispatch } from '../../src/ipc/client';
+import { exitDaemon, ipcDispatch } from '../../src/ipc/client';
 import { handleMessage } from '../../src/ipc/server';
 
 describe('ipc/client（集成测试：真实 socket）', () => {
@@ -88,48 +70,16 @@ describe('ipc/client（集成测试：真实 socket）', () => {
     server.close();
   });
 
-  it('ipcRegisterTask 通过 IPC 注册任务，返回 taskId', async () => {
-    const result = await ipcRegisterTask({ type: 'tmux' }, socketPath);
-    expect(result).toBe('task-001');
-    expect(mockRegisterTask).toHaveBeenCalledWith({ type: 'tmux' });
-  });
-
-  it('ipcRegisterTask 支持传入完整 pane 信息', async () => {
-    const result = await ipcRegisterTask(
-      { type: 'claude', agentName: 'agent1', session: 'sess', window: 'win', paneIndex: 2 },
-      socketPath
-    );
-    expect(result).toBe('task-001');
-    expect(mockRegisterTask).toHaveBeenCalledWith({
-      type: 'claude',
-      agentName: 'agent1',
-      session: 'sess',
-      window: 'win',
-      paneIndex: 2
-    });
-  });
-
   it('ipcDispatch 通过 IPC 分发指令，返回 dispatched=true', async () => {
     mockDispatch.mockResolvedValueOnce(true);
     const result = await ipcDispatch('test-session', 'myagent', 0, 'hello world', socketPath);
     expect(result).toBe(true);
-    expect(mockDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, { command: 'hello world' });
+    expect(mockDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, { prompt: 'hello world' });
   });
 
   it('ipcDispatch 在 dispatch 抛异常时抛出错误而非挂起', async () => {
     mockDispatch.mockRejectedValueOnce(new Error('dispatch failed'));
     await expect(ipcDispatch('test-session', 'myagent', 0, 'hello', socketPath)).rejects.toThrow('dispatch failed');
-  });
-
-  it('ipcListTasks 通过 IPC 获取全部任务列表和终态计数', async () => {
-    const tasks = [{ id: 'task-1', status: 'running' as const, type: 'tmux' as const, createdAt: '' }];
-    mockListTasks.mockReturnValue(tasks);
-    mockGetTerminalCounts.mockReturnValue({ completed: 2, timeout: 0, failed: 0, killed: 0 });
-    const result = await ipcListTasks(socketPath);
-    expect(result).toEqual({
-      tasks,
-      terminalCounts: { completed: 2, timeout: 0, failed: 0, killed: 0 }
-    });
   });
 });
 

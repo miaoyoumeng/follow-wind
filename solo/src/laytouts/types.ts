@@ -29,3 +29,6 @@ export const LAYOUT_MAP = {
 
 /** layouts 模块使用的 pane 位置值 */
 export type PaneLayout = One | Horizontal | Vertical | LeftThreePane | RightThreePane;
+
+/** pane 分屏函数的 entries 参数：tag → pane 配置条目数组 */
+export type PaneEntries = [string, { layout: string; booter?: string }][];

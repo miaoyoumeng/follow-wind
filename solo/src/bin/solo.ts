@@ -125,7 +125,7 @@ const COMMANDS: readonly CommandSpec[] = [
       { flags: '--event <event>', description: 'hook 事件名' },
       { flags: '--workspace <workspace>', description: '工作目录（可选）' }
     ],
-    execute: async (opts: Record<string, string>) => {
+    execute: async (opts: Record<string, string>): Promise<void> => {
       await runHook({
         endpoint: opts.endpoint as 'tmux' | 'claude',
         event: opts.event,

@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
-const { mockReadPidFile, mockIsProcessAlive, mockListTasks } = vi.hoisted(() => ({
+const { mockReadPidFile, mockIsProcessAlive } = vi.hoisted(() => ({
   mockReadPidFile: vi.fn(),
-  mockIsProcessAlive: vi.fn(),
-  mockListTasks: vi.fn()
+  mockIsProcessAlive: vi.fn()
 }));
 
 vi.mock('../../src/envs', () => ({
@@ -11,7 +10,8 @@ vi.mock('../../src/envs', () => ({
 }));
 
 vi.mock('../../src/config', () => ({
-  readConfig: vi.fn().mockReturnValue({ name: 'test-project' })
+  readConfig: vi.fn().mockReturnValue({ name: 'test-project' }),
+  NAME_REGEX: /^[a-zA-Z][a-zA-Z0-9_-]*$/
 }));
 
 vi.mock('../../src/agents', () => ({
@@ -23,12 +23,9 @@ vi.mock('../../src/bootstrap', () => ({
   isProcessAlive: mockIsProcessAlive
 }));
 
-vi.mock('../../src/ipc', () => ({
-  ipcListTasks: mockListTasks
-}));
-
-import { runStatus } from '../../src/cli/status';
+import { runStatus, validateWorkspace } from '../../src/cli/status';
 import { checkAgentWorkspaces } from '../../src/agents';
+import { readConfig } from '../../src/config';
 
 /** 去除 ANSI 转义码，便于纯文本断言 */
 const stripAnsi = (s: string): string => s.replace(/\x1b\[[0-9;]*m/g, '');
@@ -62,43 +59,23 @@ describe('runStatus', () => {
     expect(clean).toContain('12345');
   });
 
-  // === 进程存活 → pid + tasks 状态计数 ===
+  // === 进程存活 → pid ===
 
-  it('daemon 存活时显示 pid 和 tasks 状态计数（YAML 风格）', async () => {
+  it('daemon 存活时显示 pid', async () => {
     vi.mocked(checkAgentWorkspaces).mockReturnValue([]);
     mockReadPidFile.mockReturnValue(12345);
     mockIsProcessAlive.mockReturnValue(true);
-    mockListTasks.mockResolvedValue({
-      tasks: [
-        { id: 't1', status: 'pending' },
-        { id: 't2', status: 'running' },
-        { id: 't3', status: 'running' }
-      ],
-      terminalCounts: { completed: 3, timeout: 0, failed: 0, killed: 0 }
-    });
 
     await runStatus();
 
     const output = stripAnsi(consoleSpy.mock.calls.map((c: unknown[]) => c[0] as string).join('\n'));
     expect(output).toContain('12345');
     expect(output).not.toContain('❓❓❓');
-    expect(output).toContain('tasks:');
-    // 状态标签
-    expect(output).toContain('pending');
-    expect(output).toContain('running');
-    expect(output).toContain('completed');
-    expect(output).toContain('timeout');
-    expect(output).toContain('failed');
-    expect(output).toContain('killed');
-    // 计数值
-    expect(output).toContain('1');
-    expect(output).toContain('2');
-    expect(output).toContain('3');
   });
 
-  // === 进程不存活 → ❓❓❓ + 隐藏 tasks ===
+  // === 进程不存活 → ❓❓❓ ===
 
-  it('PID 文件不存在时 pid 显示 ❓❓❓ 且不显示 tasks', async () => {
+  it('PID 文件不存在时 pid 显示 ❓❓❓', async () => {
     vi.mocked(checkAgentWorkspaces).mockReturnValue([]);
     mockReadPidFile.mockReturnValue(null);
 
@@ -106,11 +83,9 @@ describe('runStatus', () => {
 
     const output = stripAnsi(consoleSpy.mock.calls.map((c: unknown[]) => c[0] as string).join('\n'));
     expect(output).toContain('❓❓❓');
-    expect(output).not.toContain('tasks:');
-    expect(mockListTasks).not.toHaveBeenCalled();
   });
 
-  it('PID 文件存在但进程不存活时 pid 显示 ❓❓❓ 且不显示 tasks', async () => {
+  it('PID 文件存在但进程不存活时 pid 显示 ❓❓❓', async () => {
     vi.mocked(checkAgentWorkspaces).mockReturnValue([]);
     mockReadPidFile.mockReturnValue(12345);
     mockIsProcessAlive.mockReturnValue(false);
@@ -119,7 +94,6 @@ describe('runStatus', () => {
 
     const output = stripAnsi(consoleSpy.mock.calls.map((c: unknown[]) => c[0] as string).join('\n'));
     expect(output).toContain('❓❓❓');
-    expect(output).not.toContain('tasks:');
   });
 
   // === agents 表格 ===
@@ -303,13 +277,31 @@ describe('runStatus', () => {
     expect(output).toContain('workspaces');
     expect(output).toContain('status');
   });
+});
 
-  it('daemon 不存活时，不调用 IPC ipcListTasks', async () => {
-    vi.mocked(checkAgentWorkspaces).mockReturnValue([]);
-    mockReadPidFile.mockReturnValue(null);
+describe('validateWorkspace', () => {
+  let consoleSpy: MockInstance;
+  let mockExit: MockInstance;
 
-    await runStatus();
+  beforeEach(() => {
+    vi.clearAllMocks();
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+  });
 
-    expect(mockListTasks).not.toHaveBeenCalled();
+  afterEach(() => {
+    consoleSpy.mockRestore();
+    mockExit.mockRestore();
+  });
+
+  it('name 非法时输出的消息包含该 name，而非「不是 solo 工作区」文案', () => {
+    vi.mocked(readConfig).mockReturnValueOnce({ name: '1-invalid' });
+
+    validateWorkspace();
+
+    const output = stripAnsi(consoleSpy.mock.calls.map((c: unknown[]) => String(c[0] as string)).join('\n'));
+    expect(output).toContain('1-invalid');
+    expect(output).not.toContain('not solo workspace');
+    expect(mockExit).toHaveBeenCalledWith(1);
   });
 });

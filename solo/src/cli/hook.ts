@@ -1,7 +1,7 @@
 import { isTmuxHook } from '../tmux';
 import type { HookCallbackParams } from '../tmux';
 import { logger } from '../logging';
-import { createTmuxHook, createClaudeHook } from '../hooks';
+import { createTmuxHook, createClaudeHook, type TmuxHook, type ClaudeHook } from '../hooks';
 
 const VALID_ENDPOINTS: readonly string[] = ['tmux', 'claude'];
 
@@ -16,15 +16,14 @@ export const runHook = async (params: HookCallbackParams): Promise<void> => {
     logger.warn(`[hook] 未知 endpoint "${params.endpoint}"（必须是 tmux 或 claude）`);
     return;
   }
-  let hook = null;
+  let hook: TmuxHook | ClaudeHook;
   if (params.endpoint === 'tmux') {
     if (!isTmuxHook(params.event)) {
-      logger.warn(`[hook] 未知 hook 事件 "${params.event}"（不在 tmux hook 池中）`);
       throw new Error(`未知 hook 事件 "${params.event}"（不在 tmux hook 池中）`);
     }
     hook = createTmuxHook(params);
   } else {
     hook = createClaudeHook(params);
   }
-  await hook?.runner();
+  await hook.runner();
 };

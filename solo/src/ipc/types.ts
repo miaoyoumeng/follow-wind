@@ -1,13 +1,8 @@
-import type { TaskType } from '../task';
-
 /** IPC 方法常量 */
 export const IPC_METHODS = {
-  ipcRegisterTask: 'ipcRegisterTask',
-  ipcListTasks: 'ipcListTasks',
-  ipcUpdateTaskState: 'ipcUpdateTaskState',
   ipcServerExit: 'ipcServerExit',
   ipcDispatch: 'ipcDispatch',
-  ipcPaneStable: 'ipcPaneStable'
+  ipcPaneRolling: 'ipcPaneRolling'
 } as const;
 
 /** IPC 方法名称 */
@@ -41,25 +36,16 @@ export interface HandleExitOptions {
   onExit?: () => void;
 }
 
-/** registerTask IPC 请求参数 */
-export interface RegisterTaskParams {
-  type?: TaskType;
-  agentName?: string;
-  session?: string;
-  window?: string;
-  paneIndex?: number;
-}
-
 /** ipcDispatch IPC 请求参数 */
 export interface DispatchParams {
   session: string;
   window: string;
   paneIndex: number;
-  command: string;
+  prompt: string;
 }
 
-/** ipcPaneStable IPC 请求参数 */
-export interface PaneStableParams {
+/** ipcPaneRolling IPC 请求参数 */
+export interface PaneRollingParams {
   session: string;
   window: string;
   paneIndex: number;

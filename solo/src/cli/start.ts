@@ -5,7 +5,6 @@ import {
   createSession,
   createTmuxWindow,
   listPanes,
-  splitPane,
   setPaneTitle,
   sendKeys,
   registerHooks
@@ -14,69 +13,14 @@ import { getAgents, type Agent } from '../agents';
 import { readConfig } from '../config';
 import { logger } from '../logging';
 import { validateWorkspace } from './status';
-import { getAgentPanesLayout } from '../laytouts';
-import { registerRouter } from '../pipe';
+import { getAgentPanesLayout, applyTwoPaneSplit, applyThreePaneSplit } from '../laytouts';
+import { registerRouter } from '../task';
 import { isDaemonRunning, writePidFile, startDaemon } from '../bootstrap';
-
-/**
- * 执行水平双 pane 分屏，返回 position → pane index 映射
- */
-const applyHorizontalSplit = async (
-  s: string,
-  w: string,
-  entries: [string, { layout: string; booter?: string }][],
-  orig: number,
-  dir: string
-): Promise<Record<string, number>> => {
-  const np = await splitPane(s, w, orig, '-h', dir);
-  const sorted = [...entries].sort(([, a], [, b]) => {
-    const o: Record<string, number> = { left: 0, right: 1 };
-    return (o[a.layout] ?? 0) - (o[b.layout] ?? 0);
-  });
-  return { [sorted[0][1].layout]: orig, [sorted[1][1].layout]: np };
-};
-
-/**
- * 执行垂直双 pane 分屏，返回 position → pane index 映射
- */
-const applyVerticalSplit = async (
-  s: string,
-  w: string,
-  entries: [string, { layout: string; booter?: string }][],
-  orig: number,
-  dir: string
-): Promise<Record<string, number>> => {
-  const np = await splitPane(s, w, orig, '-v', dir);
-  const sorted = [...entries].sort(([, a], [, b]) => {
-    const o: Record<string, number> = { top: 0, bottom: 1 };
-    return (o[a.layout] ?? 0) - (o[b.layout] ?? 0);
-  });
-  return { [sorted[0][1].layout]: orig, [sorted[1][1].layout]: np };
-};
-
-/**
- * 执行三 pane 分屏（left-split 或 right-split），返回 position → pane index 映射
- */
-const applyThreePaneSplit = async (
-  s: string,
-  w: string,
-  layout: string,
-  orig: number,
-  dir: string
-): Promise<Record<string, number>> => {
-  const rp = await splitPane(s, w, orig, '-h', dir);
-  if (layout === 'LeftThreePane') {
-    const rb = await splitPane(s, w, rp, '-v', dir);
-    return { left: orig, 'right-top': rp, 'right-bottom': rb };
-  }
-  const lb = await splitPane(s, w, orig, '-v', dir);
-  return { 'left-top': orig, 'left-bottom': lb, right: rp };
-};
 
 /**
  * 为每个 pane 设置标题（tag 名）并执行 booter 命令
  */
-const setPaneTitlesAndBooters = async (
+const setPaneTitlesAndBooter = async (
   s: string,
   w: string,
   panes: Agent['panes'],
@@ -116,11 +60,17 @@ const applyAgentLayout = async (sessionName: string, agent: Agent): Promise<void
   if (layout === 'One') {
     posToIdx = { [entries[0][1].layout]: originalPane };
   } else if (layout === 'Vertical') {
-    posToIdx = await applyHorizontalSplit(sessionName, agentName, entries, originalPane, agentWorkspace);
+    posToIdx = await applyTwoPaneSplit(sessionName, agentName, entries, originalPane, agentWorkspace, '-h', {
+      left: 0,
+      right: 1
+    });
   } else if (layout === 'LeftThreePane' || layout === 'RightThreePane') {
     posToIdx = await applyThreePaneSplit(sessionName, agentName, layout, originalPane, agentWorkspace);
   } else {
-    posToIdx = await applyVerticalSplit(sessionName, agentName, entries, originalPane, agentWorkspace);
+    posToIdx = await applyTwoPaneSplit(sessionName, agentName, entries, originalPane, agentWorkspace, '-v', {
+      top: 0,
+      bottom: 1
+    });
   }
   const tagToIdx: Record<string, number> = {};
   const positions = Object.keys(posToIdx);
@@ -131,7 +81,7 @@ const applyAgentLayout = async (sessionName: string, agent: Agent): Promise<void
     logger.debug(`register tmux router....session = ${sessionName}, window = ${agentName}, paneIndex = ${idx}`);
     registerRouter(sessionName, agentName, idx);
   }
-  await setPaneTitlesAndBooters(sessionName, agentName, panes, tagToIdx);
+  await setPaneTitlesAndBooter(sessionName, agentName, panes, tagToIdx);
 };
 
 /**

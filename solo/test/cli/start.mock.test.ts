@@ -13,13 +13,13 @@ import {
   sendKeys,
   registerHooks
 } from '../../src/tmux';
-import { registerRouter } from '../../src/pipe';
+import { registerRouter } from '../../src/task';
 
 // 文件 IO 与外部 tmux 命令均属外部依赖，mock 以隔离 start 调度逻辑
 vi.mock('../../src/config', () => ({
   readConfig: vi.fn(),
   writeConfig: vi.fn(),
-  isValidPanePosition: (v: unknown) =>
+  isValidPanePosition: (v: unknown): boolean =>
     typeof v === 'string' && ['left', 'right', 'left-top', 'right-top', 'left-bottom', 'right-bottom'].includes(v)
 }));
 
@@ -98,7 +98,7 @@ vi.mock('../../src/bootstrap', () => ({
   startDaemon: mockStartDaemon
 }));
 
-vi.mock('../../src/pipe', () => ({
+vi.mock('../../src/task', () => ({
   registerRouter: vi.fn().mockReturnValue({} as unknown as TmuxRouter)
 }));
 

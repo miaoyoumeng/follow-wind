@@ -1,7 +1,7 @@
 import * as net from 'net';
 
 import { readConfig, getIpcSocketPath } from '../config';
-import { IPC_METHODS, type IpcRequest, type IpcResponse, type IpcMethod, type RegisterTaskParams } from './types';
+import { IPC_METHODS, type IpcRequest, type IpcResponse, type IpcMethod } from './types';
 import { logger } from '../logging';
 
 let requestId = 0;
@@ -22,9 +22,9 @@ const resolveSocketPath = (): string => {
  * @param method 方法名
  * @param params 参数
  * @param socketPath socket 文件路径（默认从配置计算）
- * @returns 响应 data 字段
+ * @returns 响应 data 字段，类型由调用方通过类型参数 T 指定
  */
-const sendIpcRequest = (method: IpcMethod, params?: unknown, socketPath?: string): Promise<unknown> => {
+const sendIpcRequest = <T = unknown>(method: IpcMethod, params?: unknown, socketPath?: string): Promise<T> => {
   const resolvedPath = socketPath ?? resolveSocketPath();
   return new Promise((resolve, reject) => {
     const id = `req-${++requestId}`;
@@ -42,7 +42,7 @@ const sendIpcRequest = (method: IpcMethod, params?: unknown, socketPath?: string
         const res = JSON.parse(data) as IpcResponse;
         if (res.success) {
           logger.debug(`[ipc-client] ${id} success`);
-          resolve(res.data);
+          resolve(res.data as T);
         } else {
           const err = res.error ?? 'Unknown IPC error';
           logger.debug(`[ipc-client] ${id} failed: ${err}`);
@@ -61,24 +61,11 @@ const sendIpcRequest = (method: IpcMethod, params?: unknown, socketPath?: string
 };
 
 /**
- * 注册任务（IPC 客户端）
- * @param params 任务参数：type 为 daemon 注册；agentName/session/window/paneIndex 为 pane 级任务
- * @param socketPath socket 路径（默认从配置计算）
- * @returns 任务 ID
- */
-export const ipcRegisterTask = async (params: RegisterTaskParams, socketPath?: string): Promise<string> => {
-  const data = await sendIpcRequest(IPC_METHODS.ipcRegisterTask, params, socketPath);
-  const taskId = (data as { taskId: string }).taskId;
-  logger.info(`[ipc-client] registerTask completed, taskId=${taskId}`);
-  return taskId;
-};
-
-/**
  * 通过 IPC 将指令分发到 daemon 进程中已注册的 router
  * @param session tmux session 名称
  * @param window tmux window 名称
  * @param paneIndex tmux pane index
- * @param command 要执行的命令
+ * @param prompt 要执行的内容
  * @param socketPath socket 路径（默认从配置计算）
  * @returns true 表示指令已入队并触发 roller；false 表示未注册 router
  */
@@ -86,35 +73,17 @@ export const ipcDispatch = async (
   session: string,
   window: string,
   paneIndex: number,
-  command: string,
+  prompt: string,
   socketPath?: string
 ): Promise<boolean> => {
-  const data = await sendIpcRequest(IPC_METHODS.ipcDispatch, { session, window, paneIndex, command }, socketPath);
-  const dispatched = (data as { dispatched: boolean }).dispatched;
+  const data = await sendIpcRequest<{ dispatched: boolean }>(
+    IPC_METHODS.ipcDispatch,
+    { session, window, paneIndex, prompt },
+    socketPath
+  );
+  const dispatched = data.dispatched;
   logger.info(`[ipc-client] ipcDispatch completed, dispatched=${dispatched}`);
   return dispatched;
-};
-
-/**
- * 获取全部任务列表和终态计数（IPC 客户端）
- * @param socketPath socket 路径（默认从配置计算）
- * @returns 活跃任务列表和终态计数
- */
-export const ipcListTasks = async (
-  socketPath?: string
-): Promise<{
-  tasks: unknown[];
-  terminalCounts: { completed: number; timeout: number; failed: number; killed: number };
-}> => {
-  const data = await sendIpcRequest(IPC_METHODS.ipcListTasks, undefined, socketPath);
-  const { tasks, terminalCounts } = data as {
-    tasks: unknown[];
-    terminalCounts: { completed: number; timeout: number; failed: number; killed: number };
-  };
-  logger.info(
-    `[ipc-client] listTasks completed, active=${tasks.length}, completed=${terminalCounts.completed}, timeout=${terminalCounts.timeout}, failed=${terminalCounts.failed}`
-  );
-  return { tasks, terminalCounts };
 };
 
 /**
@@ -128,18 +97,18 @@ export const exitDaemon = async (socketPath?: string): Promise<void> => {
 };
 
 /**
- * 通知 daemon 指定 pane 已稳定（由 Stop hook 调用）
+ * 通知 daemon 触发指定 pane 的下一次 paneRolling（由 Stop hook 调用）
  * @param session tmux session 名称
  * @param window tmux window 名称
  * @param paneIndex tmux pane index
  * @param socketPath socket 路径（默认从配置计算）
  */
-export const ipcPaneStable = async (
+export const ipcPaneRolling = async (
   session: string,
   window: string,
   paneIndex: number,
   socketPath?: string
 ): Promise<void> => {
-  await sendIpcRequest(IPC_METHODS.ipcPaneStable, { session, window, paneIndex }, socketPath);
-  logger.info(`[ipc-client] ipcPaneStable completed, pane=${session}:${window}.${paneIndex}`);
+  await sendIpcRequest(IPC_METHODS.ipcPaneRolling, { session, window, paneIndex }, socketPath);
+  logger.debug(`[ipc-client] ipcPaneRolling requested, pane=${session}:${window}.${paneIndex}`);
 };

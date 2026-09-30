@@ -1,4 +1,5 @@
 import { exec } from '../process';
+import { buildPaneKey } from './key';
 
 /**
  * 在指定 pane 上分屏，返回新 pane 的 index
@@ -10,7 +11,7 @@ export const splitPane = async (
   orientation: '-h' | '-v',
   dir?: string
 ): Promise<number> => {
-  const target = `${session}:${window}.${paneIndex}`;
+  const target = buildPaneKey(session, window, paneIndex);
   const cwd = dir ? ` -c ${dir}` : '';
   const { stdout } = await exec.fn(`tmux split-window -t ${target} ${orientation}${cwd} -P -F '#{pane_index}'`);
   return parseInt(stdout.trim(), 10);
@@ -57,7 +58,7 @@ export const setPaneTitle = async (
   paneIndex: number,
   title: string
 ): Promise<void> => {
-  const target = `${session}:${window}.${paneIndex}`;
+  const target = buildPaneKey(session, window, paneIndex);
   await exec.fn(`tmux select-pane -t ${target} -T '${title}'`);
 };
 
@@ -65,7 +66,7 @@ export const setPaneTitle = async (
  * 选择（激活）指定 pane
  */
 export const selectPane = async (session: string, window: string, paneIndex: number): Promise<void> => {
-  const target = `${session}:${window}.${paneIndex}`;
+  const target = buildPaneKey(session, window, paneIndex);
   await exec.fn(`tmux select-pane -t ${target}`);
 };
 
@@ -77,7 +78,7 @@ export const selectPane = async (session: string, window: string, paneIndex: num
  * @param keys tmux 键名（如 'Enter'、'C-m'）不加引号，文本内容（含空格或特殊字符）加引号
  */
 export const sendKeys = async (session: string, window: string, paneIndex: number, keys: string): Promise<void> => {
-  const target = `${session}:${window}.${paneIndex}`;
+  const target = buildPaneKey(session, window, paneIndex);
   const keysArg = /^[a-zA-Z0-9-]+$/.test(keys) ? keys : `'${keys.replace(/'/g, `'\\''`)}'`;
   await exec.fn(`tmux send-keys -t ${target} ${keysArg}`);
 };
@@ -109,7 +110,7 @@ export const capturePane = async (
   lines?: number,
   joinWrapped?: boolean
 ): Promise<string> => {
-  const target = `${session}:${window}.${paneIndex}`;
+  const target = buildPaneKey(session, window, paneIndex);
   let cmd = `tmux capture-pane -t ${target} -p`;
   if (lines !== undefined) {
     cmd += ` -S -${lines}`;

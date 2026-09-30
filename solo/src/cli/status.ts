@@ -1,14 +1,9 @@
 import chalk from 'chalk';
 
 import { checkSettings } from '../envs';
-import { readConfig } from '../config';
+import { readConfig, NAME_REGEX } from '../config';
 import { checkAgentWorkspaces, type WorkspaceChecker } from '../agents';
 import { readPidFile, isProcessAlive } from '../bootstrap';
-import { ipcListTasks } from '../ipc';
-import type { TmuxTask, TaskStat } from '../task';
-
-// name 验证规则：英文字符开头，可包含数字、'-'、'_'
-const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
 
 /**
  * 验证工作区合规性，不合规则退出
@@ -23,7 +18,7 @@ export const validateWorkspace = (): string => {
 
   const name = readConfig().name;
   if (!name || !NAME_REGEX.test(name)) {
-    console.log(chalk.red(`fatal: this dir is not solo workspace:\`.solo\`, please use \`solo init\``));
+    console.log(chalk.red(`fatal: invalid name \`${name}\`, must match ${NAME_REGEX}`));
     process.exit(1);
   }
 
@@ -99,51 +94,6 @@ const formatAgentTable = (results: WorkspaceChecker[]): string[] => {
   return lines;
 };
 
-/**
- * 统计任务列表中各状态的数量（纯函数）
- * 活跃任务（pending/running）从 tasks 计数，终态从 terminalCounts 获取
- * @param tasks 活跃任务列表
- * @param terminalCounts 终态计数
- * @returns 各状态计数
- */
-export const statTask = (
-  tasks: TmuxTask[],
-  terminalCounts: { completed: number; timeout: number; failed: number; killed: number }
-): TaskStat => {
-  const stat: TaskStat = { pending: 0, running: 0, completed: 0, timeout: 0, failed: 0, killed: 0 };
-  for (const task of tasks) {
-    stat[task.status]++;
-  }
-  stat.completed = terminalCounts.completed;
-  stat.timeout = terminalCounts.timeout;
-  stat.failed = terminalCounts.failed;
-  stat.killed = terminalCounts.killed;
-  return stat;
-};
-
-/**
- * 格式化 tasks 状态计数（右对齐标签 + 缩进 + 彩色数值）
- * 标签总宽度 = 最长标签长度 + 3（缓冲），所有冒号对齐在同一列
- * @param stat 各状态计数
- */
-const formatTaskStatus = (stat: TaskStat): string[] => {
-  const entries: [string, number][] = [
-    ['pending', stat.pending],
-    ['running', stat.running],
-    ['completed', stat.completed],
-    ['timeout', stat.timeout],
-    ['failed', stat.failed],
-    ['killed', stat.killed]
-  ];
-  const maxLen = Math.max(...entries.map(([k]) => k.length));
-  const labelWidth = maxLen + 3;
-  return entries.map(([key, val]) => {
-    const label = chalk.gray(key.padStart(labelWidth) + ':');
-    const color = val > 0 ? chalk.yellow : chalk.white;
-    return `${label} ${color(String(val))}`;
-  });
-};
-
 export const runStatus = async (): Promise<void> => {
   const name = validateWorkspace();
   const pid = readPidFile();
@@ -158,28 +108,5 @@ export const runStatus = async (): Promise<void> => {
   console.log(chalk.gray('agents:'));
   for (const line of formatAgentTable(results)) {
     console.log(line);
-  }
-
-  // tasks（仅 daemon 存活时显示）
-  if (!isDaemonAlive) {
-    return;
-  }
-
-  try {
-    const { tasks, terminalCounts } = await ipcListTasks();
-    const activeTasks = tasks as TmuxTask[];
-    const hasAnyTask = activeTasks.length > 0 || Object.values(terminalCounts).some(c => c > 0);
-    if (!hasAnyTask) {
-      console.log(chalk.yellow('  📋 暂无任务'));
-    } else {
-      const stat = statTask(activeTasks, terminalCounts);
-
-      console.log(chalk.gray('tasks:'));
-      for (const line of formatTaskStatus(stat)) {
-        console.log(line);
-      }
-    }
-  } catch {
-    // IPC 连接失败，静默跳过
   }
 };

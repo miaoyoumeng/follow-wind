@@ -1,81 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { IpcRequest } from '../../src/ipc/types';
+import { IPC_METHODS, type IpcMethod, type IpcRequest } from '../../src/ipc/types';
 
-const {
-  mockRegisterTask,
-  mockListTasks,
-  mockUpdateTaskState,
-  mockGetTerminalCounts,
-  mockGetTask,
-  mockDispatch,
-  mockNotifyStable
-} = vi.hoisted(() => ({
-  mockRegisterTask: vi.fn().mockReturnValue('task-001'),
-  mockListTasks: vi.fn().mockReturnValue([]),
-  mockUpdateTaskState: vi.fn(),
-  mockGetTerminalCounts: vi.fn().mockReturnValue({ completed: 0, timeout: 0, failed: 0, killed: 0 }),
-  mockGetTask: vi.fn().mockReturnValue({ id: 'task-001', type: 'tmux', status: 'running', createdAt: '' }),
+const { mockDispatch, mockTriggerPaneRolling } = vi.hoisted(() => ({
   mockDispatch: vi.fn().mockResolvedValue(true),
-  mockNotifyStable: vi.fn()
-}));
-
-vi.mock('../../src/task/chatTaskStorage', () => ({
-  registerTask: mockRegisterTask,
-  listTasks: mockListTasks,
-  updateTaskState: mockUpdateTaskState,
-  getTerminalCounts: mockGetTerminalCounts,
-  getTask: mockGetTask
+  mockTriggerPaneRolling: vi.fn()
 }));
 
 vi.mock('../../src/pipe/dispatcher', () => ({
   dispatch: mockDispatch,
-  notifyStable: mockNotifyStable
+  triggerPaneRolling: mockTriggerPaneRolling
 }));
 
 import { handleMessage } from '../../src/ipc/server';
 
+/** 各 IPC 方法的最小合法参数（Record 类型穷举：新增方法时必须补齐，否则编译失败） */
+const validParams: Record<IpcMethod, unknown> = {
+  ipcServerExit: undefined,
+  ipcDispatch: { session: 'test-session', window: 'myagent', paneIndex: 0, prompt: 'hello' },
+  ipcPaneRolling: { session: 'test-session', window: 'myagent', paneIndex: 0 }
+};
+
+describe('IPC 契约', () => {
+  it('IPC_METHODS 中每个方法都有服务端处理器', async () => {
+    for (const method of Object.values(IPC_METHODS)) {
+      const res = await handleMessage({ id: `contract-${method}`, method, params: validParams[method] });
+      expect(res.success, `方法 ${method} 缺少服务端处理器`).toBe(true);
+    }
+  });
+});
+
 describe('handleMessage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('处理 registerTask 请求，委托 chatTaskStorage.registerTask', async () => {
-    const req: IpcRequest = {
-      id: 'req-1',
-      method: 'ipcRegisterTask',
-      params: { type: 'tmux' }
-    };
-    const res = await handleMessage(req);
-    expect(res.id).toBe('req-1');
-    expect(res.success).toBe(true);
-    expect(res.data).toEqual({ taskId: 'task-001' });
-    expect(mockRegisterTask).toHaveBeenCalledWith({ type: 'tmux' });
-  });
-
-  it('处理 listTasks 请求，委托 chatTaskStorage.listTasks', async () => {
-    const tasks = [
-      { id: 'task-1', status: 'running', type: 'tmux', session: 's', window: 'w', paneIndex: 0, createdAt: '' }
-    ];
-    mockListTasks.mockReturnValue(tasks);
-    const req: IpcRequest = { id: 'req-3', method: 'ipcListTasks' };
-    const res = await handleMessage(req);
-    expect(res.success).toBe(true);
-    expect(res.data).toEqual({
-      tasks,
-      terminalCounts: { completed: 0, timeout: 0, failed: 0, killed: 0 }
-    });
-    expect(mockListTasks).toHaveBeenCalled();
-  });
-
-  it('处理 updateTaskState 请求，委托 chatTaskStorage.updateTaskState', async () => {
-    const req: IpcRequest = {
-      id: 'req-update-1',
-      method: 'ipcUpdateTaskState',
-      params: { taskId: 'task-001', status: 'running' }
-    };
-    const res = await handleMessage(req);
-    expect(res.success).toBe(true);
-    expect(mockUpdateTaskState).toHaveBeenCalledWith('task-001', 'running');
   });
 
   it('未知方法返回 success=false 和错误信息', async () => {
@@ -84,20 +40,6 @@ describe('handleMessage', () => {
     expect(res.id).toBe('req-5');
     expect(res.success).toBe(false);
     expect(res.error).toContain('unknown');
-  });
-
-  it('chatTaskStorage 抛出异常时返回 success=false 和错误信息', async () => {
-    mockRegisterTask.mockImplementationOnce(() => {
-      throw new Error('register failed');
-    });
-    const req: IpcRequest = {
-      id: 'req-6',
-      method: 'ipcRegisterTask',
-      params: { type: 'tmux' }
-    };
-    const res = await handleMessage(req);
-    expect(res.success).toBe(false);
-    expect(res.error).toBe('register failed');
   });
 
   it('exit 方法调用 onExit 回调并返回 success=true', async () => {
@@ -125,13 +67,13 @@ describe('handleMessage', () => {
         session: 'test-session',
         window: 'myagent',
         paneIndex: 0,
-        command: 'hello world'
+        prompt: 'hello world'
       }
     };
     const res = await handleMessage(req);
     expect(res.success).toBe(true);
     expect(res.data).toEqual({ dispatched: true });
-    expect(mockDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, { command: 'hello world' });
+    expect(mockDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, { prompt: 'hello world' });
   });
 
   it('ipcDispatch 中 dispatch 抛出异常时返回 success=false 和错误信息', async () => {
@@ -143,7 +85,7 @@ describe('handleMessage', () => {
         session: 'test-session',
         window: 'myagent',
         paneIndex: 0,
-        command: 'hello'
+        prompt: 'hello'
       }
     };
     const res = await handleMessage(req);
@@ -160,7 +102,7 @@ describe('handleMessage', () => {
         session: 'test-session',
         window: 'myagent',
         paneIndex: 0,
-        command: 'hello'
+        prompt: 'hello'
       }
     };
     const res = await handleMessage(req);
@@ -168,10 +110,10 @@ describe('handleMessage', () => {
     expect(res.data).toEqual({ dispatched: false });
   });
 
-  it('ipcPaneStable 调用 notifyStable 并返回 success=true', async () => {
+  it('ipcPaneRolling 调用 triggerPaneRolling 并返回 success=true', async () => {
     const req: IpcRequest = {
-      id: 'req-pane-stable-1',
-      method: 'ipcPaneStable',
+      id: 'req-pane-rolling-1',
+      method: 'ipcPaneRolling',
       params: {
         session: 'test-session',
         window: 'myagent',
@@ -181,6 +123,6 @@ describe('handleMessage', () => {
     const res = await handleMessage(req);
     expect(res.success).toBe(true);
     expect(res.data).toEqual({});
-    expect(mockNotifyStable).toHaveBeenCalledWith('test-session', 'myagent', 0);
+    expect(mockTriggerPaneRolling).toHaveBeenCalledWith('test-session', 'myagent', 0);
   });
 });

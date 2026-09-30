@@ -19,7 +19,7 @@ describe('exec 容器', () => {
 
     it('替换后调用应使用新函数', async () => {
       const fakeResult = { stdout: 'fake-out', stderr: '' };
-      const fakeFn = async (_cmd: string) => fakeResult;
+      const fakeFn = async (_cmd: string): Promise<{ stdout: string; stderr: string }> => fakeResult;
 
       exec.fn = fakeFn;
 
@@ -29,7 +29,7 @@ describe('exec 容器', () => {
 
     it('替换只影响 exec.fn，不影响 execAsync 本身', () => {
       const beforeAsync = execAsync;
-      exec.fn = async () => ({ stdout: '', stderr: '' });
+      exec.fn = async (): Promise<{ stdout: string; stderr: string }> => ({ stdout: '', stderr: '' });
       expect(execAsync).toBe(beforeAsync);
     });
   });

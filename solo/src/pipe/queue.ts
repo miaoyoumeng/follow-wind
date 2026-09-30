@@ -11,6 +11,11 @@ export class InstructQueue {
     this.queue.push(instruct);
   }
 
+  /** 插入队首（用于发送失败后优先重试） */
+  enqueueFront(instruct: Instruct): void {
+    this.queue.unshift(instruct);
+  }
+
   /** 出队（空队列返回 undefined） */
   dequeue(): Instruct | undefined {
     return this.queue.shift();

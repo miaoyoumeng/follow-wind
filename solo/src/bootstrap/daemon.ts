@@ -3,7 +3,7 @@ import { startIpcServer, stopIpcServer } from '../ipc/server';
 import { readConfig, getIpcSocketPath } from '../config';
 import { readPidFile, isProcessAlive } from './pid';
 import { startHeartbeat, stopHeartbeat } from './heartbeat';
-import { clearAll } from '../pipe/dispatcher';
+import { clearAll } from '../task/chatTaskStorage';
 
 let ipcRunning = false;
 

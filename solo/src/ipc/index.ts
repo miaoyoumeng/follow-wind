@@ -1,2 +1,2 @@
 export { IPC_METHODS } from './types';
-export { ipcRegisterTask, ipcListTasks, exitDaemon, ipcDispatch } from './client';
+export { exitDaemon, ipcDispatch } from './client';

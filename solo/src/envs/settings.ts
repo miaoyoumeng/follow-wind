@@ -1,19 +1,12 @@
 import { getConfigPath } from '../config';
-import { BaseEnvHandler } from './base';
 import { exists } from '../utils/files';
-import type { EnvCheckResult } from './types';
+import type { SettingsResult } from './types';
 
 /**
- * Settings 环境检测 Handler
+ * 检测 solo 配置文件是否存在
+ * @returns 配置文件存在状态与路径
  */
-export class SettingsHandler extends BaseEnvHandler {
-  handle(): EnvCheckResult {
-    const configPath = getConfigPath();
-    return {
-      settings: {
-        exists: exists(configPath),
-        path: configPath
-      }
-    };
-  }
-}
+export const checkSettings = (): SettingsResult => {
+  const path = getConfigPath();
+  return { exists: exists(path), path };
+};

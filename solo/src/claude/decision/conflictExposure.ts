@@ -1,13 +1,11 @@
 import type { DecisionContext, DecisionStrategy } from '../types';
+import { NUMBERED_LINE_REGEX } from './parser';
 
 /** 冲突/矛盾信号关键词 */
 const CONFLICT_KEYWORDS: readonly string[] = ['冲突', 'conflict', '不一致', '矛盾'];
 
 /** 确认信号关键词 */
 const CONFIRM_KEYWORDS: readonly string[] = ['确认'];
-
-/** 匹配编号行的正则：可选前导空白 + 可选 ❯/↓ 前缀 + 数字 + 点 */
-const NUMBERED_LINE_REGEX = /^\s*(?:[❯↓]\s+)?(\d+)\./m;
 
 /**
  * 策略：冲突暴露。
@@ -21,9 +19,6 @@ const NUMBERED_LINE_REGEX = /^\s*(?:[❯↓]\s+)?(\d+)\./m;
  */
 export const conflictExposure: DecisionStrategy = (context: DecisionContext): string | null => {
   const { content } = context;
-  if (!content) {
-    return null;
-  }
 
   const hasConflict = CONFLICT_KEYWORDS.some(kw => content.includes(kw));
   if (!hasConflict) {

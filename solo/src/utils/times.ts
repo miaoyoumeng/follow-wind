@@ -31,7 +31,7 @@ export const formatDateOnly = (d: Date = new Date()): string => {
 
 /**
  * 当前时间
- * ISO 8601 格式字符串‌，‌格式‌：YYYY-MM-DDTHH:mm:ss.sssZ
+ * ISO 8601 格式字符串，格式：YYYY-MM-DDTHH:mm:ss.sssZ
  * 示例 2026-09-24T03:00:00.000Z
  */
 export const nowUTC = (): string => {

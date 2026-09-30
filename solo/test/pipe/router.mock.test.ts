@@ -27,6 +27,8 @@ vi.mock('../../src/logging', () => ({
 
 import { TmuxRouter } from '../../src/pipe/router';
 
+const NOW = '2026-09-30T00:00:00.000Z';
+
 describe('TmuxRouter', () => {
   beforeEach(() => {
     mockSendKeysEnter.mockReset();
@@ -36,85 +38,95 @@ describe('TmuxRouter', () => {
   });
 
   describe('构造', () => {
-    it('属性正确初始化为默认值', () => {
-      const router = new TmuxRouter();
-      expect(router.session).toBe('');
-      expect(router.window).toBe('');
-      expect(router.paneIndex).toBe(0);
-      expect(router.isStable).toBe(true);
+    it('构造参数被正确赋值，队列为空', () => {
+      const router = new TmuxRouter('s', 'w', 2);
+      expect(router.session).toBe('s');
+      expect(router.window).toBe('w');
+      expect(router.paneIndex).toBe(2);
       expect(router.queue.isEmpty()).toBe(true);
     });
   });
 
   describe('enqueue()', () => {
     it('将指令加入队列', () => {
-      const router = new TmuxRouter();
-      router.enqueue({ command: 'ls' });
+      const router = new TmuxRouter('s', 'w', 0);
+      router.enqueue({ prompt: 'ls', createdAt: NOW });
       expect(router.queue.size()).toBe(1);
-      expect(router.queue.peek()?.command).toBe('ls');
+      expect(router.queue.peek()?.prompt).toBe('ls');
     });
 
     it('多次调用依次入队', () => {
-      const router = new TmuxRouter();
-      router.enqueue({ command: 'ls' });
-      router.enqueue({ command: 'pwd' });
+      const router = new TmuxRouter('s', 'w', 0);
+      router.enqueue({ prompt: 'ls', createdAt: NOW });
+      router.enqueue({ prompt: 'pwd', createdAt: NOW });
       expect(router.queue.size()).toBe(2);
     });
   });
 
   describe('paneRolling()', () => {
-    it('isStable 为 false 时提前返回，不执行指令', async () => {
-      const router = new TmuxRouter();
-      Object.assign(router, { session: 's', window: 'w', paneIndex: 0 });
-      router.isStable = false;
-      router.queue.enqueue({ command: 'ls' });
-      await router.paneRolling();
-      expect(mockSelectPane).not.toHaveBeenCalled();
-      expect(mockSendKeysEnter).not.toHaveBeenCalled();
-      expect(router.queue.size()).toBe(1);
-    });
-
     it('队列为空时不执行任何操作', async () => {
-      const router = new TmuxRouter();
-      Object.assign(router, { session: 's', window: 'w', paneIndex: 0 });
+      const router = new TmuxRouter('s', 'w', 0);
       await router.paneRolling();
       expect(mockSelectPane).not.toHaveBeenCalled();
       expect(mockSendKeysEnter).not.toHaveBeenCalled();
     });
 
-    it('发送指令前调用 selectPane，然后 sendKeysEnter，并设置 isStable=false', async () => {
-      const router = new TmuxRouter();
-      Object.assign(router, { session: 's', window: 'w', paneIndex: 0 });
-      router.queue.enqueue({ command: 'ls -la' });
+    it('发送指令前调用 selectPane，然后 sendKeysEnter', async () => {
+      const router = new TmuxRouter('s', 'w', 0);
+      router.queue.enqueue({ prompt: 'ls -la', createdAt: NOW });
       await router.paneRolling();
       expect(mockSelectPane).toHaveBeenCalledWith('s', 'w', 0);
       expect(mockSendKeysEnter).toHaveBeenCalledWith('s', 'w', 0, 'ls -la');
-      expect(router.isStable).toBe(false);
     });
 
-    it('executeInstruct 失败时重置 isStable=true', async () => {
-      const router = new TmuxRouter();
-      Object.assign(router, { session: 's', window: 'w', paneIndex: 0 });
+    it('sendKeysEnter 失败时不抛出异常，并将指令放回队首且递增重试计数', async () => {
+      const router = new TmuxRouter('s', 'w', 0);
       mockSendKeysEnter.mockRejectedValueOnce(new Error('send failed'));
-      router.queue.enqueue({ command: 'ls' });
+      router.queue.enqueue({ prompt: 'ls', createdAt: NOW });
+
+      await expect(router.paneRolling()).resolves.not.toThrow();
+
+      expect(router.queue.size()).toBe(1);
+      expect(router.queue.peek()?.prompt).toBe('ls');
+      expect(router.queue.peek()?.retryCount).toBe(1);
+    });
+
+    it('重试的指令优先于其后入队的指令', async () => {
+      const router = new TmuxRouter('s', 'w', 0);
+      mockSendKeysEnter.mockRejectedValueOnce(new Error('send failed'));
+      router.queue.enqueue({ prompt: 'first', createdAt: NOW });
+      router.queue.enqueue({ prompt: 'second', createdAt: NOW });
+
       await router.paneRolling();
-      expect(router.isStable).toBe(true);
-    });
-  });
 
-  describe('markStable()', () => {
-    it('设置 isStable 为 true', () => {
-      const router = new TmuxRouter();
-      router.isStable = false;
-      router.markStable();
-      expect(router.isStable).toBe(true);
+      expect(router.queue.size()).toBe(2);
+      expect(router.queue.peek()?.prompt).toBe('first');
     });
 
-    it('多次调用不会报错', () => {
-      const router = new TmuxRouter();
-      router.markStable();
-      router.markStable();
-      expect(router.isStable).toBe(true);
+    it('重试计数逐次递增，达到上限后丢弃指令', async () => {
+      const router = new TmuxRouter('s', 'w', 0);
+      mockSendKeysEnter.mockRejectedValue(new Error('send failed'));
+      router.queue.enqueue({ prompt: 'ls', createdAt: NOW });
+
+      await router.paneRolling();
+      expect(router.queue.peek()?.retryCount).toBe(1);
+
+      await router.paneRolling();
+      expect(router.queue.peek()?.retryCount).toBe(2);
+
+      await router.paneRolling();
+      expect(router.queue.isEmpty()).toBe(true);
+    });
+
+    it('失败一次后重试成功则指令出队且不再入队', async () => {
+      const router = new TmuxRouter('s', 'w', 0);
+      mockSendKeysEnter.mockRejectedValueOnce(new Error('send failed'));
+      router.queue.enqueue({ prompt: 'ls', createdAt: NOW });
+
+      await router.paneRolling();
+      await router.paneRolling();
+
+      expect(router.queue.isEmpty()).toBe(true);
     });
   });
 });

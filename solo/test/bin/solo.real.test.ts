@@ -18,7 +18,7 @@ const createProgram = (): Command => {
 describe('registerCommands', () => {
   it('注册命令名与描述', () => {
     const program = createProgram();
-    const specs: CommandSpec[] = [{ name: 'ping', description: '连通性检查', execute: () => {} }];
+    const specs: CommandSpec[] = [{ name: 'ping', description: '连通性检查', execute: (): void => {} }];
 
     registerCommands(program, specs);
 
@@ -30,9 +30,9 @@ describe('registerCommands', () => {
   it('一次注册多个 spec 时全部生效且保持顺序', () => {
     const program = createProgram();
     const specs: CommandSpec[] = [
-      { name: 'alpha', description: 'a', execute: () => {} },
-      { name: 'beta', description: 'b', execute: () => {} },
-      { name: 'gamma', description: 'c', execute: () => {} }
+      { name: 'alpha', description: 'a', execute: (): void => {} },
+      { name: 'beta', description: 'b', execute: (): void => {} },
+      { name: 'gamma', description: 'c', execute: (): void => {} }
     ];
 
     registerCommands(program, specs);

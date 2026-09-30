@@ -1,10 +1,7 @@
 import chalk from 'chalk';
 
 import { checkSettings, checkGit, checkTmux, checkClaude } from '../envs';
-import { readConfig } from '../config';
-
-// name 验证规则：英文字符开头，可包含数字、'-'、'_'
-const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+import { readConfig, NAME_REGEX } from '../config';
 
 /**
  * 检查工具是否安装并输出结果

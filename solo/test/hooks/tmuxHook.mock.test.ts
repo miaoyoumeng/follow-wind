@@ -62,16 +62,6 @@ describe('createTmuxHook', () => {
       });
       expect(typeof hook.runner).toBe('function');
     });
-
-    it('构造时 sessionName/windowName/paneIndex 初始为空字符串', () => {
-      const hook = createTmuxHook({
-        endpoint: 'tmux',
-        event: 'after-select-pane'
-      });
-      expect(hook.sessionName).toBe('');
-      expect(hook.windowName).toBe('');
-      expect(hook.paneIndex).toBe('');
-    });
   });
 
   describe('runner() 成功路径', () => {
@@ -94,21 +84,10 @@ describe('createTmuxHook', () => {
       expect(mockGetPaneIndex).toHaveBeenCalled();
       expect(mockGetPaneName).toHaveBeenCalled();
     });
-
-    it('runner() 执行后 sessionName/windowName/paneIndex 被 display-message 值填充', async () => {
-      const hook = createTmuxHook({
-        endpoint: 'tmux',
-        event: 'after-select-pane'
-      });
-      await hook.runner();
-      expect(hook.sessionName).toBe('my-project');
-      expect(hook.windowName).toBe('agent1');
-      expect(hook.paneIndex).toBe('2');
-    });
   });
 
   describe('runner() session 不匹配', () => {
-    it('display-message 返回的 session 与配置不匹配时直接返回', async () => {
+    it('display-message 返回的 session 与配置不匹配时直接返回，不抛错', async () => {
       mockReadConfig.mockReturnValue({ name: 'my-project' });
       mockGetSessionName.mockResolvedValue('other-project');
       mockGetWindowName.mockResolvedValue('agent1');
@@ -118,8 +97,8 @@ describe('createTmuxHook', () => {
         endpoint: 'tmux',
         event: 'after-select-pane'
       });
-      await hook.runner();
-      expect(hook.sessionName).toBe('');
+
+      await expect(hook.runner()).resolves.not.toThrow();
     });
   });
 });

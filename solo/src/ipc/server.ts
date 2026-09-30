@@ -5,28 +5,25 @@ import {
   type IpcRequest,
   type IpcResponse,
   type HandleExitOptions,
-  type RegisterTaskParams,
   type DispatchParams,
-  type PaneStableParams,
+  type PaneRollingParams,
   IPC_METHODS
 } from './types';
-import { registerTask, listTasks, updateTaskState, getTerminalCounts } from '../task';
 import { logger } from '../logging';
 import { readPidFile } from '../bootstrap';
 import { sessionExists } from '../tmux';
 import { validateWorkspace } from '../cli';
-import { dispatch, notifyStable } from '../pipe';
+import { dispatch, triggerPaneRolling } from '../pipe';
 
 let ipcServerInstance: net.Server | null = null;
 let ipcSocketPath: string = '';
 
 /**
- * debug 级别日志快捷方法：仅在 debug 启用时输出
- * @param message 日志消息
+ * 提取错误信息文本
+ * @param err 捕获到的错误
+ * @returns 错误消息文本
  */
-const debugIpc = (message: string): void => {
-  logger.debug(`[ipc-server] ${message}`);
-};
+const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
 /**
  * 发送 IPC 响应并在 exit 请求时触发进程退出
@@ -37,7 +34,7 @@ const debugIpc = (message: string): void => {
 const sendResponse = (conn: net.Socket, req: IpcRequest, res: IpcResponse): void => {
   const pid = readPidFile();
   conn.end(JSON.stringify(res));
-  logger.trace(`[ipc-server] handle method ${req.method},  request info: ${JSON.stringify(res)}`);
+  logger.trace(`[ipc-server] handle method ${req.method}, response info: ${JSON.stringify(res)}`);
   if (req.method === 'ipcServerExit') {
     setImmediate(() => {
       const sessionName = validateWorkspace();
@@ -62,16 +59,16 @@ const handleConnection = (conn: net.Socket, onExit: () => void): void => {
     data += chunk.toString();
   });
   conn.on('end', () => {
-    debugIpc(`connection received, raw data length=${data.length}`);
+    logger.debug(`[ipc-server] connection received, raw data length=${data.length}`);
     try {
       const req = JSON.parse(data) as IpcRequest;
-      debugIpc(`parsed request id=${req.id} method=${req.method}`);
+      logger.debug(`[ipc-server] parsed request id=${req.id} method=${req.method}`);
       const result = handleMessage(req, { onExit });
       if (result instanceof Promise) {
         void result
           .then(res => sendResponse(conn, req, res))
           .catch(err => {
-            debugIpc(`failed to handle async request: ${String(err)}`);
+            logger.debug(`[ipc-server] failed to handle async request: ${String(err)}`);
             logger.error(`[ipc-server] error handling async request: ${String(err)}`);
             conn.end();
           });
@@ -79,7 +76,7 @@ const handleConnection = (conn: net.Socket, onExit: () => void): void => {
         sendResponse(conn, req, result);
       }
     } catch (err) {
-      debugIpc(`failed to parse or handle request: ${String(err)}`);
+      logger.debug(`[ipc-server] failed to parse or handle request: ${String(err)}`);
       logger.error(`[ipc-server] error handling request: ${String(err)}`);
       conn.end();
     } finally {
@@ -140,29 +137,29 @@ export const stopIpcServer = (): void => {
 const handleDispatch = async (reqId: string, params: DispatchParams): Promise<IpcResponse> => {
   try {
     const dispatched = await dispatch(params.session, params.window, params.paneIndex, {
-      command: params.command
+      prompt: params.prompt
     });
     return { id: reqId, success: true, data: { dispatched } };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = errorMessage(err);
     logger.error(`[ipc-server] handleDispatch error: ${message}`);
     return { id: reqId, success: false, error: message };
   }
 };
 
 /**
- * 处理 ipcPaneStable 请求：通知指定 pane 的 router 已稳定
+ * 处理 ipcPaneRolling 请求：触发指定 pane 的 router 执行下一次 paneRolling
  * @param reqId 请求 ID
- * @param params pane 稳定参数
+ * @param params pane rolling 参数
  * @returns 成功响应
  */
-const handlePaneStable = (reqId: string, params: PaneStableParams): IpcResponse => {
-  notifyStable(params.session, params.window, params.paneIndex);
+const handlePaneRolling = (reqId: string, params: PaneRollingParams): IpcResponse => {
+  triggerPaneRolling(params.session, params.window, params.paneIndex);
   return { id: reqId, success: true, data: {} };
 };
 
 /**
- * 处理 IPC 请求，委托 chatTaskStorage 执行
+ * 处理 IPC 请求
  * @param req IPC 请求消息
  * @param options 可选参数（onExit 回调等）
  * @returns IPC 响应消息；ipcDispatch 返回 Promise
@@ -170,23 +167,6 @@ const handlePaneStable = (reqId: string, params: PaneStableParams): IpcResponse 
 export const handleMessage = (req: IpcRequest, options?: HandleExitOptions): IpcResponse | Promise<IpcResponse> => {
   try {
     switch (req.method) {
-      case IPC_METHODS.ipcRegisterTask: {
-        logger.info('[ipc] registerTask method received, register a task...');
-        const taskId = registerTask(req.params as RegisterTaskParams);
-        return { id: req.id, success: true, data: { taskId } };
-      }
-      case IPC_METHODS.ipcListTasks: {
-        debugIpc('ipcListTasks received');
-        const tasks = listTasks();
-        const terminalCounts = getTerminalCounts();
-        return { id: req.id, success: true, data: { tasks, terminalCounts } };
-      }
-      case IPC_METHODS.ipcUpdateTaskState: {
-        const { taskId, status } = req.params as { taskId: string; status: Parameters<typeof updateTaskState>[1] };
-        debugIpc(`ipcUpdateTaskState received taskId=${taskId} status=${status}`);
-        updateTaskState(taskId, status);
-        return { id: req.id, success: true, data: {} };
-      }
       case IPC_METHODS.ipcServerExit: {
         logger.info('[ipc] exit method received, triggering daemon shutdown');
         options?.onExit?.();
@@ -194,14 +174,14 @@ export const handleMessage = (req: IpcRequest, options?: HandleExitOptions): Ipc
       }
       case IPC_METHODS.ipcDispatch:
         return handleDispatch(req.id, req.params as DispatchParams);
-      case IPC_METHODS.ipcPaneStable:
-        return handlePaneStable(req.id, req.params as PaneStableParams);
+      case IPC_METHODS.ipcPaneRolling:
+        return handlePaneRolling(req.id, req.params as PaneRollingParams);
       default:
         logger.warn(`[ipc-server] unknown method received: ${String(req.method)}`);
         return { id: req.id, success: false, error: `Unknown method: ${String(req.method)}` };
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = errorMessage(err);
     return { id: req.id, success: false, error: message };
   }
 };

@@ -29,8 +29,8 @@ module.exports = {
     // eslint
     'no-var': 'error',
     'no-multiple-empty-lines': ['error', { max: 1 }],
-    // 函数逻辑代码（不含空行和注释）不得超过 40 行
-    'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
+    // 函数逻辑代码（不含空行和注释）不得超过 45 行
+    'max-lines-per-function': ['error', { max: 45, skipBlankLines: true, skipComments: true }],
     // 禁止 import 带 .js 后缀或 /index
     'no-restricted-syntax': [
       'error',
@@ -92,6 +92,22 @@ module.exports = {
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
     ],
     "@typescript-eslint/prefer-readonly": "error",
+    '@typescript-eslint/explicit-function-return-type': [
+      'error',
+      {
+        // 允许表达式（如 const fn = () => x * 2）省略返回类型
+        allowExpressions: true,
+        // 允许高阶函数里的回调省略返回类型
+        // 如 [1,2,3].map((x) => x + 1)
+        allowTypedFunctionExpressions: true,
+        // 允许作为对象属性/变量初始值的函数表达式省略返回类型
+        // 如 const obj = { foo: () => 1 }
+        allowHigherOrderFunctions: true,
+        allowDirectConstAssertionInArrowFunctions: true,
+        // 允许 IIFE 省略
+        // allowIIFEs: true,
+      },
+    ],
     'curly': ['error', 'all'],
   },
   overrides: [

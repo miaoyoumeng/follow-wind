@@ -1,5 +1,5 @@
-/** 任务状态：pending → running → completed | timeout */
-export type TaskStatus = 'pending' | 'running' | 'completed' | 'timeout' | 'failed' | 'killed';
+/** 任务状态：pending → running → completed | timeout | failed */
+export type TaskStatus = 'pending' | 'running' | 'completed' | 'timeout' | 'failed';
 
 /** 任务类型 */
 export type TaskType = 'tmux' | 'claude' | 'shell';
@@ -21,23 +21,3 @@ export type Task = {
   /** 终止任务 */
   kill?(taskId: string, state: TaskStatus): Promise<void>;
 };
-
-/** tmux 后台任务记录，继承 Task 并扩展 tmux 特有字段 */
-export interface TmuxTask extends Task {
-  /** 关联的 tmux session（daemon 路径可缺省） */
-  session?: string;
-  /** 关联的 tmux window（daemon 路径可缺省） */
-  window?: string;
-  /** 关联的 pane 索引（daemon 路径可缺省） */
-  paneIndex?: number;
-}
-
-/** 各状态的任务计数 */
-export interface TaskStat {
-  pending: number;
-  running: number;
-  completed: number;
-  timeout: number;
-  failed: number;
-  killed: number;
-}

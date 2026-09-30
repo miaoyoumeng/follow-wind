@@ -8,7 +8,6 @@ const {
   mockListPanesWithTitle,
   mockReadPidFile,
   mockIsProcessAlive,
-  mockIpcRegisterTask,
   mockIpcDispatch
 } = vi.hoisted(() => ({
   mockValidateWorkspace: vi.fn(),
@@ -16,7 +15,6 @@ const {
   mockListPanesWithTitle: vi.fn(),
   mockReadPidFile: vi.fn(),
   mockIsProcessAlive: vi.fn(),
-  mockIpcRegisterTask: vi.fn(),
   mockIpcDispatch: vi.fn()
 }));
 
@@ -38,7 +36,6 @@ vi.mock('../../src/bootstrap', () => ({
 }));
 
 vi.mock('../../src/ipc', () => ({
-  ipcRegisterTask: mockIpcRegisterTask,
   ipcDispatch: mockIpcDispatch
 }));
 
@@ -58,7 +55,6 @@ describe('runChat', () => {
     mockValidateWorkspace.mockReturnValue('test-session');
     mockReadPidFile.mockReturnValue(12345);
     mockIsProcessAlive.mockReturnValue(true);
-    mockIpcRegisterTask.mockResolvedValue('task-ipc-001');
     mockIpcDispatch.mockResolvedValue(true);
   });
 
@@ -70,7 +66,7 @@ describe('runChat', () => {
       await runChat('nonexistent', 'hello');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('agent "nonexistent" 不存在'));
-      expect(mockIpcRegisterTask).not.toHaveBeenCalled();
+      expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -89,7 +85,7 @@ describe('runChat', () => {
       await runChat('myagent', 'hello');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('agent "myagent" 没有 claude pane'));
-      expect(mockIpcRegisterTask).not.toHaveBeenCalled();
+      expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -113,14 +109,14 @@ describe('runChat', () => {
       await runChat('myagent', 'hello');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('agent "myagent" 没有 claude pane'));
-      expect(mockIpcRegisterTask).not.toHaveBeenCalled();
+      expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
   });
 
   describe('正常流程', () => {
-    it('找到 claude pane 后，通过 IPC 注册任务并分发指令；dispatched=true 时打印成功提示', async () => {
+    it('找到 claude pane 后，通过 IPC 分发指令；dispatched=true 时打印成功提示', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -141,13 +137,6 @@ describe('runChat', () => {
       expect(mockValidateWorkspace).toHaveBeenCalled();
       expect(mockGetAgent).toHaveBeenCalledWith('myagent');
       expect(mockListPanesWithTitle).toHaveBeenCalledWith('test-session', 'myagent');
-      expect(mockIpcRegisterTask).toHaveBeenCalledWith({
-        type: 'claude',
-        agentName: 'myagent',
-        session: 'test-session',
-        window: 'myagent',
-        paneIndex: 1
-      });
       expect(mockIpcDispatch).toHaveBeenCalledWith('test-session', 'myagent', 1, 'hello world');
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('chat 任务提交成功'));
 
@@ -182,7 +171,7 @@ describe('runChat', () => {
       await runChat('myagent', 'hello');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('solo 未启动'));
-      expect(mockIpcRegisterTask).not.toHaveBeenCalled();
+      expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -195,14 +184,14 @@ describe('runChat', () => {
       await runChat('myagent', 'hello');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('solo 未启动'));
-      expect(mockIpcRegisterTask).not.toHaveBeenCalled();
+      expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
   });
 
-  describe('IPC 注册任务', () => {
-    it('daemon 存活时，通过 IPC 注册完整 chat 任务（含 pane 信息）并通过 ipcDispatch 分发指令', async () => {
+  describe('IPC 分发', () => {
+    it('daemon 存活时，通过 ipcDispatch 把指令分发到目标 pane', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -213,17 +202,10 @@ describe('runChat', () => {
 
       await runChat('myagent', 'hello');
 
-      expect(mockIpcRegisterTask).toHaveBeenCalledWith({
-        type: 'claude',
-        agentName: 'myagent',
-        session: 'test-session',
-        window: 'myagent',
-        paneIndex: 0
-      });
       expect(mockIpcDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, 'hello');
     });
 
-    it('IPC 注册失败时，显示连接异常提示', async () => {
+    it('IPC 分发失败时，记录真实错误并提示任务提交失败', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -231,12 +213,12 @@ describe('runChat', () => {
         panes: { claude: { layout: 'left' } }
       });
       mockListPanesWithTitle.mockResolvedValue([{ index: 0, title: 'claude' }]);
-      mockIpcRegisterTask.mockRejectedValue(new Error('connection refused'));
+      mockIpcDispatch.mockRejectedValue(new Error('connection refused'));
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await runChat('myagent', 'hello');
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('IPC'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('IPC 任务提交失败'));
 
       consoleSpy.mockRestore();
     });

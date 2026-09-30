@@ -1,15 +1,6 @@
 import type { ClaudeHookEvent, EventProcessor } from './types';
-import { createSessionStartProcessor } from './sessionStart';
-import { createSessionEndProcessor } from './sessionEnd';
 import { createStopProcessor } from './stop';
-import { createStopFailureProcessor } from './stopFailure';
-import { createPreToolUseProcessor } from './preToolUse';
-import { createPostToolUseProcessor } from './postToolUse';
-import { createPostToolUseFailureProcessor } from './postToolUseFailure';
-import { createPermissionRequestProcessor } from './permissionRequest';
-import { createPermissionDeniedProcessor } from './permissionDenied';
-import { createDefaultClaudeHookEvent } from './defaultClaudeHookEvent';
-import { logger } from '../../logging';
+import { createNoopProcessor } from './noop';
 
 /**
  * 根据事件名称创建对应的处理器
@@ -19,25 +10,24 @@ import { logger } from '../../logging';
 export const createProcessor = (event: ClaudeHookEvent): EventProcessor => {
   switch (event) {
     case 'SessionStart':
-      return createSessionStartProcessor();
+      return createNoopProcessor('SessionStart');
     case 'SessionEnd':
-      return createSessionEndProcessor();
+      return createNoopProcessor('SessionEnd');
     case 'Stop':
       return createStopProcessor();
     case 'StopFailure':
-      return createStopFailureProcessor();
+      return createNoopProcessor('StopFailure');
     case 'PreToolUse':
-      return createPreToolUseProcessor();
+      return createNoopProcessor('PreToolUse');
     case 'PostToolUse':
-      return createPostToolUseProcessor();
+      return createNoopProcessor('PostToolUse');
     case 'PostToolUseFailure':
-      return createPostToolUseFailureProcessor();
+      return createNoopProcessor('PostToolUseFailure');
     case 'PermissionRequest':
-      return createPermissionRequestProcessor();
+      return createNoopProcessor('PermissionRequest');
     case 'PermissionDenied':
-      return createPermissionDeniedProcessor();
+      return createNoopProcessor('PermissionDenied');
     default:
-      logger.warn(`claude hook event unknown type: ${String(event)}`);
-      return createDefaultClaudeHookEvent();
+      return createNoopProcessor('DefaultClaudeHookEvent');
   }
 };

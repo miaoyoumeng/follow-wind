@@ -1,12 +1,17 @@
 import { randomBytes } from 'crypto';
 import chalk from 'chalk';
 
-import { SOLO_DIR, CONFIG_PATH_NAME, SOLO_DIR_NAME, readConfig, writeConfig, type SoloConfig } from '../config';
+import {
+  SOLO_DIR,
+  CONFIG_PATH_NAME,
+  SOLO_DIR_NAME,
+  NAME_REGEX,
+  readConfig,
+  writeConfig,
+  type SoloConfig
+} from '../config';
 import { checkSettings, checkClaude, checkTmux } from '../envs';
 import { exists, ensureDir } from '../utils/files';
-
-// name 验证规则：英文字符开头，可包含数字、'-'、'_'
-const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
 
 const validateName = (name: string): boolean => {
   return NAME_REGEX.test(name);
@@ -42,6 +47,19 @@ const checkToolInstalled = async (
   }
 };
 
+/**
+ * 读取已存在的配置；解析失败时输出提示并返回 null
+ * @returns 已有配置，读取失败时为 null
+ */
+const readExistingConfig = (): SoloConfig | null => {
+  try {
+    return readConfig();
+  } catch {
+    console.log(chalk.yellow(`⚠️ ${CONFIG_PATH_NAME} 解析失败，将重新初始化`));
+    return null;
+  }
+};
+
 const initSettings = (name: string): void => {
   const { exists: configExists } = checkSettings();
   if (!configExists) {
@@ -53,13 +71,8 @@ const initSettings = (name: string): void => {
     console.log(chalk.green(`✅ 已创建目录\`${SOLO_DIR_NAME}\`，name: ${name}`));
     return;
   }
-  let config: SoloConfig = { name: '' };
-  try {
-    config = readConfig();
-  } catch {
-    console.log(chalk.yellow(`⚠️ ${CONFIG_PATH_NAME} 解析失败，将重新初始化`));
-  }
-  if (config.name && validateName(config.name)) {
+  const config = readExistingConfig();
+  if (config?.name && validateName(config.name)) {
     console.log(chalk.yellow(`⚠️ 已存在 name: ${config.name}`));
     console.log(chalk.gray(`如需修改，请手动编辑或删除 ${CONFIG_PATH_NAME} 文件`));
     process.exit(1);
