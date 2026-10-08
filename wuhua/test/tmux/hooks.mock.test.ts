@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockExecAsync } = vi.hoisted(() => ({
-  mockExecAsync: vi.fn().mockResolvedValue({ stdout: '', stderr: '' })
+const { mockExeca } = vi.hoisted(() => ({
+  mockExeca: vi.fn().mockResolvedValue({ stdout: '', stderr: '' })
 }));
 
-vi.mock('../../src/process/exec', () => ({
-  exec: { fn: mockExecAsync }
+vi.mock('execa', () => ({
+  execa: mockExeca
 }));
 
 import { setHook, isTmuxHook, HOOK_NAMES, registerHooks } from '../../src/tmux/hooks';
@@ -26,35 +26,39 @@ describe('isTmuxHook', () => {
 
 describe('setHook', () => {
   beforeEach(() => {
-    mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
+    mockExeca.mockReset().mockResolvedValue({ stdout: '', stderr: '' });
   });
 
-  it('全局设置 hook：拼接 tmux set-hook -g', async () => {
+  it('全局设置 hook：scope 参数为 -g', async () => {
     await setHook('after-new-session', 'run-shell "echo created"');
-    expect(mockExecAsync).toHaveBeenCalledWith(`tmux set-hook -g after-new-session 'run-shell "echo created"'`);
+    expect(mockExeca).toHaveBeenCalledWith('tmux', ['set-hook', '-g', 'after-new-session', 'run-shell "echo created"']);
   });
 
-  it('指定 session 设置 hook：拼接 -t sessionName', async () => {
+  it('指定 session 设置 hook：scope 参数为 -t sessionName', async () => {
     await setHook('after-split-window', 'run-shell "echo closed"', 'my-session');
-    expect(mockExecAsync).toHaveBeenCalledWith(
-      `tmux set-hook -t my-session after-split-window 'run-shell "echo closed"'`
-    );
+    expect(mockExeca).toHaveBeenCalledWith('tmux', [
+      'set-hook',
+      '-t',
+      'my-session',
+      'after-split-window',
+      'run-shell "echo closed"'
+    ]);
   });
 
-  it('command 不含引号时仍用单引号包裹', async () => {
+  it('command 含空格时作为单个参数原样传递，不做 shell 引号包裹', async () => {
     await setHook('after-kill-pane', 'display-message died');
-    expect(mockExecAsync).toHaveBeenCalledWith(`tmux set-hook -g after-kill-pane 'display-message died'`);
+    expect(mockExeca).toHaveBeenCalledWith('tmux', ['set-hook', '-g', 'after-kill-pane', 'display-message died']);
   });
 
   it('支持 after-* 系列 hook：after-new-session', async () => {
     await setHook('after-new-session', 'run-shell "echo new"');
-    expect(mockExecAsync).toHaveBeenCalledWith(`tmux set-hook -g after-new-session 'run-shell "echo new"'`);
+    expect(mockExeca).toHaveBeenCalledWith('tmux', ['set-hook', '-g', 'after-new-session', 'run-shell "echo new"']);
   });
 });
 
 describe('registerHooks', () => {
   beforeEach(() => {
-    mockExecAsync.mockClear().mockResolvedValue({ stdout: '', stderr: '' });
+    mockExeca.mockReset().mockResolvedValue({ stdout: '', stderr: '' });
   });
 
   it('值为 true 的事件全部注册，返回事件名列表', async () => {
@@ -65,27 +69,33 @@ describe('registerHooks', () => {
     });
 
     expect(registered).toEqual(['alert-activity', 'after-send-keys']);
-    expect(mockExecAsync).toHaveBeenCalledTimes(2);
-    // 每个启用事件执行一次 set-hook，回调为 solo hook 上报命令
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      1,
-      `tmux set-hook -t sess-abc alert-activity 'run-shell "solo hook --endpoint=tmux --event=alert-activity"'`
-    );
-    expect(mockExecAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('tmux set-hook -t sess-abc after-send-keys')
-    );
+    expect(mockExeca).toHaveBeenCalledTimes(2);
+    // 每个启用事件执行一次 set-hook，回调为 wuhua hook 上报命令
+    expect(mockExeca).toHaveBeenNthCalledWith(1, 'tmux', [
+      'set-hook',
+      '-t',
+      'sess-abc',
+      'alert-activity',
+      'run-shell "wuhua hook --endpoint=tmux --event=alert-activity"'
+    ]);
+    expect(mockExeca).toHaveBeenNthCalledWith(2, 'tmux', [
+      'set-hook',
+      '-t',
+      'sess-abc',
+      'after-send-keys',
+      'run-shell "wuhua hook --endpoint=tmux --event=after-send-keys"'
+    ]);
   });
 
   it('hooks 为 undefined 或空对象时不执行任何注册', async () => {
     await registerHooks('sess-abc');
     await registerHooks('sess-abc', {});
-    expect(mockExecAsync).not.toHaveBeenCalled();
+    expect(mockExeca).not.toHaveBeenCalled();
   });
 
   it('值为 false 的事件跳过注册', async () => {
     await registerHooks('sess-abc', { 'alert-bell': false });
-    expect(mockExecAsync).not.toHaveBeenCalled();
+    expect(mockExeca).not.toHaveBeenCalled();
   });
 
   it('配置 tmux 不支持的未知事件名时抛出错误并提示事件名', async () => {

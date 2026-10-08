@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
-const { mockTerminal, mockSessionExists, mockValidateWorkspace } = vi.hoisted(() => ({
-  mockTerminal: vi.fn(),
+const { mockExeca, mockSessionExists, mockValidateWorkspace } = vi.hoisted(() => ({
+  mockExeca: vi.fn(),
   mockSessionExists: vi.fn().mockResolvedValue(true),
   mockValidateWorkspace: vi.fn().mockReturnValue('sess-abc')
 }));
 
-vi.mock('../../src/process', () => ({
-  terminal: mockTerminal
+vi.mock('execa', () => ({
+  execa: mockExeca
 }));
 
 vi.mock('../../src/tmux', () => ({
@@ -29,16 +29,29 @@ describe('runDashboard', () => {
     vi.clearAllMocks();
     spy = vi.spyOn(console, 'log').mockImplementation(() => {});
     mockSessionExists.mockResolvedValue(true);
+    mockExeca.mockResolvedValue({ stdout: '', stderr: '', exitCode: 0 });
   });
 
   afterEach(() => {
     spy.mockRestore();
   });
 
-  it('session 存在时调用 terminal 启动 tmux attach-session', async () => {
+  it('session 存在时接管终端 attach tmux session 并透传退出码', async () => {
     await runDashboard();
 
-    expect(mockTerminal).toHaveBeenCalledWith('tmux', ['attach-session', '-t', 'sess-abc']);
+    expect(mockExeca).toHaveBeenCalledWith('tmux', ['attach-session', '-t', 'sess-abc'], {
+      stdio: 'inherit',
+      reject: false
+    });
+    expect(mockExit).toHaveBeenCalledWith(0);
+  });
+
+  it('attach 异常退出时透传非零退出码', async () => {
+    mockExeca.mockResolvedValue({ stdout: '', stderr: '', exitCode: 3 });
+
+    await runDashboard();
+
+    expect(mockExit).toHaveBeenCalledWith(3);
   });
 
   it('session 不存在时输出错误并退出', async () => {
@@ -49,7 +62,7 @@ describe('runDashboard', () => {
 
     await expect(runDashboard()).rejects.toThrow('process.exit');
 
-    expect(mockTerminal).not.toHaveBeenCalled();
+    expect(mockExeca).not.toHaveBeenCalled();
     const output = spy.mock.calls.map((c: unknown[]) => String(c[0])).join('');
     expect(output).toContain('is not running');
     expect(mockExit).toHaveBeenCalledWith(1);

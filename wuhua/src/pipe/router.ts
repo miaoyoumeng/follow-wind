@@ -1,5 +1,5 @@
 import { InstructQueue } from './queue';
-import { selectPane, sendKeysEnter, buildPaneKey } from '../tmux';
+import { selectPane, sendKeys, buildPaneKey } from '../tmux';
 import { logger } from '../logging';
 import type { Instruct } from './types';
 
@@ -45,15 +45,15 @@ export class TmuxRouter {
     try {
       logger.debug(`${tag} select pane, sending keys: ${instruct.prompt}`);
       await selectPane(this.session, this.window, this.paneIndex);
-      await sendKeysEnter(this.session, this.window, this.paneIndex, instruct.prompt);
+      await sendKeys(this.session, this.window, this.paneIndex, instruct.prompt);
       logger.debug(`${tag} instruct sent`);
     } catch (err) {
       const retryCount = (instruct.retryCount ?? 0) + 1;
       if (retryCount >= MAX_SEND_RETRY) {
-        logger.error(`${tag} sendKeysEnter failed ${retryCount} times, dropping instruct: ${String(err)}`);
+        logger.error(`${tag} sendKeys failed ${retryCount} times, dropping instruct: ${String(err)}`);
         return;
       }
-      logger.warn(`${tag} sendKeysEnter failed (retry ${retryCount}/${MAX_SEND_RETRY}), requeue: ${String(err)}`);
+      logger.warn(`${tag} sendKeys failed (retry ${retryCount}/${MAX_SEND_RETRY}), requeue: ${String(err)}`);
       this.queue.enqueueFront({ ...instruct, retryCount });
     }
   }

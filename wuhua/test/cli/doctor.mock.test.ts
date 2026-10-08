@@ -40,7 +40,7 @@ describe('runDoctor', () => {
   });
 
   const allPass = (): void => {
-    mockCheckSettings.mockReturnValue({ exists: true, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: true, path: '/.wuhua/config.yaml' });
     mockReadConfig.mockReturnValue({ name: 'test-project' });
     mockCheckGit.mockResolvedValue({ installed: true, version: 'git version 2.39.0' });
     mockCheckTmux.mockResolvedValue({ installed: true, version: 'tmux 3.3a' });
@@ -65,7 +65,7 @@ describe('runDoctor', () => {
   });
 
   it('config.yaml 不存在时显示 ❌ 并退出', async () => {
-    mockCheckSettings.mockReturnValue({ exists: false, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: false, path: '/.wuhua/config.yaml' });
     mockCheckGit.mockResolvedValue({ installed: true, version: 'git version 2.39.0' });
     mockCheckTmux.mockResolvedValue({ installed: true, version: 'tmux 3.3a' });
     mockCheckClaude.mockResolvedValue({ installed: true, version: 'claude version 1.0.0' });
@@ -78,7 +78,7 @@ describe('runDoctor', () => {
   });
 
   it('readConfig 抛出异常时显示解析错误', async () => {
-    mockCheckSettings.mockReturnValue({ exists: true, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: true, path: '/.wuhua/config.yaml' });
     mockReadConfig.mockImplementation(() => {
       throw new Error('YAML parse error');
     });
@@ -94,7 +94,7 @@ describe('runDoctor', () => {
   });
 
   it('name 为空或非法时显示 ❌', async () => {
-    mockCheckSettings.mockReturnValue({ exists: true, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: true, path: '/.wuhua/config.yaml' });
     mockReadConfig.mockReturnValue({ name: '' });
     mockCheckGit.mockResolvedValue({ installed: true, version: 'git version 2.39.0' });
     mockCheckTmux.mockResolvedValue({ installed: true, version: 'tmux 3.3a' });
@@ -108,7 +108,7 @@ describe('runDoctor', () => {
   });
 
   it('git 未安装时显示 ❌', async () => {
-    mockCheckSettings.mockReturnValue({ exists: true, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: true, path: '/.wuhua/config.yaml' });
     mockReadConfig.mockReturnValue({ name: 'test-project' });
     mockCheckGit.mockResolvedValue({ installed: false });
     mockCheckTmux.mockResolvedValue({ installed: true, version: 'tmux 3.3a' });
@@ -122,7 +122,7 @@ describe('runDoctor', () => {
   });
 
   it('tmux 未安装时显示 ❌', async () => {
-    mockCheckSettings.mockReturnValue({ exists: true, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: true, path: '/.wuhua/config.yaml' });
     mockReadConfig.mockReturnValue({ name: 'test-project' });
     mockCheckGit.mockResolvedValue({ installed: true, version: 'git version 2.39.0' });
     mockCheckTmux.mockResolvedValue({ installed: false });
@@ -136,7 +136,7 @@ describe('runDoctor', () => {
   });
 
   it('claude 未安装时显示 ❌', async () => {
-    mockCheckSettings.mockReturnValue({ exists: true, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: true, path: '/.wuhua/config.yaml' });
     mockReadConfig.mockReturnValue({ name: 'test-project' });
     mockCheckGit.mockResolvedValue({ installed: true, version: 'git version 2.39.0' });
     mockCheckTmux.mockResolvedValue({ installed: true, version: 'tmux 3.3a' });
@@ -150,7 +150,7 @@ describe('runDoctor', () => {
   });
 
   it('多项失败时全部报告', async () => {
-    mockCheckSettings.mockReturnValue({ exists: false, path: '/.solo/config.yaml' });
+    mockCheckSettings.mockReturnValue({ exists: false, path: '/.wuhua/config.yaml' });
     mockCheckGit.mockResolvedValue({ installed: false });
     mockCheckTmux.mockResolvedValue({ installed: true, version: 'tmux 3.3a' });
     mockCheckClaude.mockResolvedValue({ installed: false });

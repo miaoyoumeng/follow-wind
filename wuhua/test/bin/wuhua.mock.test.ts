@@ -23,7 +23,7 @@ const {
 }));
 
 // commander 是外部 CLI 框架：用真实 Command 子类替换，保留全部链式 API 以便断言注册结果。
-// 只把 parse 置为空操作 —— src/bin/solo 在模块顶层调用它，真实解析会执行命令并终止测试进程；
+// 只把 parse 置为空操作 —— src/bin/wuhua 在模块顶层调用它，真实解析会执行命令并终止测试进程；
 // parseAsync 保持真实实现，供测试主动驱动解析。
 vi.mock('commander', async importOriginal => {
   const actual = await importOriginal<typeof CommanderType>();
@@ -67,7 +67,7 @@ vi.mock('../../src/logging', () => ({
   } as unknown
 }));
 
-import { initLogger } from '../../src/bin/solo';
+import { initLogger } from '../../src/bin/wuhua';
 
 /** 从捕获的 program 上读取注册结果的只读视图 */
 interface RegisteredCommand {
@@ -79,6 +79,7 @@ interface RegisteredCommand {
 }
 
 const program = registeredPrograms[0] as unknown as {
+  name: () => string;
   commands: RegisteredCommand[];
   parseAsync: (args: string[]) => Promise<void>;
 };
@@ -89,15 +90,21 @@ const EXPECTED_COMMANDS: ReadonlyArray<[string, string]> = [
   ['init', '检查并初始化环境'],
   ['version', '检查环境并显示版本'],
   ['doctor', '诊断环境和配置'],
-  ['status', '检查工作目录是否为合规的 solo 工作区'],
+  ['status', '检查工作目录是否为合规的 wuhua 工作区'],
   ['start', '启动本项目的 tmux session'],
   ['stop', '终止本项目的 tmux session'],
   ['dashboard', '进入本项目的 tmux session'],
   ['usage', '统计指定 agent 的 Claude token 消耗'],
   ['chat', '向指定 agent 的 claude pane 发送消息'],
   ['hook', 'hook 回调入口（由 tmux run-shell 自动调用）'],
-  ['capture', '捕获指定 agent 面板内容并写入 .solo/capture/']
+  ['capture', '捕获指定 agent 面板内容并写入 .wuhua/capture/']
 ];
+
+describe('项目名', () => {
+  it('program 名称为 wuhua', () => {
+    expect(program.name()).toBe('wuhua');
+  });
+});
 
 describe('initLogger', () => {
   beforeEach(() => {
@@ -105,15 +112,15 @@ describe('initLogger', () => {
   });
 
   it('配置 logging 段时，调用 setup 初始化日志模块', () => {
-    mockGetLoggingConfig.mockReturnValue({ level: 'debug', file: '/tmp/solo.log' });
+    mockGetLoggingConfig.mockReturnValue({ level: 'debug', file: '/tmp/wuhua.log' });
     initLogger();
-    expect(mockSetup).toHaveBeenCalledWith({ level: 'debug', file: '/tmp/solo.log' });
+    expect(mockSetup).toHaveBeenCalledWith({ level: 'debug', file: '/tmp/wuhua.log' });
   });
 
   it('未配置 logging 段时，仍调用 setup（getLoggingConfig 已补充默认值）', () => {
-    mockGetLoggingConfig.mockReturnValue({ level: 'warn', file: '/default/.solo/solo.log' });
+    mockGetLoggingConfig.mockReturnValue({ level: 'warn', file: '/default/.wuhua/wuhua.log' });
     initLogger();
-    expect(mockSetup).toHaveBeenCalledWith({ level: 'warn', file: '/default/.solo/solo.log' });
+    expect(mockSetup).toHaveBeenCalledWith({ level: 'warn', file: '/default/.wuhua/wuhua.log' });
   });
 });
 
@@ -174,23 +181,23 @@ describe('命令执行', () => {
   // commander 会在声明的参数之后追加 options 与 command 对象（lib/command.js:534-540）；
   // 各命令实现按固定元数接收，多余参数被忽略，故断言前 N 个实参
   it('capture：pane-index 经 parseInt 转为 number 后传入', async () => {
-    await program.parseAsync(['node', 'solo', 'capture', 'myagent', '3']);
+    await program.parseAsync(['node', 'wuhua', 'capture', 'myagent', '3']);
     expect(mockRunCapture.mock.calls[0].slice(0, 2)).toEqual(['myagent', 3]);
   });
 
   it('chat：两个位置参数按序传入', async () => {
-    await program.parseAsync(['node', 'solo', 'chat', 'myagent', 'hello world']);
+    await program.parseAsync(['node', 'wuhua', 'chat', 'myagent', 'hello world']);
     expect(mockRunChat.mock.calls[0].slice(0, 2)).toEqual(['myagent', 'hello world']);
   });
 
   it('usage：省略日期时第二个参数为 undefined', async () => {
-    await program.parseAsync(['node', 'solo', 'usage', 'myagent']);
+    await program.parseAsync(['node', 'wuhua', 'usage', 'myagent']);
     expect(mockRunUsage.mock.calls[0][0]).toBe('myagent');
     expect(mockRunUsage.mock.calls[0][1]).toBeUndefined();
   });
 
   it('hook：选项映射为回调参数', async () => {
-    await program.parseAsync(['node', 'solo', 'hook', '--endpoint', 'tmux', '--event', 'alert-bell']);
+    await program.parseAsync(['node', 'wuhua', 'hook', '--endpoint', 'tmux', '--event', 'alert-bell']);
     expect(mockRunHook).toHaveBeenCalledWith({
       endpoint: 'tmux',
       event: 'alert-bell',
@@ -199,7 +206,7 @@ describe('命令执行', () => {
   });
 
   it('start：多余参数报错，不执行 runStart（allowExcessArguments=false 生效）', async () => {
-    await expect(program.parseAsync(['node', 'solo', 'start', 'extra'])).rejects.toThrow(/too many arguments/);
+    await expect(program.parseAsync(['node', 'wuhua', 'start', 'extra'])).rejects.toThrow(/too many arguments/);
     expect(mockRunStart).not.toHaveBeenCalled();
   });
 });

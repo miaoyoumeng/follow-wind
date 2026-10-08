@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type * as TmuxType from '../../src/tmux';
 
-const { mockSendKeysEnter, mockSelectPane } = vi.hoisted(() => ({
-  mockSendKeysEnter: vi.fn(),
+const { mockSendKeys, mockSelectPane } = vi.hoisted(() => ({
+  mockSendKeys: vi.fn(),
   mockSelectPane: vi.fn()
 }));
 
@@ -10,7 +10,7 @@ vi.mock('../../src/tmux', async () => {
   const actual = await vi.importActual<typeof TmuxType>('../../src/tmux');
   return {
     ...actual,
-    sendKeysEnter: mockSendKeysEnter,
+    sendKeys: mockSendKeys,
     selectPane: mockSelectPane
   };
 });
@@ -31,9 +31,9 @@ const NOW = '2026-09-30T00:00:00.000Z';
 
 describe('TmuxRouter', () => {
   beforeEach(() => {
-    mockSendKeysEnter.mockReset();
+    mockSendKeys.mockReset();
     mockSelectPane.mockReset();
-    mockSendKeysEnter.mockResolvedValue(undefined);
+    mockSendKeys.mockResolvedValue(undefined);
     mockSelectPane.mockResolvedValue(undefined);
   });
 
@@ -68,20 +68,20 @@ describe('TmuxRouter', () => {
       const router = new TmuxRouter('s', 'w', 0);
       await router.paneRolling();
       expect(mockSelectPane).not.toHaveBeenCalled();
-      expect(mockSendKeysEnter).not.toHaveBeenCalled();
+      expect(mockSendKeys).not.toHaveBeenCalled();
     });
 
-    it('发送指令前调用 selectPane，然后 sendKeysEnter', async () => {
+    it('发送指令前调用 selectPane，然后 sendKeys', async () => {
       const router = new TmuxRouter('s', 'w', 0);
       router.queue.enqueue({ prompt: 'ls -la', createdAt: NOW });
       await router.paneRolling();
       expect(mockSelectPane).toHaveBeenCalledWith('s', 'w', 0);
-      expect(mockSendKeysEnter).toHaveBeenCalledWith('s', 'w', 0, 'ls -la');
+      expect(mockSendKeys).toHaveBeenCalledWith('s', 'w', 0, 'ls -la');
     });
 
-    it('sendKeysEnter 失败时不抛出异常，并将指令放回队首且递增重试计数', async () => {
+    it('sendKeys 失败时不抛出异常，并将指令放回队首且递增重试计数', async () => {
       const router = new TmuxRouter('s', 'w', 0);
-      mockSendKeysEnter.mockRejectedValueOnce(new Error('send failed'));
+      mockSendKeys.mockRejectedValueOnce(new Error('send failed'));
       router.queue.enqueue({ prompt: 'ls', createdAt: NOW });
 
       await expect(router.paneRolling()).resolves.not.toThrow();
@@ -93,7 +93,7 @@ describe('TmuxRouter', () => {
 
     it('重试的指令优先于其后入队的指令', async () => {
       const router = new TmuxRouter('s', 'w', 0);
-      mockSendKeysEnter.mockRejectedValueOnce(new Error('send failed'));
+      mockSendKeys.mockRejectedValueOnce(new Error('send failed'));
       router.queue.enqueue({ prompt: 'first', createdAt: NOW });
       router.queue.enqueue({ prompt: 'second', createdAt: NOW });
 
@@ -105,7 +105,7 @@ describe('TmuxRouter', () => {
 
     it('重试计数逐次递增，达到上限后丢弃指令', async () => {
       const router = new TmuxRouter('s', 'w', 0);
-      mockSendKeysEnter.mockRejectedValue(new Error('send failed'));
+      mockSendKeys.mockRejectedValue(new Error('send failed'));
       router.queue.enqueue({ prompt: 'ls', createdAt: NOW });
 
       await router.paneRolling();
@@ -120,7 +120,7 @@ describe('TmuxRouter', () => {
 
     it('失败一次后重试成功则指令出队且不再入队', async () => {
       const router = new TmuxRouter('s', 'w', 0);
-      mockSendKeysEnter.mockRejectedValueOnce(new Error('send failed'));
+      mockSendKeys.mockRejectedValueOnce(new Error('send failed'));
       router.queue.enqueue({ prompt: 'ls', createdAt: NOW });
 
       await router.paneRolling();

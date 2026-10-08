@@ -87,7 +87,7 @@ const handleConnection = (conn: net.Socket, onExit: () => void): void => {
 
 /**
  * 启动 IPC Unix socket 服务端，接收请求并委托 handleMessage 处理
- * @param socketPath socket 文件路径（如 .solo/ipc-[name].sock）
+ * @param socketPath socket 文件路径（如 .wuhua/ipc-[name].sock）
  * @param onExit exit 方法被调用时的回调（用于触发 daemon 优雅关闭）
  * @param onListening socket 开始监听后的回调
  */

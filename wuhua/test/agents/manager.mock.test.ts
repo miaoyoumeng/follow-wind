@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readConfig, type SoloConfig } from '../../src/config';
+import { readConfig, type WuhuaConfig } from '../../src/config';
 import { getAgents, getAgent } from '../../src/agents/manager';
 
 // 文件 IO 是最低层外部依赖，mock 读取函数以隔离 manager 逻辑
@@ -11,7 +11,7 @@ vi.mock('../../src/config', () => ({
 const mockReadConfig = vi.mocked(readConfig);
 
 // 新语义：key = tag 名，value = { layout: 位置 }
-const sampleConfig: SoloConfig = {
+const sampleConfig: WuhuaConfig = {
   name: 'l2yzf501k6yxyde',
   agents: {
     'admin-pm': {

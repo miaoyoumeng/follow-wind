@@ -84,7 +84,7 @@ describe('runUsage', () => {
 
   it('日期格式不合法时，抛出错误并提示命令用法', async () => {
     mockGetAgent.mockReturnValue({ name: 'frontend', workspace: '/app', activate: true });
-    await expect(runUsage('frontend', '20260909')).rejects.toThrow('用法: solo usage [agent name] [日期(可选)]');
+    await expect(runUsage('frontend', '20260909')).rejects.toThrow('用法: wuhua usage [agent name] [日期(可选)]');
   });
 
   it('无 usage.json 时，创建文件并写入今日统计', async () => {
@@ -107,7 +107,7 @@ describe('runUsage', () => {
     expect(mockWriteFileSync).toHaveBeenCalledTimes(1);
     const writePath = mockWriteFileSync.mock.calls[0][0] as string;
     const writeData = mockWriteFileSync.mock.calls[0][1] as string;
-    expect(writePath).toBe(join(process.cwd(), '.solo', 'usage.json'));
+    expect(writePath).toBe(join(process.cwd(), '.wuhua', 'usage.json'));
     const parsed = JSON.parse(writeData as string) as Record<string, unknown>;
     expect(parsed['2026-09-09']).toEqual({
       'claude-sonnet-4-5': {

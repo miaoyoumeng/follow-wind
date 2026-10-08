@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockExecAsync } = vi.hoisted(() => ({
-  mockExecAsync: vi.fn()
+const { mockExeca } = vi.hoisted(() => ({
+  mockExeca: vi.fn()
 }));
 
-vi.mock('../../src/process', () => ({
-  execAsync: mockExecAsync,
-  exec: { fn: mockExecAsync }
+vi.mock('execa', () => ({
+  execa: mockExeca
 }));
 
 vi.mock('../../src/logging', () => ({
@@ -17,18 +16,18 @@ import { isTmuxRunning } from '../../src/tmux/session';
 
 describe('isTmuxRunning', () => {
   beforeEach(() => {
-    mockExecAsync.mockReset();
+    mockExeca.mockReset();
   });
 
   it('tmux server 运行时返回 true', async () => {
-    mockExecAsync.mockResolvedValue({ stdout: '0: my-session\n', stderr: '' });
+    mockExeca.mockResolvedValue({ stdout: '0: my-session\n', stderr: '' });
     const result = await isTmuxRunning();
     expect(result).toBe(true);
-    expect(mockExecAsync).toHaveBeenCalledWith('tmux list-sessions 2>/dev/null');
+    expect(mockExeca).toHaveBeenCalledWith('tmux', ['list-sessions']);
   });
 
   it('tmux server 未运行时返回 false', async () => {
-    mockExecAsync.mockRejectedValue(new Error('no server running'));
+    mockExeca.mockRejectedValue(new Error('no server running'));
     const result = await isTmuxRunning();
     expect(result).toBe(false);
   });

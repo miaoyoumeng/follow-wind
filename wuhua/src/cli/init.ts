@@ -2,13 +2,13 @@ import { randomBytes } from 'crypto';
 import chalk from 'chalk';
 
 import {
-  SOLO_DIR,
+  WUHUA_DIR,
   CONFIG_PATH_NAME,
-  SOLO_DIR_NAME,
+  WUHUA_DIR_NAME,
   NAME_REGEX,
   readConfig,
   writeConfig,
-  type SoloConfig
+  type WuhuaConfig
 } from '../config';
 import { checkSettings, checkClaude, checkTmux } from '../envs';
 import { exists, ensureDir } from '../utils/files';
@@ -51,7 +51,7 @@ const checkToolInstalled = async (
  * 读取已存在的配置；解析失败时输出提示并返回 null
  * @returns 已有配置，读取失败时为 null
  */
-const readExistingConfig = (): SoloConfig | null => {
+const readExistingConfig = (): WuhuaConfig | null => {
   try {
     return readConfig();
   } catch {
@@ -64,11 +64,11 @@ const initSettings = (name: string): void => {
   const { exists: configExists } = checkSettings();
   if (!configExists) {
     console.log(chalk.cyan(`创建 ${CONFIG_PATH_NAME}...`));
-    if (!exists(SOLO_DIR)) {
-      ensureDir(SOLO_DIR);
+    if (!exists(WUHUA_DIR)) {
+      ensureDir(WUHUA_DIR);
     }
     writeConfig({ name });
-    console.log(chalk.green(`✅ 已创建目录\`${SOLO_DIR_NAME}\`，name: ${name}`));
+    console.log(chalk.green(`✅ 已创建目录\`${WUHUA_DIR_NAME}\`，name: ${name}`));
     return;
   }
   const config = readExistingConfig();

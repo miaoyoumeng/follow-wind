@@ -20,7 +20,7 @@ import { getVersion } from '../utils/version';
 import { setConfigPath } from '../config';
 import { getLoggingConfig, logger, setup as setupLogger } from '../logging';
 
-/** 从 .solo/config 读取日志配置并初始化日志模块（始终启用，缺失字段使用默认值） */
+/** 从 .wuhua/config 读取日志配置并初始化日志模块（始终启用，缺失字段使用默认值） */
 export const initLogger = (): void => {
   setupLogger(getLoggingConfig());
 };
@@ -61,7 +61,7 @@ export const registerCommands = (program: Command, specs: readonly CommandSpec[]
   }
 };
 
-// 仅在直接执行时运行副作用（import 时跳过，使 solo.ts 可安全导入测试）
+// 仅在直接执行时运行副作用（import 时跳过，使 wuhua.ts 可安全导入测试）
 if (require.main === module) {
   initLogger();
 
@@ -76,10 +76,10 @@ if (require.main === module) {
 const program = new Command();
 
 program
-  .name('solo')
+  .name('wuhua')
   .description('通过 tmux 管理多个 Claude 命令窗口')
   .version(getVersion())
-  .option('--config <path>', '指定配置文件路径（默认 .solo/config.yaml）');
+  .option('--config <path>', '指定配置文件路径（默认 .wuhua/config.yaml）');
 
 // 在执行任何子命令前，解析 --config 选项并更新配置路径
 program.hook('preAction', (thisCommand: InstanceType<typeof Command>) => {
@@ -95,7 +95,7 @@ const COMMANDS: readonly CommandSpec[] = [
   { name: 'init', description: '检查并初始化环境', execute: runInit },
   { name: 'version', description: '检查环境并显示版本', execute: runVersion },
   { name: 'doctor', description: '诊断环境和配置', execute: runDoctor },
-  { name: 'status', description: '检查工作目录是否为合规的 solo 工作区', execute: runStatus },
+  { name: 'status', description: '检查工作目录是否为合规的 wuhua 工作区', execute: runStatus },
   { name: 'start', description: '启动本项目的 tmux session', allowExcessArguments: false, execute: runStart },
   { name: 'stop', description: '终止本项目的 tmux session', execute: runStop },
   { name: 'dashboard', description: '进入本项目的 tmux session', execute: runDashboard },
@@ -135,7 +135,7 @@ const COMMANDS: readonly CommandSpec[] = [
   },
   {
     name: 'capture',
-    description: '捕获指定 agent 面板内容并写入 .solo/capture/',
+    description: '捕获指定 agent 面板内容并写入 .wuhua/capture/',
     args: [
       { syntax: '<agent-name>', description: 'agent 名称' },
       { syntax: '<pane-index>', description: 'pane 索引', parser: parseInt }

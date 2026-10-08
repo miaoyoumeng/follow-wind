@@ -71,7 +71,7 @@ const mergeModels = (
 };
 
 /**
- * 统计指定 agent 在目标日期的 token 消耗，写入 .solo/usage.json（按日期升序）
+ * 统计指定 agent 在目标日期的 token 消耗，写入 .wuhua/usage.json（按日期升序）
  * 同时在控制台输出今日消耗与总消耗
  * @param agentName agent 名称
  * @param dateStr 可选日期 yyyy-mm-dd，默认今天
@@ -85,7 +85,7 @@ export const runUsage = async (agentName: string, dateStr?: string): Promise<voi
 
   const targetDate = dateStr ?? formatDateOnly();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
-    throw new Error(`日期格式错误: "${dateStr}"（应为 yyyy-mm-dd）。用法: solo usage [agent name] [日期(可选)]`);
+    throw new Error(`日期格式错误: "${dateStr}"（应为 yyyy-mm-dd）。用法: wuhua usage [agent name] [日期(可选)]`);
   }
 
   // 读取已有 usage 数据

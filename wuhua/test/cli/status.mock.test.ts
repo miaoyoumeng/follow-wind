@@ -6,7 +6,7 @@ const { mockReadPidFile, mockIsProcessAlive } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../src/envs', () => ({
-  checkSettings: vi.fn().mockReturnValue({ exists: true, path: '/.solo/config' })
+  checkSettings: vi.fn().mockReturnValue({ exists: true, path: '/.wuhua/config' })
 }));
 
 vi.mock('../../src/config', () => ({
@@ -294,14 +294,14 @@ describe('validateWorkspace', () => {
     mockExit.mockRestore();
   });
 
-  it('name 非法时输出的消息包含该 name，而非「不是 solo 工作区」文案', () => {
+  it('name 非法时输出的消息包含该 name，而非「不是 wuhua 工作区」文案', () => {
     vi.mocked(readConfig).mockReturnValueOnce({ name: '1-invalid' });
 
     validateWorkspace();
 
     const output = stripAnsi(consoleSpy.mock.calls.map((c: unknown[]) => String(c[0] as string)).join('\n'));
     expect(output).toContain('1-invalid');
-    expect(output).not.toContain('not solo workspace');
+    expect(output).not.toContain('not wuhua workspace');
     expect(mockExit).toHaveBeenCalledWith(1);
   });
 });

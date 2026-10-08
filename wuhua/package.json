@@ -1,13 +1,13 @@
 {
-  "name": "solo",
+  "name": "wuhua",
   "version": "1.0.0",
   "description": "通过 tmux 管理多个 Claude 命令窗口的 CLI 工具",
   "bin": {
-    "solo": "./dist/bin/solo.js"
+    "wuhua": "./dist/bin/wuhua.js"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/bin/solo.js",
+    "start": "node dist/bin/wuhua.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint:eslint": "eslint --fix --ext .js,.ts ./src ./test",
@@ -31,6 +31,7 @@
     "chalk": "^4.1.2",
     "commander": "^12.0.0",
     "croner": "^10.0.1",
+    "execa": "^10.1.0",
     "js-yaml": "^5.4.1",
     "lodash": "^4.18.1",
     "md5": "^2.3.0",

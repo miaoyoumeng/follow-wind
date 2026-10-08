@@ -170,7 +170,7 @@ describe('runChat', () => {
 
       await runChat('myagent', 'hello');
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('solo 未启动'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('wuhua 未启动'));
       expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -183,7 +183,7 @@ describe('runChat', () => {
 
       await runChat('myagent', 'hello');
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('solo 未启动'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('wuhua 未启动'));
       expect(mockIpcDispatch).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();

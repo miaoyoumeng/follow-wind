@@ -33,7 +33,7 @@ export interface TaskConfig {
   maxSize?: number;
 }
 
-export interface SoloConfig {
+export interface WuhuaConfig {
   name: string;
   agents?: Record<string, AgentConfig>;
   // hooks 按 endpoint 分组，目前仅支持 tmux

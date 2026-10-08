@@ -34,7 +34,6 @@ const setPaneTitlesAndBooter = async (
     const booter = panes[tag]?.booter;
     if (booter) {
       await sendKeys(s, w, idx, booter);
-      await sendKeys(s, w, idx, 'Enter');
     }
   }
 };
@@ -97,22 +96,22 @@ const registerConfiguredHooks = async (sessionName: string): Promise<void> => {
 };
 
 export const runStart = async (): Promise<void> => {
-  console.log(chalk.cyan('solo starting...'));
+  console.log(chalk.cyan('wuhua starting...'));
   const sessionName = validateWorkspace();
   // 检查 daemon 是否已运行（重复执行检测）
   if (isDaemonRunning()) {
-    console.log(chalk.yellow(`solo 已在运行中（session: ${sessionName}），无需重复启动`));
+    console.log(chalk.yellow(`wuhua 已在运行中（session: ${sessionName}），无需重复启动`));
     return;
   }
 
-  console.log(chalk.yellow(`solo name [${sessionName}]`));
+  console.log(chalk.yellow(`wuhua name [${sessionName}]`));
   logger.info(`[start] workspace validated, session name="${sessionName}"`);
 
   const exists = await sessionExists(sessionName);
   logger.info(`[start] session "${sessionName}" exists=${exists}`);
 
   if (exists) {
-    console.log(chalk.yellow(`session "${sessionName}" 已存在，请使用 solo dashboard 进入`));
+    console.log(chalk.yellow(`session "${sessionName}" 已存在，请使用 wuhua dashboard 进入`));
     return;
   }
 
@@ -142,5 +141,5 @@ export const runStart = async (): Promise<void> => {
   writePidFile();
   // 启动常住进程，维护 chatTaskStorage 单例
   startDaemon();
-  console.log(chalk.green(`solo started, pid is ${process.pid}.`));
+  console.log(chalk.green(`wuhua started, pid is ${process.pid}.`));
 };

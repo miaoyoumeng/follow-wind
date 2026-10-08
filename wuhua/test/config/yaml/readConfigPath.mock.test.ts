@@ -33,7 +33,7 @@ describe('readConfig 接受 configPath 参数', () => {
     readConfig();
     expect(mockReadFileSync).toHaveBeenCalled();
     const calledPath = mockReadFileSync.mock.calls[0][0] as string;
-    expect(calledPath).toContain('.solo');
+    expect(calledPath).toContain('.wuhua');
     expect(calledPath).toContain('config');
   });
 });

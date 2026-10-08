@@ -12,7 +12,7 @@ import { readPidFile, isProcessAlive } from '../bootstrap';
 export const validateWorkspace = (): string => {
   const { exists } = checkSettings();
   if (!exists) {
-    console.log(chalk.red(`fatal: this dir is not solo workspace:\`.solo\`, please use \`solo init\``));
+    console.log(chalk.red(`fatal: this dir is not wuhua workspace:\`.wuhua\`, please use \`wuhua init\``));
     process.exit(1);
   }
 

@@ -9,7 +9,7 @@ describe('Logger 类', () => {
   let testLogDir: string;
 
   beforeEach(() => {
-    testLogDir = join(tmpdir(), `solo-logger-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    testLogDir = join(tmpdir(), `wuhua-logger-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(testLogDir, { recursive: true });
     testLogFile = join(testLogDir, 'test.log');
   });

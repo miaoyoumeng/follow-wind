@@ -5,10 +5,10 @@ import { getVersion } from '../utils/version';
 export const runVersion = async (): Promise<void> => {
   const errors: string[] = [];
 
-  // 检查 .solo/config
+  // 检查 .wuhua/config
   const { exists } = checkSettings();
   if (!exists) {
-    errors.push('❌ 未找到 .solo/config，请先运行 `solo init`');
+    errors.push('❌ 未找到 .wuhua/config，请先运行 `wuhua init`');
   }
 
   // 检查 claude CLI
@@ -29,6 +29,6 @@ export const runVersion = async (): Promise<void> => {
     process.exit(1);
   }
 
-  // 显示 solo 版本
-  console.log(chalk.yellow.bold(`solo version ${getVersion()}`));
+  // 显示 wuhua 版本
+  console.log(chalk.yellow.bold(`wuhua version ${getVersion()}`));
 };

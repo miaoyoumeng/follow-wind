@@ -19,7 +19,7 @@ vi.mock('../../src/logging', async importOriginal => {
 });
 
 vi.mock('../../src/config/paths', () => {
-  const tmpDir = join('/tmp', 'solo-test-pid');
+  const tmpDir = join('/tmp', 'wuhua-test-pid');
   return {
     PID_PATH: join(tmpDir, 'pid')
   };

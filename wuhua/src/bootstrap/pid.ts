@@ -3,8 +3,8 @@ import { PID_PATH } from '../config/paths';
 import { logger } from '../logging';
 
 /**
- * 将当前进程 PID 写入 .solo/pid 文件
- * 用于后续 IPC 通信时定位 solo start 进程
+ * 将当前进程 PID 写入 .wuhua/pid 文件
+ * 用于后续 IPC 通信时定位 wuhua start 进程
  */
 export const writePidFile = (): void => {
   writeFile(PID_PATH, String(process.pid));
@@ -12,7 +12,7 @@ export const writePidFile = (): void => {
 };
 
 /**
- * 读取 .solo/pid 中的 PID
+ * 读取 .wuhua/pid 中的 PID
  * @returns PID 数字；文件不存在或内容非法时返回 null
  */
 export const readPidFile = (): number | null => {

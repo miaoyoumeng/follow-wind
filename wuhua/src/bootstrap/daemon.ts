@@ -8,7 +8,7 @@ import { clearAll } from '../task/chatTaskStorage';
 let ipcRunning = false;
 
 /**
- * 检查 solo daemon 进程是否已运行
+ * 检查 wuhua daemon 进程是否已运行
  * @returns true 表示 daemon 已运行（应跳过启动），false 表示未运行
  */
 export const isDaemonRunning = (): boolean => {
@@ -19,7 +19,7 @@ export const isDaemonRunning = (): boolean => {
 /**
  * 启动常住进程，维护 chatTaskStorage 单例
  * 启动 IPC 服务端接收外部进程请求；启动心跳定期输出 chatTaskStorage 统计信息
- * IPC socket 路径从配置 name 计算：.solo/ipc-[name].sock
+ * IPC socket 路径从配置 name 计算：.wuhua/ipc-[name].sock
  * @param onListening IPC socket 开始监听后的回调
  * @returns stop 函数，调用后停止心跳并关闭 IPC 服务端
  */

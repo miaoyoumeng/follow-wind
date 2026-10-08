@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-`solo` 是一个 Node.js CLI 工具，通过 `tmux` 管理多个 Claude 命令窗口。允许用户同时运行多个独立的 Claude 会话。
+`wuhua` 是一个 Node.js CLI 工具，通过 `tmux` 管理多个 Claude 命令窗口。允许用户同时运行多个独立的 Claude 会话。
 
 ## 开发命令
 
@@ -19,15 +19,15 @@ pnpm run format          # Prettier 格式化代码和 ESLint 检查并自动修
 ## 业务命令
 
 ```bash
-solo init                # 检查并创建 .solo/config，检测 claude/tmux
-solo version             # 检查环境，显示 solo 版本
-solo status              # 检查工作目录是否为合规的 solo 工作区
-solo start               # 启动本项目的 tmux session（不存在则创建，已存在则进入）
-solo stop                # 终止本项目的 tmux session
-solo dashboard           # 进入本项目的 tmux session
-solo agents              # 显示 .solo/config 中的 agent 列表
-solo agent <args...>     # agent 管理（add <name> <path> | <name> workspace | <name> panes）
-solo windows             # 显示当前 session 中的 windows
+wuhua init                # 检查并创建 .wuhua/config，检测 claude/tmux
+wuhua version             # 检查环境，显示 wuhua 版本
+wuhua status              # 检查工作目录是否为合规的 wuhua 工作区
+wuhua start               # 启动本项目的 tmux session（不存在则创建，已存在则进入）
+wuhua stop                # 终止本项目的 tmux session
+wuhua dashboard           # 进入本项目的 tmux session
+wuhua agents              # 显示 .wuhua/config 中的 agent 列表
+wuhua agent <args...>     # agent 管理（add <name> <path> | <name> workspace | <name> panes）
+wuhua windows             # 显示当前 session 中的 windows
 ```
 
 ## 目录结构
@@ -39,7 +39,7 @@ src/
 ├── bootstrap/    # 常驻进程 daemon 管理（PID 文件、心跳、IPC 调度）
 ├── claude/       # Claude 进程启动与干预检测
 ├── cli/          # 子命令实现（每个子命令一个目录）
-├── config/       # 统一路径配置（.solo、.solo/config 等常量）
+├── config/       # 统一路径配置（.wuhua、.wuhua/config 等常量）
 ├── envs/         # 环境检测（settings、claude、tmux）
 ├── hooks/        # tmux hooks 注册与回调实现
 ├── ipc/          # IPC 通信（roller 轮询、daemon 消息处理）
@@ -50,20 +50,20 @@ src/
 └── utils/        # 通用工具（文件 IO、时间、YAML 读写等）
 ```
 
-TypeScript 构建后输出到 `dist/` 目录，可执行文件为 `dist/bin/solo.js`。
+TypeScript 构建后输出到 `dist/` 目录，可执行文件为 `dist/bin/wuhua.js`。
 
 ## 业务概念
 
 ### Agent（代理）
 
-Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux window，在这个 window 中会启动一个 claude agent，用于 ai agent工作。
+Agent 是 wuhua 管理的基本工作单元，每个 agent 对应一个 tmux window，在这个 window 中会启动一个 claude agent，用于 ai agent工作。
 
 ### Pane（面板）
 
 允许在一个 tmux window 内创建多个 pane，每个 pane 可指定一个 tag 名称（工作场景）。利用 tmux 的分屏功能，通过创建多个 pane 执行不同类型的任务。
 
 **特殊 tag：`claude`**
-当 pane 的 tag 值为 `'claude'`（精确匹配）时，solo 会在该 pane 的工作目录执行 `claude` 命令
+当 pane 的 tag 值为 `'claude'`（精确匹配）时，wuhua 会在该 pane 的工作目录执行 `claude` 命令
 
 ## 代码约定
 
@@ -71,7 +71,7 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 
 - 子命令实现都在 `src/cli/`，每个命令一个目录。
 - 业务逻辑（如 `src/agents`、`src/tmux`、`src/claude`）各自独立顶级目录。
-- 所有约定的文件路径（如 `.solo`、`.solo/config.yaml`）统一在 `src/config/` 定义，其他地方引用。
+- 所有约定的文件路径（如 `.wuhua`、`.wuhua/config.yaml`）统一在 `src/config/` 定义，其他地方引用。
 
 ### 模块入口（index.ts）
 
@@ -119,4 +119,4 @@ Agent 是 solo 管理的基本工作单元，每个 agent 对应一个 tmux wind
 - 每个测试独立且可重复：`beforeEach` 新建 Mock，`afterEach` restore/reset/clear；禁止共享可变 Mock 状态。
 - 封装第三方依赖为适配器：Mock 自己定义的适配器接口，不直接 Mock 第三方库内部 API。
 - 保持确定、快速、可读：避免真实网络/时间/随机性；遵循 AAA（Arrange-Act-Assert）；命名说明行为而非实现。
-- 测试不得依赖 `.solo/config.yaml`。测试环境通过 `test/setup.ts`（vitest setupFiles）将配置路径切换为 `.solo/config-test.yaml`，确保 `pnpm run test` 不触及真实运行环境。新增涉及配置文件的测试时，同样依赖此机制，禁止读写 `.solo/config.yaml`。
+- 测试不得依赖 `.wuhua/config.yaml`。测试环境通过 `test/setup.ts`（vitest setupFiles）将配置路径切换为 `.wuhua/config-test.yaml`，确保 `pnpm run test` 不触及真实运行环境。新增涉及配置文件的测试时，同样依赖此机制，禁止读写 `.wuhua/config.yaml`。

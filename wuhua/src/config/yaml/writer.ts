@@ -2,7 +2,7 @@ import { dump, load } from 'js-yaml';
 import { dirname } from 'path';
 import { LOG_FILE, getConfigPath } from '../paths';
 import { exists, ensureDir, readFile, writeFile } from '../../utils/files';
-import type { PanePosition, PaneEntry, AgentPanes, AgentConfig, SoloConfig, LoggingConfig, TaskConfig } from './types';
+import type { PanePosition, PaneEntry, AgentPanes, AgentConfig, WuhuaConfig, LoggingConfig, TaskConfig } from './types';
 
 // dump 选项：与示例保持一致缩进
 const YAML_DUMP_OPTIONS = { indent: 4 } as const;
@@ -95,7 +95,7 @@ const parseHookEndpoint = (raw: unknown): Record<string, boolean> => {
 /**
  * 解析顶级 hooks 段：按 endpoint 分组解析，目前仅支持 tmux
  */
-const parseHooks = (raw: unknown): SoloConfig['hooks'] => {
+const parseHooks = (raw: unknown): WuhuaConfig['hooks'] => {
   if (typeof raw !== 'object' || raw === null) {
     return {};
   }
@@ -187,7 +187,7 @@ const parseTaskConfig = (raw: unknown): TaskConfig | undefined => {
 /**
  * 校验并规范化 load 的结果（宽容处理字段缺失，语法错误已在 load 时抛出）
  */
-const normalize = (data: unknown): SoloConfig => {
+const normalize = (data: unknown): WuhuaConfig => {
   if (typeof data !== 'object' || data === null) {
     return { name: '', hooks: {} };
   }
@@ -211,7 +211,7 @@ const normalize = (data: unknown): SoloConfig => {
     }
   }
 
-  const result: SoloConfig = { name, hooks };
+  const result: WuhuaConfig = { name, hooks };
   if (Object.keys(agents).length > 0) {
     result.agents = agents;
   }
@@ -228,7 +228,7 @@ const normalize = (data: unknown): SoloConfig => {
  * 读取配置文件（不存在时返回空配置）
  * @param configPath 配置文件路径（默认 getConfigPath()）
  */
-export const readConfig = (configPath?: string): SoloConfig => {
+export const readConfig = (configPath?: string): WuhuaConfig => {
   const path = configPath ?? getConfigPath();
   if (!exists(path)) {
     return { name: '' };
@@ -245,7 +245,7 @@ export const readConfig = (configPath?: string): SoloConfig => {
     const reason = err instanceof Error ? err.message : String(err);
     throw new Error(
       `无法解析配置文件 ${path}:\n${reason}\n` +
-        `请检查 YAML 格式（如键重复、缩进错误），删除重复项后重试，或运行 \`solo init\` 重新初始化。`,
+        `请检查 YAML 格式（如键重复、缩进错误），删除重复项后重试，或运行 \`wuhua init\` 重新初始化。`,
       { cause: err }
     );
   }
@@ -257,7 +257,7 @@ export const readConfig = (configPath?: string): SoloConfig => {
  * @param data 配置数据
  * @param configPath 配置文件路径（默认 getConfigPath()）
  */
-export const writeConfig = (data: SoloConfig, configPath?: string): void => {
+export const writeConfig = (data: WuhuaConfig, configPath?: string): void => {
   const path = configPath ?? getConfigPath();
   const dir = dirname(path);
   if (!exists(dir)) {

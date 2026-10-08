@@ -102,10 +102,10 @@ describe('readConfig logging 解析', () => {
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 logging:
   level: 'debug'
-  file: '/tmp/solo.log'
+  file: '/tmp/wuhua.log'
 `);
     const config = readConfig();
-    expect(config.logging).toEqual({ level: 'debug', file: '/tmp/solo.log' });
+    expect(config.logging).toEqual({ level: 'debug', file: '/tmp/wuhua.log' });
   });
 
   it('未配置 logging 段时 logging 为 undefined', () => {
@@ -121,9 +121,9 @@ agents:
     mockReadFileSync.mockReturnValue(`name: 'sess-abc'
 logging:
   level: 123
-  file: '/tmp/solo.log'
+  file: '/tmp/wuhua.log'
 `);
-    expect(readConfig().logging).toEqual({ file: '/tmp/solo.log' });
+    expect(readConfig().logging).toEqual({ file: '/tmp/wuhua.log' });
   });
 
   it('logging.file 非字符串时仅保留 level 字段', () => {

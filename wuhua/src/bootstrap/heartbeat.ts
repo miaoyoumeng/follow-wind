@@ -13,7 +13,7 @@ export const startHeartbeat = (): void => {
   }
 
   heartbeatId = setInterval(() => {
-    logger.trace('[heartbeat] solo server alive');
+    logger.trace('[heartbeat] wuhua server alive');
   }, HEARTBEAT_INTERVAL_MS);
 };
 

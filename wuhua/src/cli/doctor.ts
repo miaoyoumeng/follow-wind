@@ -29,7 +29,7 @@ export const runDoctor = async (): Promise<void> => {
   // 1. 检查 config.yaml 是否存在
   const { exists } = checkSettings();
   if (!exists) {
-    console.log(chalk.red('❌ config.yaml: 不存在，请先运行 `solo init`'));
+    console.log(chalk.red('❌ config.yaml: 不存在，请先运行 `wuhua init`'));
     allPassed = false;
   } else {
     // 2. 检查 config.yaml 是否可解析

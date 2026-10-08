@@ -22,8 +22,8 @@ describe('resolveLoggingConfig 默认值', () => {
   });
 
   it('logging 完整配置时原样返回', () => {
-    const resolved = resolveLoggingConfig({ level: 'info', file: '/tmp/solo.log' });
-    expect(resolved).toEqual({ level: 'info', file: '/tmp/solo.log' });
+    const resolved = resolveLoggingConfig({ level: 'info', file: '/tmp/wuhua.log' });
+    expect(resolved).toEqual({ level: 'info', file: '/tmp/wuhua.log' });
   });
 
   it('logging 为 null 时返回完整默认值', () => {
@@ -79,7 +79,7 @@ logging:
     expect(resolved.file).toBe(LOG_FILE);
   });
 
-  it('LOG_FILE 默认路径为 .solo/solo.log', () => {
-    expect(LOG_FILE).toBe(join(process.cwd(), '.solo', 'solo.log'));
+  it('LOG_FILE 默认路径为 .wuhua/wuhua.log', () => {
+    expect(LOG_FILE).toBe(join(process.cwd(), '.wuhua', 'wuhua.log'));
   });
 });

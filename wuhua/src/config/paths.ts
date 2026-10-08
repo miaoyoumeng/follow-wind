@@ -1,7 +1,7 @@
 import { join } from 'path';
 
 // 基础目录名
-export const SOLO_DIR_NAME = '.solo';
+export const WUHUA_DIR_NAME = '.wuhua';
 
 // 配置文件名
 const CONFIG_FILE_NAME = 'config.yaml';
@@ -13,7 +13,7 @@ const CAPTURE_DIR_NAME = 'capture';
 const USAGE_FILE_NAME = 'usage.json';
 
 // 日志文件名
-const LOG_FILE_NAME = 'solo.log';
+const LOG_FILE_NAME = 'wuhua.log';
 
 // PID 文件名
 export const PID_FILE_NAME = 'pid';
@@ -25,14 +25,14 @@ export const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
 export const CLAUDE_PROJECTS_DIR = join(process.env.HOME ?? '', '.claude', 'projects');
 
 // 完整路径（基于当前工作目录）
-export const SOLO_DIR = join(process.cwd(), SOLO_DIR_NAME);
-const CONFIG_PATH = join(SOLO_DIR, CONFIG_FILE_NAME);
-export const CONFIG_PATH_NAME = join(SOLO_DIR_NAME, CONFIG_FILE_NAME);
+export const WUHUA_DIR = join(process.cwd(), WUHUA_DIR_NAME);
+const CONFIG_PATH = join(WUHUA_DIR, CONFIG_FILE_NAME);
+export const CONFIG_PATH_NAME = join(WUHUA_DIR_NAME, CONFIG_FILE_NAME);
 
-export const CAPTURE_DIR = join(SOLO_DIR, CAPTURE_DIR_NAME);
-export const USAGE_PATH = join(SOLO_DIR, USAGE_FILE_NAME);
-export const PID_PATH = join(SOLO_DIR, PID_FILE_NAME);
-export const LOG_FILE = join(SOLO_DIR, LOG_FILE_NAME);
+export const CAPTURE_DIR = join(WUHUA_DIR, CAPTURE_DIR_NAME);
+export const USAGE_PATH = join(WUHUA_DIR, USAGE_FILE_NAME);
+export const PID_PATH = join(WUHUA_DIR, PID_FILE_NAME);
+export const LOG_FILE = join(WUHUA_DIR, LOG_FILE_NAME);
 
 // ── 动态路径 ──────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ export const setConfigPath = (configPath: string): void => {
  * @returns socket 文件绝对路径
  */
 export const getIpcSocketPath = (name: string): string => {
-  return join(SOLO_DIR, `ipc-${name}.sock`);
+  return join(WUHUA_DIR, `ipc-${name}.sock`);
 };
 
 /**

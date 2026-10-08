@@ -1,8 +1,8 @@
 export {
-  SOLO_DIR_NAME,
+  WUHUA_DIR_NAME,
   NAME_REGEX,
   CAPTURE_DIR,
-  SOLO_DIR,
+  WUHUA_DIR,
   CONFIG_PATH_NAME,
   getConfigPath,
   setConfigPath,
@@ -11,4 +11,4 @@ export {
 } from './paths';
 
 export { readConfig, writeConfig, resolveLoggingConfig } from './yaml/writer';
-export { type SoloConfig, type AgentConfig, type AgentPanes, type TaskConfig } from './yaml/types';
+export { type WuhuaConfig, type AgentConfig, type AgentPanes, type TaskConfig } from './yaml/types';

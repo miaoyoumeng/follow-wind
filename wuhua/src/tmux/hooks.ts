@@ -1,4 +1,4 @@
-import { exec } from '../process';
+import { execa } from 'execa';
 
 /**
  * tmux 3.6b 支持的全部 hook 名（单一数据源，TmuxHook 类型由此派生）
@@ -94,25 +94,25 @@ export const isTmuxHook = (name: string): name is TmuxHook => {
 /**
  * 构建 scope 选项参数
  * @param session 指定 session 名；undefined 则全局
+ * @returns tmux scope 参数数组，如 ['-t', 'sess'] 或 ['-g']
  */
-const scopeArg = (session?: string): string => (session ? `-t ${session}` : '-g');
+const scopeArgs = (session?: string): string[] => (session ? ['-t', session] : ['-g']);
 
 /**
  * 设置 hook
  * @param hook hook 名称
- * @param command 要执行的 shell 命令
+ * @param command 要执行的 tmux 命令字符串，作为单个参数传递，无需 shell 引号
  * @param session 指定 session；省略则全局生效
  */
 export const setHook = async (hook: TmuxHook, command: string, session?: string): Promise<void> => {
-  const scope = scopeArg(session);
-  await exec.fn(`tmux set-hook ${scope} ${hook} '${command}'`);
+  await execa('tmux', ['set-hook', ...scopeArgs(session), hook, command]);
 };
 
 /**
- * 事件回调命令模板：tmux 触发事件时调用 solo hook 上报事件上下文
+ * 事件回调命令模板：tmux 触发事件时调用 wuhua hook 上报事件上下文
  * @param hookName 事件名称
  */
-const buildRunShellCommand = (hookName: string): string => `run-shell "solo hook --endpoint=tmux --event=${hookName}"`;
+const buildRunShellCommand = (hookName: string): string => `run-shell "wuhua hook --endpoint=tmux --event=${hookName}"`;
 
 /**
  * 按配置在 session 中注册启用的事件回调
@@ -128,7 +128,7 @@ export const registerHooks = async (sessionName: string, hooks?: Record<string, 
       continue;
     }
     if (!isTmuxHook(event)) {
-      throw new Error(`hooks 配置包含未知事件 "${event}"（tmux 不支持该事件名），请修正 .solo/config 的 hooks 段`);
+      throw new Error(`hooks 配置包含未知事件 "${event}"（tmux 不支持该事件名），请修正 .wuhua/config 的 hooks 段`);
     }
     await setHook(event, buildRunShellCommand(event), sessionName);
     registered.push(event);

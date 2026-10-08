@@ -97,13 +97,13 @@ describe('runCapture', () => {
       throw new Error('ENOENT');
     });
     mockCapturePane.mockResolvedValue('Hello\nWorld');
-    const expectedPath = join(process.cwd(), '.solo', 'capture', 'frontend-2.md');
+    const expectedPath = join(process.cwd(), '.wuhua', 'capture', 'frontend-2.md');
     mockGetTmuxPaneCapturePath.mockReturnValue(expectedPath);
 
     await runCapture('frontend', 2);
 
     expect(mockGetTmuxPaneCapturePath).toHaveBeenCalledWith('frontend', 2);
-    expect(mockMkdirSync).toHaveBeenCalledWith(join(process.cwd(), '.solo', 'capture'), { recursive: true });
+    expect(mockMkdirSync).toHaveBeenCalledWith(join(process.cwd(), '.wuhua', 'capture'), { recursive: true });
     expect(mockWriteFileSync).toHaveBeenCalledWith(expectedPath, 'Hello\nWorld');
   });
 
@@ -132,7 +132,7 @@ describe('runCapture', () => {
     mockGetAgent.mockReturnValue({ name: 'frontend', workspace: '/app', activate: true });
     mockStatSync.mockReturnValue({ mtimeMs: 50_000 }); // mtime = 50s → elapsed = 50s
     mockCapturePane.mockResolvedValue('content');
-    const expectedPath = join(process.cwd(), '.solo', 'capture', 'frontend-2.md');
+    const expectedPath = join(process.cwd(), '.wuhua', 'capture', 'frontend-2.md');
     mockGetTmuxPaneCapturePath.mockReturnValueOnce(expectedPath);
 
     await runCapture('frontend', 2);
@@ -146,7 +146,7 @@ describe('runCapture', () => {
       throw new Error('ENOENT');
     });
     mockCapturePane.mockResolvedValue('content');
-    const expectedPath = join(process.cwd(), '.solo', 'capture', 'api-0.md');
+    const expectedPath = join(process.cwd(), '.wuhua', 'capture', 'api-0.md');
     mockGetTmuxPaneCapturePath.mockReturnValueOnce(expectedPath);
 
     await runCapture('api', 0);

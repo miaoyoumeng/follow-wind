@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { readConfig, type SoloConfig, type AgentPanes } from '../../src/config';
+import { readConfig, type WuhuaConfig, type AgentPanes } from '../../src/config';
 import { runStart } from '../../src/cli';
 import type * as LoggingType from '../../src/logging';
 import type { TmuxRouter } from '../../src/pipe';
@@ -24,7 +24,7 @@ vi.mock('../../src/config', () => ({
 }));
 
 vi.mock('../../src/envs', () => ({
-  checkSettings: vi.fn(() => ({ exists: true, path: '.solo/config' })),
+  checkSettings: vi.fn(() => ({ exists: true, path: '.wuhua/config' })),
   checkClaude: vi.fn(),
   checkTmux: vi.fn()
 }));
@@ -118,7 +118,7 @@ const mockReadPidFileFn = vi.mocked(mockReadPidFile);
 const mockIsProcessAliveFn = vi.mocked(mockIsProcessAlive);
 const mockStartDaemonFn = vi.mocked(mockStartDaemon);
 
-const sampleConfig: SoloConfig = {
+const sampleConfig: WuhuaConfig = {
   name: 'sess-abc',
   agents: {
     'act-h': {
@@ -146,7 +146,7 @@ const sampleConfig: SoloConfig = {
       'alert-bell': false
     }
   },
-  logging: { level: 'info', file: '/tmp/solo.log' }
+  logging: { level: 'info', file: '/tmp/wuhua.log' }
 };
 
 function setup(): void {
@@ -246,13 +246,13 @@ describe('runStart', () => {
     await expect(runStart()).rejects.toThrow(/hooks 配置包含未知事件/);
   });
 
-  it('控制台输出 solo starting...、solo name [name]、solo started 三条消息', async () => {
+  it('控制台输出 wuhua starting...、wuhua name [name]、wuhua started 三条消息', async () => {
     await runStart();
     expect(logs).toHaveLength(3);
-    expect(logs[0]).toContain('solo starting...');
-    expect(logs[1]).toContain('solo name');
+    expect(logs[0]).toContain('wuhua starting...');
+    expect(logs[1]).toContain('wuhua name');
     expect(logs[1]).toContain('sess-abc');
-    expect(logs[2]).toContain(`solo started, pid is ${process.pid}`);
+    expect(logs[2]).toContain(`wuhua started, pid is ${process.pid}`);
   });
 
   it('session 不存在时，panes 布局不合法应终止启动流程', async () => {
@@ -292,7 +292,7 @@ describe('runStart', () => {
     expect(mockCreateWindow).not.toHaveBeenCalled();
   });
 
-  it('start 阶段不注册 task，轮询由 solo chat 触发', async () => {
+  it('start 阶段不注册 task，轮询由 wuhua chat 触发', async () => {
     await runStart();
     // task 注册代码已注释，start 阶段不调用 registerTask
     expect(mockRegisterTaskFn).not.toHaveBeenCalled();
@@ -396,7 +396,7 @@ describe('runStart', () => {
       expect(mockSetPaneTitle).toHaveBeenCalledWith('sess-abc', 'act-h', 2, 'shell');
     });
 
-    it('booter 有值时执行 sendKeys', async () => {
+    it('booter 有值时执行一次 sendKeys，Enter 由 sendKeys 内部追加', async () => {
       mockReadConfig.mockReturnValue({
         ...sampleConfig,
         agents: {
@@ -408,8 +408,8 @@ describe('runStart', () => {
         }
       });
       await runStart();
+      expect(mockSendKeys).toHaveBeenCalledTimes(1);
       expect(mockSendKeys).toHaveBeenCalledWith('sess-abc', 'act-boot', 1, 'vim');
-      expect(mockSendKeys).toHaveBeenCalledWith('sess-abc', 'act-boot', 1, 'Enter');
     });
 
     it('为每个 pane 注册 pipe router', async () => {

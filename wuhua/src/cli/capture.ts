@@ -1,7 +1,8 @@
 import chalk from 'chalk';
+
 import { capturePane } from '../tmux';
 import { getAgent } from '../agents';
-import { CAPTURE_DIR, getTmuxPaneCapturePath } from '../config/paths';
+import { CAPTURE_DIR, getTmuxPaneCapturePath } from '../config';
 import { logger } from '../logging';
 import { validateWorkspace } from './status';
 import { ensureDir, writeFile, stat } from '../utils/files';
@@ -9,7 +10,7 @@ import { ensureDir, writeFile, stat } from '../utils/files';
 const COOLDOWN_MS = 30_000;
 
 /**
- * 捕获指定 agent 的 pane 内容，覆盖写入 .solo/capture/[agentName]-[paneIndex].md
+ * 捕获指定 agent 的 pane 内容，覆盖写入 .wuhua/capture/[agentName]-[paneIndex].md
  * 若距上次写入不足 30 秒，输出提示并终止
  * @param agentName agent 名称
  * @param paneIndex pane 索引

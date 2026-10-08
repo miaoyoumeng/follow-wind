@@ -98,7 +98,7 @@ export const setup = (config: Required<LoggingConfig>): void => {
 };
 
 /**
- * 从 .solo/config 读取日志配置，缺失字段补充默认值（level → warn，file → .solo/solo.log）
+ * 从 .wuhua/config 读取日志配置，缺失字段补充默认值（level → warn，file → .wuhua/wuhua.log）
  * @returns 完整的日志配置对象（始终有值）
  */
 export const getLoggingConfig = (): Required<LoggingConfig> => {
