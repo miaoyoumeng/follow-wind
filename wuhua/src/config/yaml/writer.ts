@@ -2,7 +2,20 @@ import { dump, load } from 'js-yaml';
 import { dirname } from 'path';
 import { LOG_FILE, getConfigPath } from '../paths';
 import { exists, ensureDir, readFile, writeFile } from '../../utils/files';
-import type { PanePosition, PaneEntry, AgentPanes, AgentConfig, WuhuaConfig, LoggingConfig, TaskConfig } from './types';
+import type {
+  PanePosition,
+  PaneEntry,
+  AgentPanes,
+  AgentConfig,
+  WuhuaConfig,
+  LoggingConfig,
+  TaskConfig,
+  CompanyConfig,
+  CompanyRoleConfig,
+  CompanyProductConfig,
+  CompanyStoryConfig,
+  ResolvedCompanyConfig
+} from './types';
 
 // dump 选项：与示例保持一致缩进
 const YAML_DUMP_OPTIONS = { indent: 4 } as const;
@@ -73,6 +86,14 @@ const buildAgentEntry = (raw: Record<string, unknown>): AgentConfig | null => {
       entry.panes = panes;
     }
   }
+  const role = parseCompanyRole(raw.role);
+  if (role) {
+    entry.role = role;
+  }
+  const product = parseCompanyProduct(raw.product);
+  if (product) {
+    entry.product = product;
+  }
   return entry;
 };
 
@@ -138,6 +159,31 @@ export const resolveLoggingConfig = (raw: LoggingConfig | null | undefined): Req
 };
 
 /**
+ * 解析 company 配置：对缺失字段补充默认值（role.chat.model → deepseek，其余 → 空字符串）
+ * @param raw 从 readConfig 读取的 company 段，null/undefined 表示完全未配置
+ */
+export const resolveCompanyConfig = (raw: CompanyConfig | null | undefined): ResolvedCompanyConfig => {
+  const min = raw?.product?.story?.min ?? 2;
+  const max = raw?.product?.story?.max ?? 3;
+  return {
+    role: {
+      name: raw?.role?.name ?? '',
+      chat: { model: raw?.role?.chat?.model ?? 'deepseek' }
+    },
+    product: {
+      name: raw?.product?.name ?? '',
+      story: {
+        as: raw?.product?.story?.as ?? '',
+        min,
+        // min > max 时抬升 max，保证生成条数区间合法
+        max: Math.max(min, max)
+      }
+    },
+    description: raw?.description ?? ''
+  };
+};
+
+/**
  * 解析 task 段：coreSize 和 maxSize 均为可选数字；任一非数字则丢弃整个段
  * 规范化规则：
  * - 若 coreSize > maxSize，则 maxSize = coreSize
@@ -185,6 +231,97 @@ const parseTaskConfig = (raw: unknown): TaskConfig | undefined => {
 };
 
 /**
+ * 把原始值收窄为对象形式的键值表
+ * @param raw 原始值
+ * @returns 键值表，非对象时返回 undefined
+ */
+const asRecord = (raw: unknown): Record<string, unknown> | undefined => {
+  return typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : undefined;
+};
+
+/**
+ * 解析 company.role 段：缺失或类型非法的字段丢弃，无有效字段时返回 undefined
+ */
+const parseCompanyRole = (raw: unknown): CompanyRoleConfig | undefined => {
+  const obj = asRecord(raw);
+  if (!obj) {
+    return undefined;
+  }
+  const role: CompanyRoleConfig = {};
+  if (typeof obj.name === 'string') {
+    role.name = obj.name;
+  }
+  const chat = asRecord(obj.chat);
+  if (chat && typeof chat.model === 'string') {
+    role.chat = { model: chat.model };
+  }
+  return Object.keys(role).length > 0 ? role : undefined;
+};
+
+/**
+ * 解析 company.product.story 段：缺失或类型非法的字段丢弃，无有效字段时返回 undefined
+ */
+const parseCompanyStory = (raw: unknown): CompanyStoryConfig | undefined => {
+  const obj = asRecord(raw);
+  if (!obj) {
+    return undefined;
+  }
+  const story: CompanyStoryConfig = {};
+  if (typeof obj.as === 'string') {
+    story.as = obj.as;
+  }
+  if (typeof obj.min === 'number') {
+    story.min = obj.min;
+  }
+  if (typeof obj.max === 'number') {
+    story.max = obj.max;
+  }
+  return Object.keys(story).length > 0 ? story : undefined;
+};
+
+/**
+ * 解析 company.product 段：缺失或类型非法的字段丢弃，无有效字段时返回 undefined
+ */
+const parseCompanyProduct = (raw: unknown): CompanyProductConfig | undefined => {
+  const obj = asRecord(raw);
+  if (!obj) {
+    return undefined;
+  }
+  const product: CompanyProductConfig = {};
+  if (typeof obj.name === 'string') {
+    product.name = obj.name;
+  }
+  const story = parseCompanyStory(obj.story);
+  if (story) {
+    product.story = story;
+  }
+  return Object.keys(product).length > 0 ? product : undefined;
+};
+
+/**
+ * 解析顶级 company 段：缺失或类型非法的字段丢弃，整段无有效字段时返回 undefined
+ */
+const parseCompany = (raw: unknown): CompanyConfig | undefined => {
+  const obj = asRecord(raw);
+  if (!obj) {
+    return undefined;
+  }
+  const result: CompanyConfig = {};
+  if (typeof obj.description === 'string') {
+    result.description = obj.description;
+  }
+  const role = parseCompanyRole(obj.role);
+  if (role) {
+    result.role = role;
+  }
+  const product = parseCompanyProduct(obj.product);
+  if (product) {
+    result.product = product;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
+/**
  * 校验并规范化 load 的结果（宽容处理字段缺失，语法错误已在 load 时抛出）
  */
 const normalize = (data: unknown): WuhuaConfig => {
@@ -196,8 +333,9 @@ const normalize = (data: unknown): WuhuaConfig => {
   const hooks = parseHooks(obj.hooks);
   const logging = parseLogging(obj.logging);
   const task = parseTaskConfig(obj.task);
+  const company = parseCompany(obj.company);
   if (typeof obj.agents !== 'object' || obj.agents === null) {
-    return { name, hooks, logging, task };
+    return { name, hooks, logging, task, company };
   }
 
   const agents: Record<string, AgentConfig> = {};
@@ -220,6 +358,9 @@ const normalize = (data: unknown): WuhuaConfig => {
   }
   if (task) {
     result.task = task;
+  }
+  if (company) {
+    result.company = company;
   }
   return result;
 };

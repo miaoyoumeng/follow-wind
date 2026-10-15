@@ -9,5 +9,9 @@ export { runHook } from './hook';
 export { runCapture } from './capture';
 export { runUsage } from './usage';
 export { runDoctor } from './doctor';
+export { runStory } from './story';
+export { runPrompt } from './prompt';
+export { runAgent } from './agent';
+export { checkDaemonAlive } from './daemon';
 
 export type { CommandSpec, CommandArg, CommandOption } from './types';

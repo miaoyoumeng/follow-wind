@@ -13,6 +13,9 @@ import {
   runCapture,
   runUsage,
   runDoctor,
+  runStory,
+  runPrompt,
+  runAgent,
   type CommandSpec
 } from '../cli';
 
@@ -45,6 +48,8 @@ export const registerCommands = (program: Command, specs: readonly CommandSpec[]
     for (const opt of spec.options ?? []) {
       if (opt.isRequired) {
         cmd.requiredOption(opt.flags, opt.description);
+      } else if (opt.parser) {
+        cmd.option(opt.flags, opt.description, opt.parser);
       } else {
         cmd.option(opt.flags, opt.description);
       }
@@ -111,11 +116,12 @@ const COMMANDS: readonly CommandSpec[] = [
   {
     name: 'chat',
     description: '向指定 agent 的 claude pane 发送消息',
-    args: [
-      { syntax: '<agent>', description: 'agent 名称' },
-      { syntax: '<content>', description: '要发送的内容' }
+    options: [
+      { flags: '--agent <agent>', description: 'agent 名称', isRequired: true },
+      { flags: '--prompt <prompt>', description: '要发送的内容', isRequired: true }
     ],
-    execute: runChat
+    allowExcessArguments: false,
+    execute: (opts: { agent: string; prompt: string }): Promise<void> => runChat(opts.agent, opts.prompt)
   },
   {
     name: 'hook',
@@ -141,6 +147,43 @@ const COMMANDS: readonly CommandSpec[] = [
       { syntax: '<pane-index>', description: 'pane 索引', parser: parseInt }
     ],
     execute: runCapture
+  },
+  {
+    name: 'story',
+    description: '依据 feature 文件为主题生成 user story prompt',
+    options: [
+      { flags: '--agent <agent>', description: 'agent 名称（all 表示配置中的全部 agent）', isRequired: true },
+      { flags: '--file <path>', description: 'feature 文件路径（相对路径基于 agent 的 workspace）', isRequired: true }
+    ],
+    execute: (opts: Record<string, string>): void => {
+      runStory(opts.agent, opts.file);
+    }
+  },
+  {
+    name: 'prompt',
+    description: '按 prompts 索引中的 todo 列表逐条执行 prompt',
+    options: [
+      { flags: '--agent <agent>', description: 'agent 名称（all 表示配置中的全部 agent）', isRequired: true },
+      {
+        flags: '--timeout <minutes>',
+        description: '等待 Claude 空闲的超时分钟数（默认取 agent 的 waitTime 或 60）',
+        parser: parseInt
+      }
+    ],
+    allowExcessArguments: false,
+    execute: (opts: { agent: string; timeout?: number }): Promise<void> => runPrompt(opts.agent, opts.timeout)
+  },
+  {
+    name: 'agent',
+    description: '把 shell 命令提交到 agent 的 tmux pane 执行',
+    options: [
+      { flags: '--name <name>', description: 'agent 名称（all 表示所有 activate 的 agent）', isRequired: true },
+      { flags: '--pane-index <index>', description: '目标 tmux pane 索引（默认 1）', parser: parseInt },
+      { flags: '--bash <command>', description: '要提交执行的 shell 命令', isRequired: true }
+    ],
+    allowExcessArguments: false,
+    execute: (opts: { name: string; paneIndex?: number; bash: string }): Promise<void> =>
+      runAgent(opts.name, opts.paneIndex, opts.bash)
   }
 ];
 

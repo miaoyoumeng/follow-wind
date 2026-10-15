@@ -100,8 +100,19 @@ export const selectPane = async (session: string, window: string, paneIndex: num
   await execa('tmux', ['select-pane', '-t', target]);
 };
 
+/** 多行文本发送后、提交前的等待毫秒数：留出 REPL 处理粘贴的时间 */
+const MULTILINE_COMMIT_DELAY_MS = 100;
+
+/**
+ * 等待指定毫秒数
+ * @param ms 毫秒数
+ */
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * 向 pane 输入文本，默认追加 Enter 提交
+ * 多行文本分两次发送：文本一次、Enter 一次。若把 Enter 与多行内容放在同一次写入，
+ * REPL 会把整块（含 Enter）判定为粘贴而一并吞掉，导致内容进了输入框却没有提交
  * @param session session 名称
  * @param window window 名称
  * @param paneIndex 目标 pane 索引
@@ -116,11 +127,19 @@ export const sendKeys = async (
   enter: boolean = true
 ): Promise<void> => {
   const target = buildPaneKey(session, window, paneIndex);
-  const args = ['send-keys', '-t', target, text];
-  if (enter) {
-    args.push('Enter');
+
+  if (!enter || !text.includes('\n')) {
+    const args = ['send-keys', '-t', target, text];
+    if (enter) {
+      args.push('Enter');
+    }
+    await execa('tmux', args);
+    return;
   }
-  await execa('tmux', args);
+
+  await execa('tmux', ['send-keys', '-t', target, text]);
+  await execa('tmux', ['send-keys', '-t', target, 'Enter']);
+  await delay(MULTILINE_COMMIT_DELAY_MS);
 };
 
 /**

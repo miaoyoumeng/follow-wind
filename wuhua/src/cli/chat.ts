@@ -1,24 +1,12 @@
 import chalk from 'chalk';
 
 import { validateWorkspace } from './status';
+import { checkDaemonAlive } from './daemon';
 import { getAgent } from '../agents';
 import { listPanesWithTitle } from '../tmux';
-import { readPidFile, isProcessAlive } from '../bootstrap';
 import { ipcDispatch } from '../ipc';
 import { logger } from '../logging';
-/**
- * 检查 daemon 进程是否存活
- * @returns true 表示 daemon 存活，false 表示未启动并已打印提示
- */
-const checkDaemonAlive = (): boolean => {
-  const pid = readPidFile();
-  const isAlive = pid !== null && isProcessAlive(pid);
-  if (!isAlive) {
-    console.log(chalk.yellow('📋 wuhua 未启动'));
-    console.log(chalk.gray('   请先运行 `wuhua start` 启动服务'));
-  }
-  return isAlive;
-};
+import type { DispatchResult } from '../pipe';
 
 /**
  * 校验 agent 配置并返回 claude pane，失败时打印错误并返回 null
@@ -45,11 +33,29 @@ const resolveClaudePane = async (agentName: string, sessionName: string): Promis
 };
 
 /**
+ * 按分发结果打印提示；被 wuhua prompt 独占拒绝时置退出码 1
+ * @param agentName agent 名称
+ * @param result 分发结果
+ */
+const reportDispatch = (agentName: string, result: DispatchResult): void => {
+  if (result.dispatched) {
+    console.log(chalk.green('✅ chat 任务提交成功。'));
+    return;
+  }
+  if (result.reason === 'busy') {
+    console.log(chalk.red(`❌ agent "${agentName}" 的 pane 正忙（上一轮任务尚未结束），指令已拒绝`));
+    process.exitCode = 1;
+    return;
+  }
+  console.log(chalk.yellow(`📋 agent "${agentName}" 尚未注册 router，指令未分发`));
+};
+
+/**
  * 向指定 agent 的 claude pane 发送消息，并轮询等待 Claude 输出稳定
  * @param agentName agent 名称
- * @param content 要发送的内容
+ * @param prompt 要发送的内容
  */
-export const runChat = async (agentName: string, content: string): Promise<void> => {
+export const runChat = async (agentName: string, prompt: string): Promise<void> => {
   const sessionName = validateWorkspace();
   if (!checkDaemonAlive()) {
     return;
@@ -60,15 +66,11 @@ export const runChat = async (agentName: string, content: string): Promise<void>
     return;
   }
 
-  logger.debug(`[chat] dispatch to ${agentName} pane ${claudePane.index}: ${content}`);
+  logger.debug(`[chat] dispatch to ${agentName} pane ${claudePane.index}: ${prompt}`);
 
   try {
-    const dispatched = await ipcDispatch(sessionName, agentName, claudePane.index, content);
-    if (dispatched) {
-      console.log(chalk.green('✅ chat 任务提交成功。'));
-    } else {
-      console.log(chalk.yellow(`📋 agent "${agentName}" 尚未注册 router，指令未分发`));
-    }
+    const result = await ipcDispatch(sessionName, agentName, claudePane.index, prompt);
+    reportDispatch(agentName, result);
   } catch (err) {
     logger.error(`[chat] IPC dispatch failed: ${String(err)}`);
     console.log(chalk.yellow('📋 IPC 任务提交失败，请查看日志'));

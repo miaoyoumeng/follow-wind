@@ -16,6 +16,8 @@ export interface CommandOption {
   readonly description: string;
   /** 是否为必填选项（对应 commander 的 requiredOption） */
   readonly isRequired?: boolean;
+  /** 选项值解析器，如 parseInt（对应 commander 的第三个选项参数） */
+  readonly parser?: (value: string) => unknown;
 }
 
 /** 子命令定义（命令模式中被封装的「请求对象」） */
@@ -40,4 +42,28 @@ export interface CommandSpec {
    * 调用点按 commander 实际传入的参数收窄类型。
    */
   readonly execute: (...args: never[]) => Promise<void> | void;
+}
+
+/** wuhua prompt 执行单条 prompt 的定位与超时上下文 */
+export interface PromptTarget {
+  /** tmux session 名称 */
+  readonly sessionName: string;
+  /** agent 名称，同时是 tmux window 名 */
+  readonly agentName: string;
+  /** claude pane 索引 */
+  readonly paneIndex: number;
+  /** 等待 Claude Stop 的超时毫秒数 */
+  readonly timeoutMs: number;
+}
+
+/** 单个 agent 的 tmux 命令提交结果 */
+export interface AgentDispatchResult {
+  /** agent 名称，同时是 tmux window 名 */
+  readonly name: string;
+  /** 目标 pane 索引 */
+  readonly paneIndex: number;
+  /** 命令是否已成功提交到 pane */
+  readonly isSuccess: boolean;
+  /** 提交失败的原因，成功时为 undefined */
+  readonly error?: string;
 }

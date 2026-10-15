@@ -1,5 +1,6 @@
 import type { ClaudeHookEvent, EventProcessor } from './types';
 import { createStopProcessor } from './stop';
+import { createStopFailureProcessor } from './stopFailure';
 import { createNoopProcessor } from './noop';
 
 /**
@@ -16,7 +17,7 @@ export const createProcessor = (event: ClaudeHookEvent): EventProcessor => {
     case 'Stop':
       return createStopProcessor();
     case 'StopFailure':
-      return createNoopProcessor('StopFailure');
+      return createStopFailureProcessor();
     case 'PreToolUse':
       return createNoopProcessor('PreToolUse');
     case 'PostToolUse':

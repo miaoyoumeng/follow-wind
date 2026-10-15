@@ -26,8 +26,32 @@ wuhua start               # 启动本项目的 tmux session（不存在则创建
 wuhua stop                # 终止本项目的 tmux session
 wuhua dashboard           # 进入本项目的 tmux session
 wuhua agents              # 显示 .wuhua/config 中的 agent 列表
-wuhua agent <args...>     # agent 管理（add <name> <path> | <name> workspace | <name> panes）
+wuhua agent --name=<agent|all> --pane-index=<index> --bash=<shell 命令>
+                          # 把 shell 命令提交到 agent 对应 tmux window 的指定 pane 执行
+                          # --name=all 时对全部 activate: true 的 agent 提交
+                          # --pane-index 为 tmux pane 索引，默认 1
+                          # 提交后由 tmux 异步执行，wuhua 不等待结果；有提交失败时退出码为 1
+wuhua chat --agent=<agent> --prompt=<content>
+                          # 向 agent 的 claude pane 提交一条消息，提交后由 tmux 异步执行，wuhua 不等待结果
+                          # 提交成功后该 pane 置为 running，期间重复提交会被拒绝（退出码 1）
+                          # claude 的 Stop 事件到达后置回 idle；StopFailure 事件到达后置为 error
+                          # 前置条件：agent 的 workspace 需在 .claude/settings.json 配置 Stop / StopFailure hook
 wuhua windows             # 显示当前 session 中的 windows
+wuhua story --agent=<agent|all> --file <path>
+                          # 依据 feature 文件为主题生成 user story prompt
+                          # 角色与产品取自 agents.<agent> 段下的 role / product，缺失时报错并退出码 1
+                          # --file 为相对路径时基于 agent 的 workspace 解析，绝对路径则原样使用
+                          # --agent=all 时对配置中的全部 agent 生成
+                          # prompts/index.md 中状态非 todo（done / running）的主题跳过，保留原文件不重新生成
+                          # prompt 写入 .wuhua/agents/<agent>/prompts/；单个 agent 失败不影响其余，有失败时退出码为 1
+wuhua prompt --agent=<agent|all> [--timeout=<minutes>]
+                          # 按 .wuhua/agents/<agent>/prompts/index.md 中状态为 todo 的行逐条执行 prompt
+                          # 每条提交前置为 running、等到 claude 的 Stop 事件后置为 done；超时则回退 todo 并继续下一条
+                          # 执行期间该 agent 置为 running，其他 wuhua chat 的提交会被拒绝（退出码 1）
+                          # 超时取值：--timeout > agent 配置的 waitTime > 默认 60 分钟
+                          # --agent=all 时多个 agent 串行；单个 agent 失败不影响其余，有失败时退出码为 1
+                          # 前置条件：agent 的 workspace 需在 .claude/settings.json 配置 Stop / StopFailure hook
+                          #   调用 `wuhua hook --endpoint=claude`
 ```
 
 ## 目录结构
@@ -44,7 +68,8 @@ src/
 ├── hooks/        # tmux hooks 注册与回调实现
 ├── ipc/          # IPC 通信（roller 轮询、daemon 消息处理）
 ├── logging/      # 日志模块
-├── process/      # 进程级操作（wait 等待 pane 空闲）
+├── pipe/         # pane 指令分发（router 队列、PaneStatus 状态机、prompt 独占执行）
+├── prompt/       # prompt 索引（prompts/index.md）的状态读写与路径解析
 ├── task/         # 任务管理（注册、状态流转、存储、轮询循环）
 ├── tmux/         # tmux 操作封装（纯命令调用，无业务逻辑）
 └── utils/        # 通用工具（文件 IO、时间、YAML 读写等）
@@ -64,6 +89,18 @@ Agent 是 wuhua 管理的基本工作单元，每个 agent 对应一个 tmux win
 
 **特殊 tag：`claude`**
 当 pane 的 tag 值为 `'claude'`（精确匹配）时，wuhua 会在该 pane 的工作目录执行 `claude` 命令
+
+### PaneStatus（面板状态）
+
+每个 pane 在 daemon 中绑定一份 `PaneStatus`（tmux 坐标 + status 字段），`wuhua start` 创建 pane 时初始化为 `idle`。
+
+| 状态 | 含义 | 进入时机 |
+| --- | --- | --- |
+| `idle` | 空闲，可提交 | `wuhua start` 创建 pane；claude 的 Stop 事件到达 |
+| `running` | 有任务在跑，提交被拒（busy） | `wuhua chat` 提交成功；`wuhua prompt` 独占执行 |
+| `error` | 上一轮异常结束，允许覆盖提交 | claude 的 StopFailure 事件到达 |
+
+状态只存在于 daemon 进程内存中，不落盘；`wuhua stop` 退出 daemon 时一并清除。
 
 ## 代码约定
 

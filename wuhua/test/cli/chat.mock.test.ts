@@ -55,7 +55,7 @@ describe('runChat', () => {
     mockValidateWorkspace.mockReturnValue('test-session');
     mockReadPidFile.mockReturnValue(12345);
     mockIsProcessAlive.mockReturnValue(true);
-    mockIpcDispatch.mockResolvedValue(true);
+    mockIpcDispatch.mockResolvedValue({ dispatched: true });
   });
 
   describe('agent 不存在', () => {
@@ -143,7 +143,7 @@ describe('runChat', () => {
       consoleSpy.mockRestore();
     });
 
-    it('dispatched=false 时，打印失败提示，不打印成功提示', async () => {
+    it('reason=no-router 时，打印未注册 router 提示，不打印成功提示', async () => {
       mockGetAgent.mockReturnValue({
         name: 'myagent',
         workspace: '/tmp',
@@ -151,7 +151,7 @@ describe('runChat', () => {
         panes: { claude: { layout: 'left' } }
       });
       mockListPanesWithTitle.mockResolvedValue([{ index: 0, title: 'claude' }]);
-      mockIpcDispatch.mockResolvedValue(false);
+      mockIpcDispatch.mockResolvedValue({ dispatched: false, reason: 'no-router' });
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       await runChat('myagent', 'hello');
@@ -160,6 +160,27 @@ describe('runChat', () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('尚未注册 router'));
 
       consoleSpy.mockRestore();
+    });
+
+    it('reason=busy 时，拒绝提交并置退出码 1', async () => {
+      mockGetAgent.mockReturnValue({
+        name: 'myagent',
+        workspace: '/tmp',
+        activate: true,
+        panes: { claude: { layout: 'left' } }
+      });
+      mockListPanesWithTitle.mockResolvedValue([{ index: 0, title: 'claude' }]);
+      mockIpcDispatch.mockResolvedValue({ dispatched: false, reason: 'busy' });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await runChat('myagent', 'hello');
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('的 pane 正忙'));
+      expect(consoleSpy).not.toHaveBeenCalledWith(expect.stringContaining('chat 任务提交成功'));
+      expect(process.exitCode).toBe(1);
+
+      consoleSpy.mockRestore();
+      process.exitCode = undefined;
     });
   });
 

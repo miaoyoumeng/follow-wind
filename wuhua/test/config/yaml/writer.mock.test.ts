@@ -219,6 +219,57 @@ agents:
   });
 });
 
+describe('readConfig agent role/product 解析', () => {
+  beforeEach(() => {
+    mockReadFileSync.mockReset();
+  });
+
+  it('解析 agent 下的 role 与 product 段', () => {
+    mockReadFileSync.mockReturnValue(`name: 'sess-abc'
+agents:
+  console:
+    workspace: '/workspace'
+    role:
+      name: '产品经理'
+      chat:
+        model: 'yuanbao'
+    product:
+      name: '后台管理系统'
+      story:
+        as: '后台管理员'
+        min: 2
+        max: 5
+`);
+    const config = readConfig();
+    expect(config.agents?.console?.role).toEqual({ name: '产品经理', chat: { model: 'yuanbao' } });
+    expect(config.agents?.console?.product).toEqual({
+      name: '后台管理系统',
+      story: { as: '后台管理员', min: 2, max: 5 }
+    });
+  });
+
+  it('未配置 role/product 时为 undefined', () => {
+    mockReadFileSync.mockReturnValue(`name: 'sess-abc'
+agents:
+  console:
+    workspace: '/workspace'
+`);
+    const config = readConfig();
+    expect(config.agents?.console?.role).toBeUndefined();
+    expect(config.agents?.console?.product).toBeUndefined();
+  });
+
+  it('role 非对象时丢弃该字段', () => {
+    mockReadFileSync.mockReturnValue(`name: 'sess-abc'
+agents:
+  console:
+    workspace: '/workspace'
+    role: 'not-an-object'
+`);
+    expect(readConfig().agents?.console?.role).toBeUndefined();
+  });
+});
+
 describe('readConfig task 解析', () => {
   beforeEach(() => {
     mockReadFileSync.mockReset();

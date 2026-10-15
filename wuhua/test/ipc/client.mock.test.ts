@@ -6,7 +6,7 @@ import * as path from 'path';
 import type { IpcRequest } from '../../src/ipc/types';
 
 const { mockDispatch } = vi.hoisted(() => ({
-  mockDispatch: vi.fn().mockResolvedValue(true)
+  mockDispatch: vi.fn().mockResolvedValue({ dispatched: true })
 }));
 
 vi.mock('../../src/pipe/dispatcher', () => ({
@@ -34,7 +34,7 @@ describe('ipc/client（集成测试：真实 socket）', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockDispatch.mockResolvedValue(true);
+    mockDispatch.mockResolvedValue({ dispatched: true });
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ipc-test-'));
     socketPath = path.join(tmpDir, 'test.sock');
     await new Promise<void>(resolve => {
@@ -70,11 +70,35 @@ describe('ipc/client（集成测试：真实 socket）', () => {
     server.close();
   });
 
-  it('ipcDispatch 通过 IPC 分发指令，返回 dispatched=true', async () => {
-    mockDispatch.mockResolvedValueOnce(true);
+  it('ipcDispatch 通过 IPC 分发指令，返回分发结果', async () => {
+    mockDispatch.mockResolvedValueOnce({ dispatched: true });
     const result = await ipcDispatch('test-session', 'myagent', 0, 'hello world', socketPath);
-    expect(result).toBe(true);
+    expect(result).toEqual({ dispatched: true });
     expect(mockDispatch).toHaveBeenCalledWith('test-session', 'myagent', 0, { prompt: 'hello world' });
+  });
+
+  it('服务端延迟响应时，客户端阻塞等待直至响应到达', async () => {
+    // 服务端把响应挂起，模拟 ipcPrompt 等待 Claude Stop 的行为
+    let releaseDispatch: (value: unknown) => void = () => {};
+    mockDispatch.mockReturnValueOnce(
+      new Promise(resolve => {
+        releaseDispatch = resolve;
+      })
+    );
+
+    const pending = ipcDispatch('test-session', 'myagent', 0, 'slow prompt', socketPath);
+    let isSettled = false;
+    void pending.then(() => {
+      isSettled = true;
+    });
+
+    // 给足时间让请求送达服务端并进入挂起状态
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(mockDispatch).toHaveBeenCalled();
+    expect(isSettled).toBe(false);
+
+    releaseDispatch({ dispatched: true });
+    await expect(pending).resolves.toEqual({ dispatched: true });
   });
 
   it('ipcDispatch 在 dispatch 抛异常时抛出错误而非挂起', async () => {

@@ -80,18 +80,24 @@ wuhua dashboard                       # 附加进入本项目的 tmux session
 ### Agent 管理
 
 ```bash
-wuhua agents                          # 显示 .wuhua/config 中所有 agent 名称
-
-wuhua agent add <name> <path>         # 添加 agent（name 为标识，path 为工作目录）
-wuhua agent <name> workspace          # 显示指定 agent 的 workspace 路径
-wuhua agent <name> panes              # 显示指定 agent 的 panes 配置
+wuhua agent --name=<agent|all> --pane-index=<index> --bash=<shell 命令>
+                                     # 把 shell 命令提交到 agent 对应 tmux window 的指定 pane 执行
+                                     # --name=all 时对全部 activate: true 的 agent 提交
+                                     # --pane-index 为 tmux pane 索引，默认 1
+                                     # 提交后由 tmux 异步执行，wuhua 不等待结果，也不回显输出
+                                     # 有提交失败（window/pane 不可用）时进程退出码为 1
 ```
 
 ### 消息发送
 
 ```bash
-wuhua chat <agent> <content>          # 向指定 agent 的 claude pane 发送消息
+wuhua chat --agent=<agent> --prompt=<content>
+                                     # 向指定 agent 的 claude pane 发送消息
                                      # 自动定位 tag 为 claude 的 pane 并发送 content + Enter
+                                     # 提交成功后该 pane 置为 running，期间重复提交会被拒绝（退出码 1）
+                                     # claude 的 Stop 事件到达后置回 idle，StopFailure 事件到达后置为 error
+                                     # 前置条件：agent 的 workspace 需在 .claude/settings.json 配置
+                                     #   Stop / StopFailure hook 调用 `wuhua hook --endpoint=claude`
 ```
 
 ### Pane 截屏

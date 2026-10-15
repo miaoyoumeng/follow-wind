@@ -6,8 +6,14 @@ export const WUHUA_DIR_NAME = '.wuhua';
 // 配置文件名
 const CONFIG_FILE_NAME = 'config.yaml';
 
+// agents 子目录名：各 agent 的产物根目录
+const AGENTS_DIR_NAME = 'agents';
+
 // capture 子目录名
 const CAPTURE_DIR_NAME = 'capture';
+
+// prompts 子目录名
+const PROMPTS_DIR_NAME = 'prompts';
 
 // usage 统计文件名
 const USAGE_FILE_NAME = 'usage.json';
@@ -51,6 +57,15 @@ export const getConfigPath = (): string => currentConfigPath;
  */
 export const setConfigPath = (configPath: string): void => {
   currentConfigPath = configPath;
+};
+
+/**
+ * 根据 agent 名称计算 prompts 目录路径：<cwd>/.wuhua/agents/<agent>/prompts
+ * @param agentName agent 名称
+ * @returns prompts 目录绝对路径
+ */
+export const getAgentPromptsDir = (agentName: string): string => {
+  return join(WUHUA_DIR, AGENTS_DIR_NAME, agentName, PROMPTS_DIR_NAME);
 };
 
 /**

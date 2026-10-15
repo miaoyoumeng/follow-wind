@@ -115,19 +115,30 @@ export const runStart = async (): Promise<void> => {
     return;
   }
 
-  await createSession(sessionName, process.cwd());
-  logger.info(`[start] session "${sessionName}" 已创建`);
-
   // 仅启动 activate: true 的 agent
   const activeAgents = getAgents().filter(agent => agent.activate);
   logger.info(`[start] active agents: [${activeAgents.map(a => a.name).join(', ')}]`);
 
+  // 先校验全部布局，避免创建出 window 数与 agent 数不一致的 session
   for (const agent of activeAgents) {
     const panes = agent.panes;
     if (!panes || getAgentPanesLayout(panes) === undefined) {
       console.log(chalk.red(`[agent:${agent.name}] panes 布局配置无效，请检查布局`));
       return;
     }
+  }
+
+  // 首个 agent 复用 new-session 自带的 window，其余 agent 逐个新建，使 window 数与 agent 数一致
+  const [firstAgent, ...restAgents] = activeAgents;
+  await createSession(sessionName, firstAgent?.name, firstAgent?.workspace ?? process.cwd());
+  logger.info(`[start] session "${sessionName}" 已创建`);
+
+  if (firstAgent) {
+    logger.info(`[start] window "${firstAgent.name}" 复用 session 自带 window，workspace="${firstAgent.workspace}"`);
+    await applyAgentLayout(sessionName, firstAgent);
+  }
+
+  for (const agent of restAgents) {
     logger.info(`[start] creating window "${agent.name}" workspace="${agent.workspace}"`);
     await createTmuxWindow(sessionName, agent.name, agent.workspace);
     await applyAgentLayout(sessionName, agent);

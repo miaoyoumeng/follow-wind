@@ -105,8 +105,8 @@ describe('conflictExposure', () => {
         '  src/hooks/types.ts:13 又定义了 TmuxHook（接口，有 run() 方法）。两者同名但含义完全不同。在',
         '  src/cli/hook.ts 中 import 会冲突。',
         '',
-        '  建议：将 src/hooks/types.ts 中的 TmuxHook → SoloTmuxHook，ClaudeHook → SoloClaudeHook，加',
-        '  Solo 前缀区分。',
+        '  建议：将 src/hooks/types.ts 中的 TmuxHook → WuhuaTmuxHook，ClaudeHook → WuhuaClaudeHook，加',
+        '  Wuhua 前缀区分。',
         '',
         '  2. run() 的行为：',
         '  - TmuxHook.run() → 我计划把现有 runHook 中 endpoint=tmux 的逻辑（校验 → 匹配 session →',
@@ -116,7 +116,7 @@ describe('conflictExposure', () => {
         '  ---',
         '',
         '  在你确认前我先不动代码。你确认下：',
-        '  1. 是否加 Solo 前缀避免命名冲突？还是其他命名方案？',
+        '  1. 是否加 Wuhua 前缀避免命名冲突？还是其他命名方案？',
         '  2. ClaudeHook.run() 目前是 stub（只记日志）是否正确？'
       ].join('\n');
       expect(conflictExposure(makeContext(content))).toBe('conflictExposure');

@@ -68,6 +68,21 @@ describe('sendKeys', () => {
     expect(mockExeca).toHaveBeenCalledWith('tmux', ['send-keys', '-t', 'sess:win.0', 'hello world', 'Enter']);
   });
 
+  it('多行文本：文本与 Enter 分两次发送，避免 Enter 随粘贴内容一起被吞掉', async () => {
+    await sendKeys('sess', 'win', 0, 'line1\nline2');
+
+    expect(mockExeca).toHaveBeenCalledTimes(2);
+    expect(mockExeca).toHaveBeenNthCalledWith(1, 'tmux', ['send-keys', '-t', 'sess:win.0', 'line1\nline2']);
+    expect(mockExeca).toHaveBeenNthCalledWith(2, 'tmux', ['send-keys', '-t', 'sess:win.0', 'Enter']);
+  });
+
+  it('多行文本且 enter=false：只发内容，不追加 Enter', async () => {
+    await sendKeys('sess', 'win', 0, 'line1\nline2', false);
+
+    expect(mockExeca).toHaveBeenCalledTimes(1);
+    expect(mockExeca).toHaveBeenCalledWith('tmux', ['send-keys', '-t', 'sess:win.0', 'line1\nline2']);
+  });
+
   it('enter=false 时只发一次文本，不追加 Enter', async () => {
     await sendKeys('sess', 'win', 1, 'hello world', false);
     expect(mockExeca).toHaveBeenCalledTimes(1);

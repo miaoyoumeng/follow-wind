@@ -38,11 +38,9 @@ describe('TmuxRouter', () => {
   });
 
   describe('构造', () => {
-    it('构造参数被正确赋值，队列为空', () => {
+    it('绑定 pane 坐标与初始 idle 状态，队列为空', () => {
       const router = new TmuxRouter('s', 'w', 2);
-      expect(router.session).toBe('s');
-      expect(router.window).toBe('w');
-      expect(router.paneIndex).toBe(2);
+      expect(router.paneStatus).toEqual({ session: 's', window: 'w', paneIndex: 2, status: 'idle' });
       expect(router.queue.isEmpty()).toBe(true);
     });
   });

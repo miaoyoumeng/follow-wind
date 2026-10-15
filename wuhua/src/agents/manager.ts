@@ -14,7 +14,10 @@ export const getAgents = (): Agent[] => {
       name,
       workspace: resolveWorkspace(agent.workspace),
       activate: agent.activate ?? false,
-      panes: agent.panes
+      waitTime: agent.waitTime,
+      panes: agent.panes,
+      role: agent.role,
+      product: agent.product
     });
   }
 
@@ -34,7 +37,10 @@ export const getAgent = (name: string): Agent | undefined => {
     name,
     workspace: resolveWorkspace(agent.workspace),
     activate: agent.activate ?? false,
-    panes: agent.panes
+    waitTime: agent.waitTime,
+    panes: agent.panes,
+    role: agent.role,
+    product: agent.product
   };
 };
 

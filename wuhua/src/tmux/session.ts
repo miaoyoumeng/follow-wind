@@ -30,13 +30,18 @@ export const sessionExists = async (name: string): Promise<boolean> => {
 };
 
 /**
- * 创建新的 session
+ * 创建新的 session（tmux 会自带一个 window，可在此直接命名并指定其工作目录）
  * @param name session 名称
+ * @param window 首个 window 名称，省略时使用 tmux 默认名
  * @param dir 工作目录，省略时使用当前进程工作目录
  */
-export const createSession = async (name: string, dir?: string): Promise<void> => {
+export const createSession = async (name: string, window?: string, dir?: string): Promise<void> => {
   const cwd = dir ?? process.cwd();
-  await execa('tmux', ['new-session', '-d', '-s', name, '-c', cwd]);
+  const args = ['new-session', '-d', '-s', name, '-c', cwd];
+  if (window) {
+    args.push('-n', window);
+  }
+  await execa('tmux', args);
 };
 
 /**

@@ -10,6 +10,9 @@ const {
   mockRunChat,
   mockRunUsage,
   mockRunHook,
+  mockRunStory,
+  mockRunPrompt,
+  mockRunAgent,
   registeredPrograms
 } = vi.hoisted(() => ({
   mockGetLoggingConfig: vi.fn(),
@@ -19,6 +22,9 @@ const {
   mockRunChat: vi.fn(),
   mockRunUsage: vi.fn(),
   mockRunHook: vi.fn(),
+  mockRunStory: vi.fn(),
+  mockRunPrompt: vi.fn(),
+  mockRunAgent: vi.fn(),
   registeredPrograms: [] as unknown[]
 }));
 
@@ -50,7 +56,10 @@ vi.mock('../../src/cli', async importOriginal => {
     runCapture: mockRunCapture,
     runChat: mockRunChat,
     runUsage: mockRunUsage,
-    runHook: mockRunHook
+    runHook: mockRunHook,
+    runStory: mockRunStory,
+    runPrompt: mockRunPrompt,
+    runAgent: mockRunAgent
   };
 });
 
@@ -97,7 +106,10 @@ const EXPECTED_COMMANDS: ReadonlyArray<[string, string]> = [
   ['usage', '统计指定 agent 的 Claude token 消耗'],
   ['chat', '向指定 agent 的 claude pane 发送消息'],
   ['hook', 'hook 回调入口（由 tmux run-shell 自动调用）'],
-  ['capture', '捕获指定 agent 面板内容并写入 .wuhua/capture/']
+  ['capture', '捕获指定 agent 面板内容并写入 .wuhua/capture/'],
+  ['story', '依据 feature 文件为主题生成 user story prompt'],
+  ['prompt', '按 prompts 索引中的 todo 列表逐条执行 prompt'],
+  ['agent', '把 shell 命令提交到 agent 的 tmux pane 执行']
 ];
 
 describe('项目名', () => {
@@ -129,7 +141,7 @@ describe('命令注册', () => {
   const businessCommands = (): string[] =>
     program.commands.filter(c => c.name() !== 'help' && !c._hidden).map(c => c.name());
 
-  it('注册全部 11 个业务命令，且顺序与 --help 输出一致', () => {
+  it('注册全部 14 个业务命令，且顺序与 --help 输出一致', () => {
     expect(businessCommands()).toEqual(EXPECTED_COMMANDS.map(([name]) => name));
   });
 
@@ -147,10 +159,12 @@ describe('参数元数据', () => {
     expect(args.map(a => a.required)).toEqual([true, false]);
   });
 
-  it('chat：agent 与 content 均必填', () => {
-    const args = findCommand('chat')?.registeredArguments ?? [];
-    expect(args.map(a => a.name())).toEqual(['agent', 'content']);
-    expect(args.map(a => a.required)).toEqual([true, true]);
+  it('chat：--agent 与 --prompt 均必填，且不声明位置参数', () => {
+    const cmd = findCommand('chat');
+    expect(cmd?.registeredArguments ?? []).toEqual([]);
+    const options = cmd?.options ?? [];
+    expect(options.map(o => o.flags)).toEqual(['--agent <agent>', '--prompt <prompt>']);
+    expect(options.map(o => (o as unknown as { mandatory: boolean }).mandatory)).toEqual([true, true]);
   });
 
   it('capture：agent-name 与 pane-index 均必填', () => {
@@ -165,6 +179,30 @@ describe('参数元数据', () => {
     // endpoint 必填（mandatory），其余可选
     // 注：commander 的 required 表示选项是否需要参数值，mandatory 才是是否必填
     expect(options.map(o => (o as unknown as { mandatory: boolean }).mandatory)).toEqual([true, false, false]);
+  });
+
+  it('story：--agent 与 --file 均必填，且不声明位置参数', () => {
+    const cmd = findCommand('story');
+    expect(cmd?.registeredArguments ?? []).toEqual([]);
+    const options = cmd?.options ?? [];
+    expect(options.map(o => o.flags)).toEqual(['--agent <agent>', '--file <path>']);
+    expect(options.map(o => (o as unknown as { mandatory: boolean }).mandatory)).toEqual([true, true]);
+  });
+
+  it('prompt：--agent 必填，--timeout 可选，且不声明位置参数', () => {
+    const cmd = findCommand('prompt');
+    expect(cmd?.registeredArguments ?? []).toEqual([]);
+    const options = cmd?.options ?? [];
+    expect(options.map(o => o.flags)).toEqual(['--agent <agent>', '--timeout <minutes>']);
+    expect(options.map(o => (o as unknown as { mandatory: boolean }).mandatory)).toEqual([true, false]);
+  });
+
+  it('agent：--name 与 --bash 必填，--pane-index 可选，且不声明位置参数', () => {
+    const cmd = findCommand('agent');
+    expect(cmd?.registeredArguments ?? []).toEqual([]);
+    const options = cmd?.options ?? [];
+    expect(options.map(o => o.flags)).toEqual(['--name <name>', '--pane-index <index>', '--bash <command>']);
+    expect(options.map(o => (o as unknown as { mandatory: boolean }).mandatory)).toEqual([true, false, true]);
   });
 
   it('无参数命令不声明位置参数', () => {
@@ -185,8 +223,8 @@ describe('命令执行', () => {
     expect(mockRunCapture.mock.calls[0].slice(0, 2)).toEqual(['myagent', 3]);
   });
 
-  it('chat：两个位置参数按序传入', async () => {
-    await program.parseAsync(['node', 'wuhua', 'chat', 'myagent', 'hello world']);
+  it('chat：--agent 与 --prompt 选项按序映射为实参', async () => {
+    await program.parseAsync(['node', 'wuhua', 'chat', '--agent', 'myagent', '--prompt', 'hello world']);
     expect(mockRunChat.mock.calls[0].slice(0, 2)).toEqual(['myagent', 'hello world']);
   });
 
@@ -203,6 +241,38 @@ describe('命令执行', () => {
       event: 'alert-bell',
       workspace: undefined
     });
+  });
+
+  it('story：--agent 与 --file 按序传入 runStory', async () => {
+    await program.parseAsync(['node', 'wuhua', 'story', '--agent', 'console', '--file', '/spec/feature.json']);
+    expect(mockRunStory).toHaveBeenCalledWith('console', '/spec/feature.json');
+  });
+
+  it('prompt：--agent 传入 runPrompt，省略 --timeout 时为 undefined', async () => {
+    await program.parseAsync(['node', 'wuhua', 'prompt', '--agent', 'console']);
+    expect(mockRunPrompt).toHaveBeenCalledWith('console', undefined);
+  });
+
+  it('prompt：--timeout 经 parseInt 转为 number 后传入', async () => {
+    await program.parseAsync(['node', 'wuhua', 'prompt', '--agent=all', '--timeout=30']);
+    expect(mockRunPrompt).toHaveBeenCalledWith('all', 30);
+  });
+
+  it('agent：--name 与 --bash 传入 runAgent，省略 --pane-index 时为 undefined', async () => {
+    await program.parseAsync(['node', 'wuhua', 'agent', '--name=all', '--bash=pnpm test']);
+    expect(mockRunAgent).toHaveBeenCalledWith('all', undefined, 'pnpm test');
+  });
+
+  it('agent：--pane-index 经 parseInt 转为 number 后传入', async () => {
+    await program.parseAsync(['node', 'wuhua', 'agent', '--name=console', '--pane-index=2', '--bash=git pull']);
+    expect(mockRunAgent).toHaveBeenCalledWith('console', 2, 'git pull');
+  });
+
+  it('agent：多余参数报错，不执行 runAgent（allowExcessArguments=false 生效）', async () => {
+    await expect(program.parseAsync(['node', 'wuhua', 'agent', '--name=all', '--bash=pwd', 'extra'])).rejects.toThrow(
+      /too many arguments/
+    );
+    expect(mockRunAgent).not.toHaveBeenCalled();
   });
 
   it('start：多余参数报错，不执行 runStart（allowExcessArguments=false 生效）', async () => {

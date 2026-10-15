@@ -175,11 +175,32 @@ describe('runStart', () => {
     spy.mockRestore();
   });
 
-  it('只对 activate: true 的 agent 创建 window', async () => {
+  it('只有一个 activate agent 时，window 数量为 1（复用 session 默认 window，不额外新建）', async () => {
     await runStart();
-    expect(mockCreateSession).toHaveBeenCalledWith('sess-abc', expect.any(String));
+    expect(mockCreateSession).toHaveBeenCalledWith('sess-abc', 'act-h', '/a');
+    expect(mockCreateWindow).not.toHaveBeenCalled();
+  });
+
+  it('多个 activate agent 时，window 数量与 agent 数量一致（首个复用默认 window，其余新建）', async () => {
+    mockReadConfig.mockReturnValue({
+      ...sampleConfig,
+      agents: {
+        'act-h': {
+          workspace: '/a',
+          activate: true,
+          panes: { claude: { layout: 'left' }, shell: { layout: 'right' } }
+        },
+        'act-two': {
+          workspace: '/b',
+          activate: true,
+          panes: { main: { layout: 'one' } } as unknown as AgentPanes
+        }
+      }
+    });
+    await runStart();
+    expect(mockCreateSession).toHaveBeenCalledWith('sess-abc', 'act-h', '/a');
     expect(mockCreateWindow).toHaveBeenCalledTimes(1);
-    expect(mockCreateWindow).toHaveBeenCalledWith('sess-abc', 'act-h', '/a');
+    expect(mockCreateWindow).toHaveBeenCalledWith('sess-abc', 'act-two', '/b');
   });
 
   it('activate: true 且配置 panes 的 agent 执行分屏', async () => {
@@ -207,7 +228,7 @@ describe('runStart', () => {
       agents: { 'act-false': { workspace: '/c', activate: false } }
     });
     await runStart();
-    expect(mockCreateSession).toHaveBeenCalled();
+    expect(mockCreateSession).toHaveBeenCalledWith('sess-abc', undefined, expect.any(String));
     expect(mockCreateWindow).not.toHaveBeenCalled();
   });
 
@@ -269,6 +290,7 @@ describe('runStart', () => {
     await runStart();
     const errorLogs = logs.filter(l => l.includes('panes 布局配置无效'));
     expect(errorLogs.length).toBeGreaterThan(0);
+    expect(mockCreateSession).not.toHaveBeenCalled();
     expect(mockCreateWindow).not.toHaveBeenCalled();
     expect(mockRegisterHooks).not.toHaveBeenCalled();
     expect(mockWritePidFileFn).not.toHaveBeenCalled();

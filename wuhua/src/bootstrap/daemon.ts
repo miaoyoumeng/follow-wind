@@ -4,6 +4,7 @@ import { readConfig, getIpcSocketPath } from '../config';
 import { readPidFile, isProcessAlive } from './pid';
 import { startHeartbeat, stopHeartbeat } from './heartbeat';
 import { clearAll } from '../task/chatTaskStorage';
+import { clearWaits } from '../pipe';
 
 let ipcRunning = false;
 
@@ -49,11 +50,12 @@ export const startDaemon = (onListening?: () => void): (() => void) => {
 };
 
 /**
- * 停止常住进程心跳并关闭 IPC 服务端，清理 dispatcher 内存
+ * 停止常住进程心跳并关闭 IPC 服务端，清理 dispatcher 与等待队列内存
  */
 export const stopDaemon = (): void => {
   stopHeartbeat();
   clearAll();
+  clearWaits();
   if (ipcRunning) {
     stopIpcServer();
     ipcRunning = false;

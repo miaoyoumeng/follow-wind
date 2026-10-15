@@ -22,15 +22,13 @@ vi.mock('../../src/logging', () => ({
   }
 }));
 
-import { dispatch, triggerPaneRolling } from '../../src/pipe/dispatcher';
+import { dispatch, getPaneStatus, markPaneError, triggerPaneRolling } from '../../src/pipe/dispatcher';
 import { registerRouter, clearAll } from '../../src/task/chatTaskStorage';
 
 const mockRouter = (): TmuxRouter => {
   const queue = new InstructQueue();
   return {
-    session: 's',
-    window: 'w',
-    paneIndex: 0,
+    paneStatus: { session: 's', window: 'w', paneIndex: 0, status: 'idle' },
     queue,
     enqueue: (instruct: Parameters<TmuxRouter['enqueue']>[0]) => queue.enqueue(instruct),
     paneRolling: vi.fn().mockResolvedValue(undefined)
@@ -45,10 +43,10 @@ describe('dispatcher', () => {
   });
 
   describe('dispatch', () => {
-    it('将指令加入 router 的 queue，返回 true', async () => {
+    it('将指令加入 router 的 queue，返回 dispatched=true', async () => {
       const router = registerRouter('s', 'w', 0);
       const result = await dispatch('s', 'w', 0, { prompt: 'ls' });
-      expect(result).toBe(true);
+      expect(result).toEqual({ dispatched: true });
       expect(router.queue.size()).toBe(1);
       expect(router.queue.peek()?.prompt).toBe('ls');
     });
@@ -68,10 +66,45 @@ describe('dispatcher', () => {
       expect(router.paneRolling).toHaveBeenCalled();
     });
 
-    it('未注册 router 时返回 false', async () => {
+    it('未注册 router 时返回 dispatched=false 且原因为 no-router', async () => {
       const result = await dispatch('s', 'w', 0, { prompt: 'ls' });
-      expect(result).toBe(false);
+      expect(result).toEqual({ dispatched: false, reason: 'no-router' });
       expect(mockPaneRolling).not.toHaveBeenCalled();
+    });
+
+    it('router 处于 running 时拒绝分发，不入队也不触发 roller', async () => {
+      const router = registerRouter('s', 'w', 0);
+      router.paneStatus.status = 'running';
+      const result = await dispatch('s', 'w', 0, { prompt: 'ls' });
+      expect(result).toEqual({ dispatched: false, reason: 'busy' });
+      expect(router.queue.size()).toBe(0);
+      expect(router.paneRolling).not.toHaveBeenCalled();
+    });
+
+    it('分发成功后把 pane 状态置为 running', async () => {
+      const router = registerRouter('s', 'w', 0);
+      await dispatch('s', 'w', 0, { prompt: 'ls' });
+      expect(router.paneStatus.status).toBe('running');
+    });
+
+    it('router 处于 error 时允许覆盖提交并置为 running', async () => {
+      const router = registerRouter('s', 'w', 0);
+      router.paneStatus.status = 'error';
+      const result = await dispatch('s', 'w', 0, { prompt: 'ls' });
+      expect(result).toEqual({ dispatched: true });
+      expect(router.paneStatus.status).toBe('running');
+    });
+  });
+
+  describe('getPaneStatus', () => {
+    it('未注册 router 时返回 null', () => {
+      expect(getPaneStatus('s', 'w', 0)).toBeNull();
+    });
+
+    it('已注册时返回绑定坐标的 pane 状态', () => {
+      const router = registerRouter('s', 'w', 0);
+      router.paneStatus.status = 'running';
+      expect(getPaneStatus('s', 'w', 0)).toEqual({ session: 's', window: 'w', paneIndex: 0, status: 'running' });
     });
   });
 
@@ -112,8 +145,33 @@ describe('dispatcher', () => {
       expect(router.paneRolling).toHaveBeenCalled();
     });
 
+    it('把 running 的 router 状态归位为 idle', () => {
+      const router = registerRouter('s', 'w', 0);
+      router.paneStatus.status = 'running';
+      void triggerPaneRolling('s', 'w', 0);
+      expect(router.paneStatus.status).toBe('idle');
+    });
+
     it('未注册 router 时不报错', () => {
       expect(() => void triggerPaneRolling('s', 'w', 0)).not.toThrow();
+    });
+  });
+
+  describe('markPaneError', () => {
+    it('把 pane 状态置为 error', () => {
+      const router = registerRouter('s', 'w', 0);
+      expect(markPaneError('s', 'w', 0)).toBe(true);
+      expect(router.paneStatus.status).toBe('error');
+    });
+
+    it('不触发 paneRolling（异常结束的回合不消费队列）', () => {
+      const router = registerRouter('s', 'w', 0);
+      markPaneError('s', 'w', 0);
+      expect(router.paneRolling).not.toHaveBeenCalled();
+    });
+
+    it('未注册 router 时返回 false 且不报错', () => {
+      expect(markPaneError('s', 'w', 0)).toBe(false);
     });
   });
 });
