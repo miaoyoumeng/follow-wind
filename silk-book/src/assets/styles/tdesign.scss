@@ -1,0 +1,8 @@
+/* TDesign 框架元素样式覆盖 */
+/* 使用 !important 确保优先级足够高 */
+.t-button + .t-button {
+  margin-left: var(--td-comp-margin-s);
+}
+.t-icon-add {
+  color: white !important;
+}
